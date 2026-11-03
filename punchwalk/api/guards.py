@@ -6,6 +6,7 @@ The "<= 2 concurrent jobs" guard lives in `jobs.py` (a pool of `MAX_CONCURRENT_J
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from collections import deque
@@ -90,19 +91,28 @@ async def _send_json(send: Send, status: int, body: dict) -> None:
     await send({"type": "http.response.body", "body": payload})
 
 
+def _env_on(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def client_ip(request: Request) -> str:
-    """Fly's proxy sets Fly-Client-IP; fall back to X-Forwarded-For, then the socket peer."""
-    fly = request.headers.get("fly-client-ip")
-    if fly:
-        return fly.strip()
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
+    """The client's IP for rate limiting. Proxy headers are only trusted behind a proxy we know:
+    Fly-Client-IP when running on Fly (FLY_APP_NAME is set; Fly's edge overwrites the header), and
+    X-Forwarded-For only with TRUST_PROXY=1. Otherwise the socket peer, so headers can't be spoofed."""
+    if os.environ.get("FLY_APP_NAME"):
+        fly = request.headers.get("fly-client-ip")
+        if fly:
+            return fly.strip()
+    if _env_on("TRUST_PROXY"):
+        fwd = request.headers.get("x-forwarded-for")
+        if fwd:
+            return fwd.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
 
 
 class UploadRateLimiter:
-    """Sliding-window counter of accepted uploads per IP."""
+    """Sliding-window counter of uploads per IP. A slot is reserved before the body streams in
+    (so parallel uploads from one device can't all slip through) and released if the upload fails."""
 
     def __init__(self, limit: int = DEMO_UPLOADS_PER_WINDOW, window_s: float = DEMO_UPLOAD_WINDOW_S) -> None:
         self.limit = limit
@@ -116,8 +126,8 @@ class UploadRateLimiter:
             hits.popleft()
         return hits
 
-    def check(self, ip: str) -> None:
-        """Raise 429 when `ip` has used up its uploads for this window."""
+    def check_and_reserve(self, ip: str) -> float:
+        """Take one slot for `ip` or raise 429. Returns the reservation, for `release()`."""
         now = time.monotonic()
         with self._lock:
             hits = self._prune(ip, now)
@@ -129,10 +139,15 @@ class UploadRateLimiter:
                     f"Try again in about {wait_min} min.",
                     headers={"Retry-After": str(wait_min * 60)},
                 )
+            hits.append(now)
+            return now
 
-    def record(self, ip: str) -> None:
+    def release(self, ip: str, reservation: float) -> None:
+        """Give back a slot taken by `check_and_reserve` (the upload was refused or failed)."""
         with self._lock:
-            self._prune(ip, time.monotonic()).append(time.monotonic())
+            hits = self._hits.get(ip)
+            if hits and reservation in hits:
+                hits.remove(reservation)
 
     def reset(self) -> None:
         with self._lock:

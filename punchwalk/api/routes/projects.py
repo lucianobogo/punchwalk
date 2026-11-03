@@ -152,21 +152,27 @@ async def upload_walk(project_id: str, request: Request, session: Session = Depe
     """multipart: kind=initial|rewalk, rewalk_of=<walk id>?, clips=<file> (repeated, in walk order)."""
     project = get_project(session, project_id)
     ip = client_ip(request)
-    if get_settings().DEMO_MODE:
-        upload_limiter.check(ip)
-
+    # DEMO_MODE: take the slot before the body streams in, give it back if the upload fails.
+    reservation = upload_limiter.check_and_reserve(ip) if get_settings().DEMO_MODE else None
     walk_id = new_id("wlk")
+    try:
+        out = await _store_upload(session, project, request, walk_id)
+    except BaseException:
+        if reservation is not None:
+            upload_limiter.release(ip, reservation)
+        uploads.discard(walk_id)
+        raise
+    notify_worker()
+    return out
+
+
+async def _store_upload(session: Session, project: Project, request: Request, walk_id: str) -> S.UploadOut:
     parsed = await uploads.receive_upload(request, walk_id)
     try:
         kind = WalkKind(parsed.fields.get("kind") or WalkKind.initial)
     except ValueError:
-        uploads.discard(walk_id)
         raise ApiError(400, "kind must be “initial” (first walk) or “rewalk”.") from None
-    try:
-        rewalk_of = _resolve_rewalk_of(session, project, kind, parsed.fields.get("rewalk_of") or None)
-    except ApiError:
-        uploads.discard(walk_id)
-        raise
+    rewalk_of = _resolve_rewalk_of(session, project, kind, parsed.fields.get("rewalk_of") or None)
     if rewalk_of:
         kind = WalkKind.rewalk
     await uploads.validate_clips(walk_id, parsed)
@@ -192,9 +198,6 @@ async def upload_walk(project_id: str, request: Request, session: Session = Depe
     session.flush()
     job = enqueue_walk_job(session, walk.id)
     session.commit()
-    if get_settings().DEMO_MODE:
-        upload_limiter.record(ip)
-    notify_worker()
     return S.UploadOut(walk_id=walk.id, job_id=job.id, status=walk.status)
 
 
@@ -235,13 +238,3 @@ def list_items(
         counts=views.item_counts(i.status for i in everything),
         total=len(picked),
     )
-
-
-# --------------------------------------------------------------------------- report
-
-
-@router.get("/{project_id}/report.pdf", include_in_schema=False)
-def report_pdf(project_id: str, session: Session = Depends(get_session)):
-    get_project(session, project_id)
-    # Seam for PLAN 6.3: render punchwalk/render report HTML -> WeasyPrint -> application/pdf.
-    raise ApiError(501, "The PDF punch report is coming in 6.3.")

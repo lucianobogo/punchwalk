@@ -741,7 +741,7 @@ def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
         if n is None:
             frames = c.get("frames", 0)
             return f"The hand followed through {frames} frames" if frames else "No hands in this walk"
-        return f"{n} points found across the whole video" if n else "No pointing in this walk"
+        return f"{n} {'point' if n == 1 else 'points'} found across the whole video" if n else "No pointing in this walk"
     if stage == Stage.fuse:
         return f"Timing and position, computed in the app. {row.detail}."
     if stage == Stage.write_items:

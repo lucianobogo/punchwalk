@@ -77,15 +77,6 @@ def test_trades_directory_endpoint(api: TestClient) -> None:
     assert check(S.DispatchListOut, hist.json()).dispatches == []
 
 
-def test_dispatch_and_report_are_501_with_readable_errors(api: TestClient) -> None:
-    pid = make_project(api)["id"]
-    body = assert_readable_error(api.get(f"/api/projects/{pid}/trades/electrical/preview"), 501)
-    assert body["error"] == "not_implemented" and "6.1" in body["detail"]
-    send = api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "outbox", "item_ids": ["x"]})
-    assert_readable_error(send, 501)
-    assert_readable_error(api.get(f"/api/projects/{pid}/report.pdf"), 501)
-
-
 def test_errors_are_readable(api: TestClient) -> None:
     body = assert_readable_error(api.get("/api/projects/prj_nope"), 404)
     assert body["error"] == "not_found"
@@ -152,10 +143,37 @@ def test_demo_mode_upload_rate_limit(api: TestClient, clip_path: Path, monkeypat
     body = assert_readable_error(res, 429)
     assert body["error"] == "rate_limited" and "3 uploads per hour" in body["detail"]
     assert int(res.headers["retry-after"]) > 0
-    # another device (Fly-Client-IP) still has its own quota
     files = [("clips", (clip_path.name, clip_path.read_bytes(), "video/mp4"))]
-    other = api.post(f"/api/projects/{pid}/walks", files=files, headers={"Fly-Client-IP": "203.0.113.9"})
-    assert other.status_code == 201
+    # proxy headers are ignored unless we know we're behind that proxy
+    spoof = {"Fly-Client-IP": "203.0.113.9", "X-Forwarded-For": "198.51.100.7"}
+    assert api.post(f"/api/projects/{pid}/walks", files=files, headers=spoof).status_code == 429
+    monkeypatch.setenv("TRUST_PROXY", "1")
+    xff = {"X-Forwarded-For": "198.51.100.7, 10.0.0.1"}
+    assert api.post(f"/api/projects/{pid}/walks", files=files, headers=xff).status_code == 201
+    monkeypatch.delenv("TRUST_PROXY")
+    monkeypatch.setenv("FLY_APP_NAME", "punchwalk")  # on Fly, Fly-Client-IP is set by Fly's edge
+    fly = {"Fly-Client-IP": "203.0.113.9"}
+    assert api.post(f"/api/projects/{pid}/walks", files=files, headers=fly).status_code == 201
+
+
+def test_rate_limit_reserves_before_streaming_and_releases_on_failure(
+    api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from punchwalk.api.guards import upload_limiter
+
+    monkeypatch.setenv("DEMO_MODE", "true")
+    reset_settings()
+    pid = make_project(api)["id"]
+    # a refused upload gives its slot back
+    for _ in range(5):
+        bad = api.post(f"/api/projects/{pid}/walks", files=[("clips", ("x.mp4", b"nope", "video/mp4"))])
+        assert bad.status_code == 415
+    assert upload(api, pid, [clip_path]).status_code == 201
+    # slots are taken when an upload starts, so parallel uploads can't all slip through
+    held = [upload_limiter.check_and_reserve("testclient") for _ in range(2)]  # two uploads in flight
+    assert_readable_error(upload(api, pid, [clip_path]), 429)
+    upload_limiter.release("testclient", held[0])
+    assert upload(api, pid, [clip_path]).status_code == 201
 
 
 def test_no_rate_limit_outside_demo_mode(api: TestClient, clip_path: Path) -> None:
@@ -183,20 +201,43 @@ def test_media_range_requests(api: TestClient, clip_path: Path) -> None:
 
     tail = api.get(url, headers={"Range": "bytes=-10"})
     assert tail.status_code == 206 and tail.content == full.content[-10:]
-    assert api.get(url, headers={"Range": f"bytes={size + 10}-"}).status_code == 416
     assert api.head(url).headers["content-length"] == str(size)
 
 
 def test_media_rejects_traversal_and_private_files(api: TestClient, clip_path: Path) -> None:
+    from punchwalk.config import get_settings
+
     _, up = ready_walk(api, clip_path)
+    wid = up["walk_id"]
+    wdir = Path(get_settings().DATA_DIR) / "walks" / wid
+    for name in ("audio.wav", "sam.mp4", "sam_part_a.mp4"):
+        (wdir / name).write_bytes(b"x")
     for bad in (
         "/media/walks/../punchwalk.sqlite3",
         "/media/walks/%2e%2e/punchwalk.sqlite3",
         "/media/punchwalk.sqlite3",
         "/media/cost_ledger.jsonl",
-        f"/media/walks/{up['walk_id']}/missing.mp4",
+        f"/media/walks/{wid}/missing.mp4",
+        f"/media/walks/{wid}/clips/00_walk1_a.mp4",  # the phone's original, with location metadata
+        f"/media/walks/{wid}/audio.wav",
+        f"/media/walks/{wid}/sam.mp4",
+        f"/media/walks/{wid}/sam_part_a.mp4",
+        f"/media/walks/{wid}/meta.json",
+        f"/media/walks/{wid}/stages/track_hands.json",
+        f"/media/walks/{wid}/items/itm_{wid[4:]}/notes.json",
     ):
         assert_readable_error(api.get(bad), 404)
+    assert (wdir / "clips" / "00_walk1_a.mp4").is_file() and (wdir / "meta.json").is_file()
+    for good in (f"/media/walks/{wid}/poster.jpg", f"/media/walks/{wid}/items/itm_{wid[4:]}/crop.jpg"):
+        assert api.get(good).status_code == 200, good
+
+
+def test_unsatisfiable_range_is_a_json_416(api: TestClient, clip_path: Path) -> None:
+    _, up = ready_walk(api, clip_path)
+    size = clip_path.stat().st_size
+    res = api.get(f"/media/walks/{up['walk_id']}/display.mp4", headers={"Range": f"bytes={size + 10}-"})
+    body = assert_readable_error(res, 416)
+    assert body["error"] == "range_not_satisfiable" and res.headers["content-range"] == f"bytes */{size}"
 
 
 def test_spa_fallback(api: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

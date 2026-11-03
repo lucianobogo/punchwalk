@@ -240,24 +240,43 @@ def test_interrupted_jobs_are_requeued_on_startup(api: TestClient, clip_path: Pa
     assert api.get(f"/api/walks/{up['walk_id']}/progress").json()["attempts"] == 2
 
 
-def test_worker_threads_process_jobs(api: TestClient, clip_path: Path) -> None:
+def test_worker_threads_process_jobs_at_most_two_at_a_time(api: TestClient, clip_path: Path) -> None:
+    import threading
+
+    lock, db_lock = threading.Lock(), threading.Lock()
+    state = {"in_flight": 0, "peak": 0}
+    pause = threading.Event()  # time.sleep is patched out in tests; Event.wait really waits
+
+    def slow_runner(walk_id: str, *, session_factory, progress=None, force=False) -> None:
+        with lock:
+            state["in_flight"] += 1
+            state["peak"] = max(state["peak"], state["in_flight"])
+        try:
+            pause.wait(0.3)  # long enough for every free worker thread to pick up a job
+            with db_lock:  # the fake runner numbers items with max()+1; keep that part serial
+                fake_runner(walk_id, session_factory=session_factory, progress=progress, force=force)
+        finally:
+            with lock:
+                state["in_flight"] -= 1
+
+    jobs.set_runner(slow_runner)
     pid = make_project(api)["id"]
-    ids = [upload(api, pid, [clip_path]).json()["walk_id"] for _ in range(3)]
-    worker = jobs.JobWorker(threads=2, poll_s=0.05)
+    ids = [upload(api, pid, [clip_path]).json()["walk_id"] for _ in range(5)]
+    worker = jobs.JobWorker(threads=jobs.MAX_CONCURRENT_JOBS, poll_s=0.05)
     worker.start()
     try:
-        assert len(worker._threads) == jobs.MAX_CONCURRENT_JOBS == 2
-        deadline = time.monotonic() + 20
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             states = {api.get(f"/api/walks/{w}/progress").json()["status"] for w in ids}
             if states == {"done"}:
                 break
-            time.sleep(0.05)
+            pause.wait(0.05)
     finally:
         worker.stop()
     assert states == {"done"}
+    assert state["peak"] == jobs.MAX_CONCURRENT_JOBS == 2  # two ran together, never three
     numbers = sorted(i["number"] for i in api.get(f"/api/projects/{pid}/items").json()["items"])
-    assert numbers == [1, 2, 3]
+    assert numbers == [1, 2, 3, 4, 5]
 
 
 def test_sse_streams_progress_until_done(api: TestClient, clip_path: Path) -> None:
@@ -373,7 +392,7 @@ def test_model_calls_and_processing_summary(api: TestClient, clip_path: Path) ->
     steps = {s.stage: s for s in proc.steps}
     assert list(steps) == [Stage.transcribe, Stage.track_hands, Stage.fuse,
                            Stage.write_items, Stage.ground_defects, Stage.verify]  # fmt: skip
-    assert steps[Stage.track_hands].detail == "1 points found across the whole video"
+    assert steps[Stage.track_hands].detail == "1 point found across the whole video"
     assert steps[Stage.verify].fallback_calls == 1 and steps[Stage.verify].provider == "meta-fallback"
     assert steps[Stage.track_hands].model_label == "SAM 3.1" and steps[Stage.track_hands].calls == 1
     assert steps[Stage.fuse].model_label is None and steps[Stage.fuse].detail.startswith("Timing and position")
