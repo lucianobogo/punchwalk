@@ -140,8 +140,8 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 4: API & jobs (Track C)
 
-- [ ] **4.1 DB.** Persist the 0.7 models (SQLModel `create_all`), media served from `DATA_DIR` with HTTP range support (needed for video seeking on iOS Safari).
-- [ ] **4.2 Endpoints:**
+- [x] **4.1 DB.** Persist the 0.7 models (SQLModel `create_all`), media served from `DATA_DIR` with HTTP range support (needed for video seeking on iOS Safari).
+- [x] **4.2 Endpoints:**
   - projects (+ trades directory)
   - walk upload: one or more ordered clips, multipart streamed to disk, ≤ 400 MB and ≤ 10 min in total
   - walk status/progress (polling, or SSE if simple)
@@ -153,8 +153,8 @@ Track ownership and paths are in the orchestrator's instructions.
   - model calls
   - report PDF
   - `/healthz`
-- [ ] **4.3 Overlay endpoint.** Per SAM frame (10 fps): `[{point_id, number, box, svg, fingertip}]` (hand outlines while pointing) in display coordinates (simplified paths; payload < 3 MB for a 3-minute walk), plus item events `[{t, item_id}]`.
-- [ ] **4.4 Guards.** ≤ 2 concurrent jobs; per-IP upload limit in `DEMO_MODE`; readable errors.
+- [x] **4.3 Overlay endpoint.** Per SAM frame (10 fps): `[{point_id, number, box, svg, fingertip}]` (hand outlines while pointing) in display coordinates (simplified paths; payload < 3 MB for a 3-minute walk), plus item events `[{t, item_id}]`.
+- [x] **4.4 Guards.** ≤ 2 concurrent jobs; per-IP upload limit in `DEMO_MODE`; readable errors.
 
 ## Phase 5: Web app (Track B; mobile first, follow DESIGN.md exactly)
 

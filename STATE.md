@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 17:25 ET
+Updated: 2026-11-03 17:30 ET
 Current phase: 1 (A) / 4 (C) / 5 (B) in parallel; 0.6 pending footage — targets Tue 8:30 PM / 10:00 PM / Wed 3:00 AM
-Last checkpoint: ckpt-0.7 (Phase 0 done except 0.6, which waits for footage)
+Last checkpoint: ckpt-4.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4 verified). Untagged commits pending verification: 5.1 (89349ae), CHANGE-1 (0f06a60), 0.6 script + 1.1–1.7 (0228dab..dfa8cc7)
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -13,9 +13,9 @@ Last checkpoint: ckpt-0.7 (Phase 0 done except 0.6, which waits for footage)
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| CHANGE: docs + contract tape→pointing (Mark→Point, Evidence.pointer, Grounding, stages, mocks) | builder | 17:01 | CLAUDE.md, DESIGN.md, FOOTAGE.md, eval/labels_template.csv, punchwalk/core/**, punchwalk/api/schemas.py, web/src/api/types.ts, fixtures/mock_api/**, scripts/gen_mock_api.py, tests/test_contracts.py, punchwalk/config.py, .env.example | Tracks A/B/C were told the new names; they finish contract-dependent parts last |
-| Track A: 0.6 + 1.1–1.7 perception & fusion | builder | 16:50 | punchwalk/pipeline/** (not ingest.py/media.py unless needed), punchwalk/vocab.py, scripts/record.py, fixtures/pipeline/**, fixtures/cache/** (promotions), tests/test_pipeline_*.py | re-briefed at 17:01: hands/pointing instead of tape; make record runs live only once footage lands |
-| Track C: 4.1–4.4 API & jobs | verifier | 16:50 (builder done 17:20) | punchwalk/api/** (not schemas.py), punchwalk/db.py, tests/test_api_*.py | committed untagged (4 commits) pending verification; verifier running |
+| CHANGE-1 docs + contract + mocks (tape→pointing) | verifier | 17:00 (builder done 17:28) | committed 0f06a60 untagged | verifying (Python/docs/mocks); 5.1 UI verification deferred to the 5.2–5.4 verification |
+| 1.1–1.7 verify (worktree .verify/wt-phase1 @ dfa8cc7) | verifier | 17:30 | read-only | commits 0.6 script + 1.1–1.7 untagged pending PASS |
+| Track A: 2.1–2.5 items, grounding, verification (+ make record when footage lands) | builder (Track A, same agent) | 17:30 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/probe.py (tape→hand fix), fixtures/pipeline/**, fixtures/cache/**, tests/test_pipeline_* | briefed by message |
 | 6.1 backend dispatch (Slack/email/outbox) + 6.2 auto-send policy + 6.3 PDF (nice) | builder (Track C, same agent) | 17:25 | punchwalk/dispatch/**, punchwalk/report/**, punchwalk/api/routes/trades.py + dispatch bits, tests/test_dispatch_*.py | briefed by message; fixes for 4.x go to the same agent |
 | 5.1 verify (after CHANGE-1 lands) + 5.2–5.4 punch list, item detail, play sheet | ui-builder (same agent) | 17:12 | web/** except web/src/api/types.ts | 5.1 committed untagged (pending verification); 5.2–5.4 briefed by message |
 
@@ -28,10 +28,10 @@ Last checkpoint: ckpt-0.7 (Phase 0 done except 0.6, which waits for footage)
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
-- make test: 221 passed (verifier, Phase 0; offline, sockets blocked)
+- make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
 - make eval: not run yet (targets in PLAN.md 3.4)
 - make screenshots: not run yet
-- Live API spend: $0.05 of $25 (probe, 11 ledger lines)
+- Live API spend: $0.14 of $25 (probe $0.046 + synthetic record/phrasing $0.097)
 - Deploy: not deployed
 - Live URL: none
 
@@ -39,7 +39,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - **CHANGE REQUEST 17:01 ET (human): no blue tape.** The inspector points with an index finger (~2 s); SAM tracks the hand; fingertip = defect location. PLAN.md 0.6/1.2/1.3/1.5/1.6/2.x/3.2/4.3/5.5/7.x updated; contract renamed Mark→Point; evidence shows a red defect outline + a small blue dot; item numbers keep the tape-tab look.
 - SAM masks are box-local rasters (H×W stretches over [x1,x2+1)×[y1,y2+1)); helper `punchwalk/render/masks.py: mask_to_frame_svg()`; scale by frame/media size (verified on probe frame).
 - SAM image input works as a data URL; strict `json_schema` works on Baseten Spark Open (always send `reasoning_effort`; default is xhigh); ASR turnId is zero-based.
-- Best tape concept (provisional, synthetic frame): "strip of blue painter's tape" 0.953 > "blue painter's tape" 0.910 > "blue tape" 0.710 → `DEFAULT_TAPE_CONCEPT`. Re-check on real footage in 0.6.
+- Hand concept (synthetic frames): "index finger" 2.64 ≈ "hand" 2.59 ≫ "pointing hand" 0 → default `SAM_HAND_CONCEPT=hand`; re-rank on real footage in `make record`. (Tape phrasing result superseded.)
 - Cache: reads data/cache then fixtures/cache; `make probe` replays at $0 in readonly mode. Ledger: data/cost_ledger.jsonl.
 - Tools present: uv 0.12, Python 3.12 system (project pins 3.11 via uv), node 24 + pnpm 9.15, ffmpeg 9, docker 29, flyctl (logged in).
 - .env was an unmodified copy of .env.example at session start (all keys empty).

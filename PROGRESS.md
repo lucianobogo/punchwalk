@@ -28,3 +28,4 @@ One line per event, newest at the bottom:
 2026-11-03 17:25 ET | 4.1-4.4 | orchestrator | committed as 4 untagged checkpoints pending verification (so 6.x edits stay separate) | git log | verifier running; Track C continues with 6.1–6.3 backend
 2026-11-03 17:27 ET | CHANGE-1 | builder | done: docs + contract (Mark→Point, Evidence.pointer, Grounding×4, stages) + mocks regenerated (208 files); 305 py tests pass | report | commit (untagged) + verify with 5.1
 2026-11-03 17:27 ET | 1.1-1.7 (+0.6 script) | builder (Track A) | partial: pipeline built to the pointing spec, 36 new tests, synth-walk integration fixture ($0.097 spent, total $0.143); 0.6 blocked on footage | report | commit per subphase (untagged) + verify; Track A continues with Phase 2
+2026-11-03 17:30 ET | 4.1-4.4 | verifier | PASS (44 API tests; 305 py total; range/traversal/limits/SSE/worker cap 2 all checked); 5 low findings forwarded to Track C | report | tags ckpt-4.1..4.4
