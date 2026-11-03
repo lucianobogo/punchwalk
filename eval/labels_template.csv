@@ -1,0 +1,6 @@
+walk,item_no,room,description,trade,time_mmss,has_tape,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+walk1,1,Kitchen,Upper cabinet left of sink missing knob,carpentry_millwork,00:14,1,,,a
+walk1,2,Kitchen,Coffee drips on counter next to stove,cleaning,00:27,1,,,a
+walk1,11,Bedroom,UNNARRATED,general,00:52,1,,,b
+walk2,1,Kitchen,Upper cabinet left of sink missing knob,carpentry_millwork,00:09,0,1,1,
+walk2,2,Kitchen,Coffee drips on counter next to stove,cleaning,00:18,1,0,1,

@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.local
+.claude/settings.local.json
+
+# data and media (raw footage never goes in git)
+data/
+footage/*
+!footage/README.md
+.verify/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# web
+node_modules/
+web/dist/
+punchwalk/static/
+playwright-report/
+test-results/
+
+# misc
+.DS_Store
+*.log
