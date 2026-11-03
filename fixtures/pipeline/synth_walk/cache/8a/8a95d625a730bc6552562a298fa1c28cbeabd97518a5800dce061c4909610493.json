@@ -1,0 +1,34 @@
+{
+ "key": "8a95d625a730bc6552562a298fa1c28cbeabd97518a5800dce061c4909610493",
+ "provider": "meta",
+ "endpoint": "/asr/transcribe",
+ "model": "muse-voice-transcribe-1.0",
+ "description": "ASR audio.wav @ 0 ms (672078 bytes)",
+ "created_at": "2026-11-03T22:12:11+00:00",
+ "meta": {},
+ "response": {
+  "sessionId": "voyager/transcribe/8181B50ACCAD4288A3E6627295821F26",
+  "transcript": "kitchen, upper cabinet left of left of the sink, knob missing. hallway, switch plate is crooked, needs to be straightened. bedroom, scuff marks on the wall by the door.",
+  "audioDurationMs": 21040,
+  "turns": [
+   {
+    "turnId": 0,
+    "startMs": 0,
+    "endMs": 7020,
+    "transcript": "kitchen, upper cabinet left of left of the sink, knob missing."
+   },
+   {
+    "turnId": 1,
+    "startMs": 7180,
+    "endMs": 10700,
+    "transcript": "hallway, switch plate is crooked, needs to be straightened."
+   },
+   {
+    "turnId": 2,
+    "startMs": 13980,
+    "endMs": 16700,
+    "transcript": "bedroom, scuff marks on the wall by the door."
+   }
+  ]
+ }
+}
