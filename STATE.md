@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:01 ET
-Current phase: 1 (A) / 4 (C) / 5 (B) in parallel; 0.6 pending footage — targets Tue 8:30 PM / 10:00 PM / Wed 3:00 AM
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script + 1.1–1.7 (0228dab..dfa8cc7) + 1.x fixes + 2.1–2.5 (3cbca8a..94626ef, verifying). Tagged so far: 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4, 6.1-backend, 6.2, 6.3, 9.1-image
+Updated: 2026-11-03 18:04 ET
+Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 5.x fixes + 5.5–5.7 (9c443eb..741585a; verify after CHANGE-2 lands). Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 4.1–4.4, 5.1–5.4, 6.1-backend, 6.2, 6.3, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -14,10 +14,10 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | 3.1–3.3 eval harness (built on the synthetic walk until footage lands) | builder (eval) | 17:48 | eval/run_eval.py, eval/report.md, eval/README?, scripts/build_mock_api.py, tests/test_eval*.py, fixtures/eval/** | reads Item rows via runner.run_walk on a temp DB; never overwrites fixtures/mock_api without --out |
-| 1.x fixes + 2.1–2.5 verify (worktree .verify/wt-phase2 @ 94626ef) | verifier | 17:50 | read-only | commits untagged pending PASS |
-| Track A: 7.1–7.4 re-walk loop (+ make record / full runs when footage lands) | builder (Track A, same agent) | 17:50 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
+| Track A: make record (walk1/2/3) + full runs (walk1, walk3) → 2.5 fixes → 7.1–7.4 → full run walk2 | builder (Track A, same agent) | 18:04 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
 | CHANGE-2 (small contract: channel_reason, approve-and-send doc, StageState.message, Settings AUTO_SEND/TRUST_PROXY/PUNCHWALK_WORKER) + 8.1 seed (on synthetic data, ready for real walks) | builder (Track C, same agent) | 17:53 | punchwalk/core/models.py, punchwalk/api/schemas.py, web/src/api/types.ts, scripts/gen_mock_api.py, fixtures/mock_api, punchwalk/config.py, .env.example, punchwalk/api/media.py, scripts/seed.py, tests/test_seed.py | briefed by message |
-| 5.5–5.7 walks + walk detail, record, how processed | ui-builder (same agent) | 17:38 | web/** except types.ts | briefed by message |
+| 5.5–5.7 + 5.x fixes verify (worktree, after the CHANGE-2 commit lands) | orchestrator → verifier | 18:02 | read-only | committed untagged; waiting for types.ts commit |
+| 6.1 UI (Trades screens, share page, sent toast) + 7.4 UI (re-walk summary) + 8.2 landing page | ui-builder (same agent) | 18:02 | web/** except types.ts | briefed by message |
 
 ## Needs human
 - **Deploy needs you (the permission classifier blocks me from running Fly deploys).** The image is built and tested (`docs/DEPLOY.md` has the full runbook). From the repo root:
@@ -32,7 +32,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
 - **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
 - Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
-- Footage → `footage/` and labels → `eval/labels/` per FOOTAGE.md (expected ~17:30 ET).
+- **Labels are still the template (blocks the eval targets in PLAN 3.4).** `eval/labels/walk1.csv`, `walk2.csv` and `walk3.csv` (18:01 ET) are byte-identical copies of `eval/labels_template.csv` (example rows for the FOOTAGE.md staging, times 00:14/00:27/00:52 with clips a/b — they can't match the real 5-part walks). Please fill them in per FOOTAGE.md → "Labels": walk1.csv = one row per defect you pointed at or described (walk, item_no, room, description, trade, time_mmss **within the part**, pointed 1/0, blank, blank, clip letter a–e); walk2.csv = one row per item you addressed on the re-walk with the same item_no, its time + clip letter, fixed_in_rewalk (truth 1/0), claimed_fixed_in_rewalk (what you said 1/0); walk3.csv = rows for the holdout. Footage itself is in and being processed (no action needed there).
 
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
@@ -45,6 +45,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - Live URL: none
 
 ## Key facts learned
+- Real footage (18:01): Ray-Ban Meta, HEVC, 120 fps, portrait, sizes vary per clip (1552×2064 … 1376×1840); walk1 = a–e (103 s), walk2 = a–e (77 s), walk3 = 15 s; 335 MB total (gitignored). Labels: template copies → Needs human.
 - **CHANGE REQUEST 17:01 ET (human): no blue tape.** The inspector points with an index finger (~2 s); SAM tracks the hand; fingertip = defect location. PLAN.md 0.6/1.2/1.3/1.5/1.6/2.x/3.2/4.3/5.5/7.x updated; contract renamed Mark→Point; evidence shows a red defect outline + a small blue dot; item numbers keep the tape-tab look.
 - SAM masks are box-local rasters (H×W stretches over [x1,x2+1)×[y1,y2+1)); helper `punchwalk/render/masks.py: mask_to_frame_svg()`; scale by frame/media size (verified on probe frame).
 - SAM image input works as a data URL; strict `json_schema` works on Baseten Spark Open (always send `reasoning_effort`; default is xhigh); ASR turnId is zero-based.

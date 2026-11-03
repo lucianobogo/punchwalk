@@ -76,28 +76,28 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 1: Perception & fusion (Track A)
 
-- [ ] **1.1 Transcribe.** ENDPOINTING mode. Keywords = ~80-term base construction vocabulary in `punchwalk/vocab.py` (trades, fixtures, "cover plate", "strike plate", "escutcheon", "caulk", "baseboard", "casing", "drywall", "GWB", "touch-up", "reveal", room names, unit numbers) + project keywords.
-- [ ] **1.2 Track hands.** SAM 3.1 concept tracking on `sam.mp4` with the hand concept from config (`SAM_HAND_CONCEPT`, default "hand"). Store raw text + per-frame records (box, confidence, SVG in SAM-frame coordinates) in `stages/track_hands.json`.
-- [ ] **1.3 Pointing events.** Within each defect turn window `[turn.start − 2.0 s, turn.end + 1.0 s]`, find frames where a hand is extended into the frame and roughly still for ≥ 0.4 s. Fingertip = the hand-mask point farthest from where the hand enters the frame. One pointing event per mention: `{t, fingertip_xy, hand_box, hold_s}` → `Point` rows, numbered by time. No hand in the window → the mention takes the voice-only path.
-- [ ] **1.4 Classify turns.** One batched Spark Open call covering all turns, with structured output per turn:
+- [x] **1.1 Transcribe.** ENDPOINTING mode. Keywords = ~80-term base construction vocabulary in `punchwalk/vocab.py` (trades, fixtures, "cover plate", "strike plate", "escutcheon", "caulk", "baseboard", "casing", "drywall", "GWB", "touch-up", "reveal", room names, unit numbers) + project keywords.
+- [x] **1.2 Track hands.** SAM 3.1 concept tracking on `sam.mp4` with the hand concept from config (`SAM_HAND_CONCEPT`, default "hand"). Store raw text + per-frame records (box, confidence, SVG in SAM-frame coordinates) in `stages/track_hands.json`.
+- [x] **1.3 Pointing events.** Within each defect turn window `[turn.start − 2.0 s, turn.end + 1.0 s]`, find frames where a hand is extended into the frame and roughly still for ≥ 0.4 s. Fingertip = the hand-mask point farthest from where the hand enters the frame. One pointing event per mention: `{t, fingertip_xy, hand_box, hold_s}` → `Point` rows, numbered by time. No hand in the window → the mention takes the voice-only path.
+- [x] **1.4 Classify turns.** One batched Spark Open call covering all turns, with structured output per turn:
   - `kind`
   - `room` (if mentioned)
   - `defects[]` (a short description each)
   - `status_update` `{target, claimed: fixed | not_fixed | unclear}`
 
   A room state machine carries the last-mentioned room forward.
-- [ ] **1.5 Fuse.** Each defect mention becomes exactly one item, with its pointing event if any (several candidates → the longest hold, then the closest to the mention's start). Mentions without a pointing event are **voice-only items**. There is no tape-track merging and there are no "unnarrated mark" items. Each item gets `video_start_s = turn.start − 2.0` and `video_end_s = turn.end + 1.0` (clamped).
-- [ ] **1.6 Evidence frames.**
+- [x] **1.5 Fuse.** Each defect mention becomes exactly one item, with its pointing event if any (several candidates → the longest hold, then the closest to the mention's start). Mentions without a pointing event are **voice-only items**. There is no tape-track merging and there are no "unnarrated mark" items. Each item gets `video_start_s = turn.start − 2.0` and `video_end_s = turn.end + 1.0` (clamped).
+- [x] **1.6 Evidence frames.**
   - Candidates = sharp frames within ±1.5 s of the pointing event where the hand mask does **not** cover the area around the fingertip (prefer frames after the hand withdraws).
   - Score = Laplacian variance (sharpness) of the context crop around the fingertip.
   - Map the fingertip into the chosen frame as the "pointed here" marker (`evidence.pointer`). Extract that frame from `display.mp4` at full resolution, plus the pointing frame and two context frames at ±0.7 s.
   - Voice-only items: sample 5 frames across the turn window and pick the sharpest (no marker).
   - Scale SAM coordinates → display coordinates using `meta.json`.
-- [ ] **1.7 Tests.** Synthetic tracks/turns for merge, fusion and evidence selection, plus a fixture-driven integration test. **AC:** `make test` green offline.
+- [x] **1.7 Tests.** Synthetic tracks/turns for merge, fusion and evidence selection, plus a fixture-driven integration test. **AC:** `make test` green offline.
 
 ## Phase 2: Items, defect grounding, verification (Track A)
 
-- [ ] **2.1 Item writer** (Spark Open, `reasoning_effort=low`).
+- [x] **2.1 Item writer** (Spark Open, `reasoning_effort=low`).
   - **Inputs:** the evidence frame with the fingertip marked, the pointing frame, two context frames, the turn text(s), room, trades enum.
   - **Output schema:**
     - `title`: ≤ 60 chars, punch-list style
@@ -109,14 +109,14 @@ Track ownership and paths are in the orchestrator's instructions.
     - `confidence`
     - `rationale`: ≤ 200 chars
   - **Prompt rules:** state only what the narration says and the frame shows; never invent quantities; if the frame doesn't show the defect, set `defect_box` to null and lower the confidence.
-- [ ] **2.2 Ground the defect** (SAM, image mode). Try these in order and record which one worked:
+- [x] **2.2 Ground the defect** (SAM, image mode). Try these in order and record which one worked:
   1. SAM concept prompt `sam_concept` on the evidence frame → pick the instance nearest the fingertip marker, within ~25% of the frame width.
   2. SAM box prompt from `defect_box` (expanded 10%), if it lies within that radius.
   3. Marker-only evidence (`grounding = pointed_only`; voice-only items without a marker: `none`).
 
   Render the evidence JPEG: full frame, defect outline + 30% fill (red), a small blue dot where the finger pointed, no burned-in text (the UI draws the number tab and captions). Also save a 4:3 crop centered on marker + defect for cards.
-- [ ] **2.3 Verify** (Spark Open, `reasoning_effort=medium`). Input: the rendered evidence + item JSON + the original quote. Check that the title, description and action match both what was said and what the frame shows. Output: `{consistent, issues[], suggested_fix?}`. If inconsistent → `needs_review` with the note. Never drop an item.
-- [ ] **2.4 Voice-only grounding.** `GROUNDING_MODE=point+voice|voice_only`. Voice-only items (and every item in voice_only mode) go through the same 2.1–2.3 path using the sampled frame.
+- [x] **2.3 Verify** (Spark Open, `reasoning_effort=medium`). Input: the rendered evidence + item JSON + the original quote. Check that the title, description and action match both what was said and what the frame shows. Output: `{consistent, issues[], suggested_fix?}`. If inconsistent → `needs_review` with the note. Never drop an item.
+- [x] **2.4 Voice-only grounding.** `GROUNDING_MODE=point+voice|voice_only`. Voice-only items (and every item in voice_only mode) go through the same 2.1–2.3 path using the sampled frame.
 - [ ] **2.5 Job runner.** Stages run with per-stage timing, 2 retries, resumable state (a re-run skips completed stages unless `force=true`), and progress events (stage, counts) for the UI.
 
 ## Phase 3: Evaluation (Track A)
