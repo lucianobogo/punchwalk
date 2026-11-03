@@ -1,0 +1,33 @@
+{
+  "name": "Unit 2B final punch",
+  "address": "418 Alder Street, Unit 2B",
+  "trades": [
+    {
+      "trade": "electrical",
+      "company": "Ace Electric",
+      "contact": "Maria Chen",
+      "email": "maria.chen@example.com",
+      "phone": "(555) 010-2201",
+      "slack_channel": "#punch-electrical",
+      "slack_webhook": "https://hooks.slack.example.com/services/T000/B000/demo-electrical"
+    },
+    {
+      "trade": "carpentry_millwork",
+      "company": "Oakline Millwork",
+      "contact": "Dev Patel",
+      "email": "dev.patel@example.com",
+      "phone": "(555) 010-2202"
+    }
+  ],
+  "keywords": [
+    "strike plate",
+    "towel bar"
+  ],
+  "rooms": [
+    "Kitchen",
+    "Bathroom",
+    "Bedroom",
+    "Hallway",
+    "Living room"
+  ]
+}

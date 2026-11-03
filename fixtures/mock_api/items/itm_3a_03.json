@@ -1,0 +1,82 @@
+{
+  "id": "itm_3a_03",
+  "project_id": "prj_unit3a",
+  "number": 3,
+  "origin_walk_id": "wlk_3a_first",
+  "mark_id": null,
+  "turn_ids": [
+    "trn_3a1_07"
+  ],
+  "title": "Paint drip on door casing",
+  "description": "A dried paint drip on the hallway door casing.",
+  "action": "Sand and touch up the casing",
+  "trade": "painting",
+  "room": "Hallway",
+  "location_detail": "Door casing",
+  "severity": "cosmetic",
+  "status": "open",
+  "review_reason": null,
+  "quote": "Paint drip on the door casing here.",
+  "quote_start_s": 37.0,
+  "quote_end_s": 40.2,
+  "video_url": "/media/walks/wlk_3a_first/display.mp4",
+  "video_start_s": 34.0,
+  "video_end_s": 41.2,
+  "confidence": 0.8,
+  "evidence": {
+    "t": 38.0,
+    "image_url": "/media/items/itm_3a_03/evidence.jpg",
+    "raw_url": "/media/items/itm_3a_03/frame.jpg",
+    "crop_url": "/media/items/itm_3a_03/crop.jpg",
+    "width": 1920,
+    "height": 1080,
+    "tape_svg": null,
+    "defect_svg": "M908 549 L906 577 L900 603 L891 623 L879 636 L866 641 L853 636 L842 623 L832 603 L827 577 L824 549 L827 520 L832 495 L842 474 L853 461 L866 457 L879 461 L891 474 L900 495 L906 520 Z",
+    "tape_box": null,
+    "defect_box": {
+      "x1": 824.5,
+      "y1": 456.8,
+      "x2": 908.5,
+      "y2": 640.8
+    },
+    "crop_box": {
+      "x1": 586.5,
+      "y1": 338.8,
+      "x2": 1146.5,
+      "y2": 758.8
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "paint drip"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-04T14:53:21Z"
+  },
+  "closure": null,
+  "history": [
+    {
+      "at": "2026-11-04T14:53:05.600000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-04T14:53:21Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    }
+  ],
+  "dispatch": null,
+  "created_at": "2026-11-04T14:53:05.600000Z",
+  "updated_at": "2026-11-04T14:53:21Z"
+}

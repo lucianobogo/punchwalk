@@ -1,0 +1,458 @@
+{
+  "walk": {
+    "id": "wlk_3a_first",
+    "project_id": "prj_unit3a",
+    "project_name": "Unit 3A turnover",
+    "kind": "initial",
+    "status": "processing",
+    "rewalk_of": null,
+    "job_id": "job_3a_first",
+    "recorded_at": "2026-11-04T14:40:00Z",
+    "created_at": "2026-11-04T14:52:00Z",
+    "updated_at": "2026-11-04T14:53:03Z",
+    "clips": [
+      {
+        "order": 0,
+        "filename": "walk3.mov",
+        "duration_s": 78.0,
+        "offset_s": 0.0
+      }
+    ],
+    "stages": [
+      {
+        "stage": "ingest",
+        "label": "Preparing the video",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:05Z",
+        "finished_at": "2026-11-04T14:52:12.400000Z",
+        "duration_ms": 7400,
+        "counts": {
+          "clips": 1
+        },
+        "progress": null,
+        "detail": "1 clip, 1 min 18 s",
+        "model_label": null
+      },
+      {
+        "stage": "transcribe",
+        "label": "Listening to the walk",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:12.400000Z",
+        "finished_at": "2026-11-04T14:52:18.300000Z",
+        "duration_ms": 5900,
+        "counts": {
+          "lines": 10
+        },
+        "progress": null,
+        "detail": "Muse Voice Transcribe found 10 lines",
+        "model_label": "Muse Voice Transcribe"
+      },
+      {
+        "stage": "track_tape",
+        "label": "Finding tape",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:18.300000Z",
+        "finished_at": "2026-11-04T14:52:47.900000Z",
+        "duration_ms": 29600,
+        "counts": {
+          "marks": 0
+        },
+        "progress": null,
+        "detail": "SAM 3.1 found no tape",
+        "model_label": "SAM 3.1"
+      },
+      {
+        "stage": "merge_marks",
+        "label": "Following each strip of tape",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:47.900000Z",
+        "finished_at": "2026-11-04T14:52:48.100000Z",
+        "duration_ms": 200,
+        "counts": {
+          "marks": 0
+        },
+        "progress": null,
+        "detail": "No tape to follow",
+        "model_label": null
+      },
+      {
+        "stage": "classify_turns",
+        "label": "Sorting what was said",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:48.100000Z",
+        "finished_at": "2026-11-04T14:52:52Z",
+        "duration_ms": 3900,
+        "counts": {
+          "lines": 10
+        },
+        "progress": null,
+        "detail": "Muse Spark Open on Baseten sorted 10 lines",
+        "model_label": "Muse Spark Open on Baseten"
+      },
+      {
+        "stage": "fuse",
+        "label": "Matching what was said to each mark",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:52Z",
+        "finished_at": "2026-11-04T14:52:52.100000Z",
+        "duration_ms": 100,
+        "counts": {
+          "matched": 0,
+          "unnarrated": 0,
+          "voice_only": 4
+        },
+        "progress": null,
+        "detail": "4 described with no tape",
+        "model_label": null
+      },
+      {
+        "stage": "pick_evidence",
+        "label": "Picking the clearest photo",
+        "status": "done",
+        "started_at": "2026-11-04T14:52:52.100000Z",
+        "finished_at": "2026-11-04T14:52:55.400000Z",
+        "duration_ms": 3300,
+        "counts": {
+          "photos": 4
+        },
+        "progress": null,
+        "detail": "4 photos picked",
+        "model_label": null
+      },
+      {
+        "stage": "write_items",
+        "label": "Writing items",
+        "status": "running",
+        "started_at": "2026-11-04T14:52:55.400000Z",
+        "finished_at": null,
+        "duration_ms": null,
+        "counts": {
+          "written": 2,
+          "total": 4
+        },
+        "progress": 0.5,
+        "detail": "Muse Spark Open on Baseten, 2 of 4 written",
+        "model_label": "Muse Spark Open on Baseten"
+      },
+      {
+        "stage": "ground_defects",
+        "label": "Outlining each defect",
+        "status": "pending",
+        "started_at": null,
+        "finished_at": null,
+        "duration_ms": null,
+        "counts": {},
+        "progress": null,
+        "detail": "SAM 3.1, waiting",
+        "model_label": "SAM 3.1"
+      },
+      {
+        "stage": "verify",
+        "label": "Checking each item against its photo",
+        "status": "pending",
+        "started_at": null,
+        "finished_at": null,
+        "duration_ms": null,
+        "counts": {},
+        "progress": null,
+        "detail": "Muse Spark Open on Baseten, waiting",
+        "model_label": "Muse Spark Open on Baseten"
+      },
+      {
+        "stage": "persist",
+        "label": "Saving the punch list",
+        "status": "pending",
+        "started_at": null,
+        "finished_at": null,
+        "duration_ms": null,
+        "counts": {},
+        "progress": null,
+        "detail": null,
+        "model_label": null
+      }
+    ],
+    "media": {
+      "display_mp4": "/media/walks/wlk_3a_first/display.mp4",
+      "poster": "/media/walks/wlk_3a_first/poster.jpg"
+    },
+    "duration_s": 78.0,
+    "fps": 30.0,
+    "width": 1920,
+    "height": 1080,
+    "orientation": "landscape",
+    "device": "phone",
+    "error": null,
+    "counts": {
+      "items": 2,
+      "marks": 0,
+      "turns": 10,
+      "needs_review": 0,
+      "signed_off": 0,
+      "still_open": 2,
+      "not_checked": 0
+    }
+  },
+  "turns": [
+    {
+      "id": "trn_3a1_01",
+      "walk_id": "wlk_3a_first",
+      "idx": 0,
+      "start_ms": 1000,
+      "end_ms": 2400,
+      "text": "Unit 3A turnover walk.",
+      "kind": "other",
+      "room": null,
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_02",
+      "walk_id": "wlk_3a_first",
+      "idx": 1,
+      "start_ms": 4000,
+      "end_ms": 4700,
+      "text": "Bathroom.",
+      "kind": "location",
+      "room": "Bathroom",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_03",
+      "walk_id": "wlk_3a_first",
+      "idx": 2,
+      "start_ms": 9000,
+      "end_ms": 12000,
+      "text": "Grout's missing at the tub corner, right side.",
+      "kind": "defect",
+      "room": "Bathroom",
+      "claimed": null,
+      "item_ids": [
+        "itm_3a_01"
+      ]
+    },
+    {
+      "id": "trn_3a1_04",
+      "walk_id": "wlk_3a_first",
+      "idx": 3,
+      "start_ms": 18000,
+      "end_ms": 18600,
+      "text": "Bedroom.",
+      "kind": "location",
+      "room": "Bedroom",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_05",
+      "walk_id": "wlk_3a_first",
+      "idx": 4,
+      "start_ms": 22000,
+      "end_ms": 25400,
+      "text": "Gap between the baseboard and the floor by the closet.",
+      "kind": "defect",
+      "room": "Bedroom",
+      "claimed": null,
+      "item_ids": [
+        "itm_3a_02"
+      ]
+    },
+    {
+      "id": "trn_3a1_06",
+      "walk_id": "wlk_3a_first",
+      "idx": 5,
+      "start_ms": 33000,
+      "end_ms": 33600,
+      "text": "Hallway.",
+      "kind": "location",
+      "room": "Hallway",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_07",
+      "walk_id": "wlk_3a_first",
+      "idx": 6,
+      "start_ms": 37000,
+      "end_ms": 40200,
+      "text": "Paint drip on the door casing here.",
+      "kind": "defect",
+      "room": "Hallway",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_08",
+      "walk_id": "wlk_3a_first",
+      "idx": 7,
+      "start_ms": 48000,
+      "end_ms": 48600,
+      "text": "Kitchen.",
+      "kind": "location",
+      "room": "Kitchen",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_09",
+      "walk_id": "wlk_3a_first",
+      "idx": 8,
+      "start_ms": 53000,
+      "end_ms": 56800,
+      "text": "Cabinet door under the sink rubs the frame when you close it.",
+      "kind": "defect",
+      "room": "Kitchen",
+      "claimed": null,
+      "item_ids": []
+    },
+    {
+      "id": "trn_3a1_10",
+      "walk_id": "wlk_3a_first",
+      "idx": 9,
+      "start_ms": 70000,
+      "end_ms": 71500,
+      "text": "Okay, that's it.",
+      "kind": "other",
+      "room": "Kitchen",
+      "claimed": null,
+      "item_ids": []
+    }
+  ],
+  "marks": [],
+  "items": [
+    {
+      "id": "itm_3a_01",
+      "project_id": "prj_unit3a",
+      "number": 1,
+      "origin_walk_id": "wlk_3a_first",
+      "mark_id": null,
+      "turn_ids": [
+        "trn_3a1_03"
+      ],
+      "title": "Grout missing at tub corner",
+      "description": "Grout is missing in the right corner where the tub meets the tile.",
+      "action": "Regrout the tub corner",
+      "trade": "general",
+      "room": "Bathroom",
+      "location_detail": "Right corner of the tub",
+      "severity": "functional",
+      "status": "open",
+      "review_reason": null,
+      "quote": "Grout's missing at the tub corner, right side.",
+      "quote_start_s": 9.0,
+      "quote_end_s": 12.0,
+      "video_url": "/media/walks/wlk_3a_first/display.mp4",
+      "video_start_s": 6.0,
+      "video_end_s": 13.0,
+      "confidence": 0.82,
+      "evidence": {
+        "t": 10.2,
+        "image_url": "/media/items/itm_3a_01/evidence.jpg",
+        "raw_url": "/media/items/itm_3a_01/frame.jpg",
+        "crop_url": "/media/items/itm_3a_01/crop.jpg",
+        "width": 1920,
+        "height": 1080,
+        "tape_svg": null,
+        "defect_svg": "M1151 369 L1221 369 L1221 703 L1151 703 Z",
+        "tape_box": null,
+        "defect_box": {
+          "x1": 1151.4,
+          "y1": 369.0,
+          "x2": 1221.4,
+          "y2": 703.0
+        },
+        "crop_box": {
+          "x1": 852.4,
+          "y1": 285.5,
+          "x2": 1520.4,
+          "y2": 786.5
+        },
+        "grounding": "sam_concept",
+        "sam_concept": "tile grout line"
+      },
+      "verification": null,
+      "closure": null,
+      "history": [
+        {
+          "at": "2026-11-04T14:52:58.800000Z",
+          "actor": "model",
+          "action": "created",
+          "field": "status",
+          "from": null,
+          "to": "open",
+          "note": "Written by Muse Spark Open on Baseten."
+        }
+      ],
+      "dispatch": null,
+      "created_at": "2026-11-04T14:52:58.800000Z",
+      "updated_at": "2026-11-04T14:52:58.800000Z"
+    },
+    {
+      "id": "itm_3a_02",
+      "project_id": "prj_unit3a",
+      "number": 2,
+      "origin_walk_id": "wlk_3a_first",
+      "mark_id": null,
+      "turn_ids": [
+        "trn_3a1_05"
+      ],
+      "title": "Gap under baseboard",
+      "description": "There's a gap between the baseboard and the floor by the bedroom closet.",
+      "action": "Close the gap at the baseboard",
+      "trade": "carpentry_millwork",
+      "room": "Bedroom",
+      "location_detail": "By the closet",
+      "severity": "cosmetic",
+      "status": "open",
+      "review_reason": null,
+      "quote": "Gap between the baseboard and the floor by the closet.",
+      "quote_start_s": 22.0,
+      "quote_end_s": 25.4,
+      "video_url": "/media/walks/wlk_3a_first/display.mp4",
+      "video_start_s": 19.0,
+      "video_end_s": 26.4,
+      "confidence": 0.85,
+      "evidence": {
+        "t": 23.0,
+        "image_url": "/media/items/itm_3a_02/evidence.jpg",
+        "raw_url": "/media/items/itm_3a_02/frame.jpg",
+        "crop_url": "/media/items/itm_3a_02/crop.jpg",
+        "width": 1920,
+        "height": 1080,
+        "tape_svg": null,
+        "defect_svg": "M674 927 L1314 927 L1314 972 L674 972 Z",
+        "tape_box": null,
+        "defect_box": {
+          "x1": 674.2,
+          "y1": 926.8,
+          "x2": 1314.2,
+          "y2": 971.8
+        },
+        "crop_box": {
+          "x1": 514.2,
+          "y1": 360.0,
+          "x2": 1474.2,
+          "y2": 1080.0
+        },
+        "grounding": "sam_concept",
+        "sam_concept": "baseboard"
+      },
+      "verification": null,
+      "closure": null,
+      "history": [
+        {
+          "at": "2026-11-04T14:53:02.200000Z",
+          "actor": "model",
+          "action": "created",
+          "field": "status",
+          "from": null,
+          "to": "open",
+          "note": "Written by Muse Spark Open on Baseten."
+        }
+      ],
+      "dispatch": null,
+      "created_at": "2026-11-04T14:53:02.200000Z",
+      "updated_at": "2026-11-04T14:53:02.200000Z"
+    }
+  ]
+}

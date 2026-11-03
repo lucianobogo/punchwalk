@@ -1,0 +1,17 @@
+{
+  "id": "dsp_unit2b_new_windows_glazing",
+  "project_id": "prj_unit2b",
+  "trade": "windows_glazing",
+  "company": "Clearview Glass",
+  "channel": "outbox",
+  "destination": "Outbox",
+  "item_ids": [
+    "itm_2b_09"
+  ],
+  "sent_at": "2026-11-04T15:00:00Z",
+  "ok": true,
+  "error": null,
+  "payload": {
+    "text": "Unit 2B final punch: 1 windows & glazing item\n\n9. Window screen missing\nLiving room, left window. Install the window screen.\nView item and video: https://punchwalk.example.com/share/item/shr_7d43c2adb3\n"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "dsp_unit3a_new_general",
+  "project_id": "prj_unit3a",
+  "trade": "general",
+  "company": "Northfield Builders",
+  "channel": "outbox",
+  "destination": "Outbox",
+  "item_ids": [
+    "itm_3a_01"
+  ],
+  "sent_at": "2026-11-04T15:00:00Z",
+  "ok": true,
+  "error": null,
+  "payload": {
+    "text": "Unit 3A turnover: 1 general item\n\n1. Grout missing at tub corner\nBathroom, right corner of the tub. Regrout the tub corner.\nView item and video: https://punchwalk.example.com/share/item/shr_1e05c2910f\n"
+  }
+}

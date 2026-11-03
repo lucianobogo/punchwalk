@@ -1,0 +1,143 @@
+{
+  "id": "itm_2b_08",
+  "project_id": "prj_unit2b",
+  "number": 8,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_08",
+  "turn_ids": [
+    "trn_2b1_16"
+  ],
+  "title": "Switch plate crooked",
+  "description": "The switch plate by the hall closet is crooked.",
+  "action": "Straighten and tighten the plate",
+  "trade": "electrical",
+  "room": "Hallway",
+  "location_detail": "By the hall closet",
+  "severity": "cosmetic",
+  "status": "dispatched",
+  "review_reason": null,
+  "quote": "Switch plate by the hall closet is crooked.",
+  "quote_start_s": 127.5,
+  "quote_end_s": 130.5,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 124.5,
+  "video_end_s": 131.5,
+  "confidence": 0.95,
+  "evidence": {
+    "t": 128.1,
+    "image_url": "/media/items/itm_2b_08/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_08/frame.jpg",
+    "crop_url": "/media/items/itm_2b_08/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M634 855 L910 855 L910 945 L634 945 Z",
+    "defect_svg": "M664 802 L606 1076 L420 1037 L478 763 Z",
+    "tape_box": {
+      "x1": 633.7,
+      "y1": 854.6,
+      "x2": 909.7,
+      "y2": 944.6
+    },
+    "defect_box": {
+      "x1": 419.7,
+      "y1": 762.9,
+      "x2": 663.8,
+      "y2": 1076.3
+    },
+    "crop_box": {
+      "x1": 297.2,
+      "y1": 644.0,
+      "x2": 1032.2,
+      "y2": 1195.3
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "light switch plate"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-03T15:41:52.200000Z"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_13",
+    "quote": "Switch plate, still crooked.",
+    "after_t": 76.6,
+    "before_image_url": "/media/items/itm_2b_08/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_08/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_08/after_frame.jpg",
+    "voice_status": "not_fixed",
+    "vision_status": "still_visible",
+    "decision": "still_open",
+    "note": "Said not fixed, and the defect is still visible.",
+    "decided_at": "2026-11-04T13:21:14.300000Z"
+  },
+  "history": [
+    {
+      "at": "2026-11-03T15:41:28.100000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-03T15:41:52.200000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    },
+    {
+      "at": "2026-11-03T15:42:03Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+    },
+    {
+      "at": "2026-11-04T13:21:14.300000Z",
+      "actor": "model",
+      "action": "rewalk_checked",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Said not fixed on the re-walk. Still open."
+    },
+    {
+      "at": "2026-11-04T13:21:14.500000Z",
+      "actor": "system",
+      "action": "status_changed",
+      "field": "status",
+      "from": "dispatched",
+      "to": "open",
+      "note": "Still open after the re-walk."
+    },
+    {
+      "at": "2026-11-04T13:25:00Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent again to Ace Electric on Slack (#punch-electrical)."
+    }
+  ],
+  "dispatch": {
+    "dispatch_id": "dsp_2b_07",
+    "trade": "electrical",
+    "company": "Ace Electric",
+    "channel": "slack",
+    "sent_at": "2026-11-04T13:25:00Z",
+    "times_sent": 2
+  },
+  "created_at": "2026-11-03T15:41:28.100000Z",
+  "updated_at": "2026-11-04T13:25:00Z"
+}

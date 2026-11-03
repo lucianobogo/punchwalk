@@ -1,0 +1,48 @@
+{
+  "token": "shr_1e05c2910f",
+  "project_name": "Unit 3A turnover",
+  "project_address": "418 Alder Street, Unit 3A",
+  "number": 1,
+  "title": "Grout missing at tub corner",
+  "description": "Grout is missing in the right corner where the tub meets the tile.",
+  "action": "Regrout the tub corner",
+  "trade": "general",
+  "company": "Northfield Builders",
+  "room": "Bathroom",
+  "location_detail": "Right corner of the tub",
+  "severity": "functional",
+  "status": "open",
+  "quote": "Grout's missing at the tub corner, right side.",
+  "quote_start_s": 9.0,
+  "quote_end_s": 12.0,
+  "video_url": "/media/walks/wlk_3a_first/display.mp4",
+  "video_start_s": 6.0,
+  "video_end_s": 13.0,
+  "evidence": {
+    "t": 10.2,
+    "image_url": "/media/items/itm_3a_01/evidence.jpg",
+    "raw_url": "/media/items/itm_3a_01/frame.jpg",
+    "crop_url": "/media/items/itm_3a_01/crop.jpg",
+    "width": 1920,
+    "height": 1080,
+    "tape_svg": null,
+    "defect_svg": "M1151 369 L1221 369 L1221 703 L1151 703 Z",
+    "tape_box": null,
+    "defect_box": {
+      "x1": 1151.4,
+      "y1": 369.0,
+      "x2": 1221.4,
+      "y2": 703.0
+    },
+    "crop_box": {
+      "x1": 852.4,
+      "y1": 285.5,
+      "x2": 1520.4,
+      "y2": 786.5
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "tile grout line"
+  },
+  "closure": null,
+  "walked_at": "2026-11-04T14:40:00Z"
+}

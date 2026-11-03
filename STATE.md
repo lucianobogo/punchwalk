@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 16:48 ET
+Updated: 2026-11-03 16:49 ET
 Current phase: 0 (Foundation, probes, contracts) — target Tue 5:30 PM
-Last checkpoint: ckpt-0.4 (0.1–0.5 all committed; 0.7 verifying)
+Last checkpoint: ckpt-0.7 (Phase 0 done except 0.6, which waits for footage)
 
 ## Next actions
 1. Review reports from 0.1–0.4 (builder A), 0.7 (builder B), 0.5 (builder C); verify each; commit checkpoints.
@@ -14,7 +14,6 @@ Last checkpoint: ckpt-0.4 (0.1–0.5 all committed; 0.7 verifying)
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | 5.1 design system & shell | ui-builder | 16:42 | web/** except web/src/api/types.ts (owned by 0.7) | started early; data layer wired once 0.7 lands |
-| 0.7 contracts | verifier | 16:12 (builder done 16:44) | punchwalk/core/**, punchwalk/api/schemas.py, punchwalk/api/__init__.py, web/src/api/types.ts, fixtures/mock_api/**, scripts/gen_mock_api.py, tests/test_contracts.py | builder done (130 tests); verifying |
 
 ## Needs human
 - none blocking. Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).

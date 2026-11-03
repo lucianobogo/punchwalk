@@ -1,0 +1,50 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "painting",
+  "contact": {
+    "trade": "painting",
+    "company": "Brightline Painting",
+    "contact": "Tom Reyes",
+    "email": "tom.reyes@example.com",
+    "phone": "(555) 010-2206",
+    "slack_channel": null,
+    "has_slack_webhook": false
+  },
+  "channel": "email",
+  "channels": [
+    {
+      "channel": "slack",
+      "available": false,
+      "destination": null,
+      "reason": "No Slack channel set up for Brightline Painting."
+    },
+    {
+      "channel": "email",
+      "available": true,
+      "destination": "tom.reyes@example.com",
+      "reason": null
+    },
+    {
+      "channel": "outbox",
+      "available": true,
+      "destination": "Outbox",
+      "reason": null
+    }
+  ],
+  "heading": "Unit 2B final punch: 1 painting item",
+  "lines": [
+    {
+      "item_id": "itm_2b_07",
+      "number": 7,
+      "title": "Scuff marks on wall",
+      "line": "Bedroom, left of the closet door. Touch up the paint.",
+      "url": "/share/item/shr_734e2c8640"
+    }
+  ],
+  "subject": "Unit 2B final punch: 1 painting item",
+  "message_text": "Unit 2B final punch: 1 painting item\n\n7. Scuff marks on wall\nBedroom, left of the closet door. Touch up the paint.\nView item and video: https://punchwalk.example.com/share/item/shr_734e2c8640\n",
+  "slack_text": "*Unit 2B final punch: 1 painting item*\n\n*7*  Scuff marks on wall\nBedroom, left of the closet door. Touch up the paint.\n<https://punchwalk.example.com/share/item/shr_734e2c8640|View item and video>\n",
+  "item_ids": [
+    "itm_2b_07"
+  ]
+}

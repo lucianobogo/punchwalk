@@ -1,0 +1,50 @@
+{
+  "project_id": "prj_unit3a",
+  "trade": "general",
+  "contact": {
+    "trade": "general",
+    "company": "Northfield Builders",
+    "contact": "Sam Okafor",
+    "email": null,
+    "phone": "(555) 010-2204",
+    "slack_channel": null,
+    "has_slack_webhook": false
+  },
+  "channel": "outbox",
+  "channels": [
+    {
+      "channel": "slack",
+      "available": false,
+      "destination": null,
+      "reason": "No Slack channel set up for Northfield Builders."
+    },
+    {
+      "channel": "email",
+      "available": false,
+      "destination": null,
+      "reason": "No email on file for Northfield Builders."
+    },
+    {
+      "channel": "outbox",
+      "available": true,
+      "destination": "Outbox",
+      "reason": null
+    }
+  ],
+  "heading": "Unit 3A turnover: 1 general item",
+  "lines": [
+    {
+      "item_id": "itm_3a_01",
+      "number": 1,
+      "title": "Grout missing at tub corner",
+      "line": "Bathroom, right corner of the tub. Regrout the tub corner.",
+      "url": "/share/item/shr_1e05c2910f"
+    }
+  ],
+  "subject": "Unit 3A turnover: 1 general item",
+  "message_text": "Unit 3A turnover: 1 general item\n\n1. Grout missing at tub corner\nBathroom, right corner of the tub. Regrout the tub corner.\nView item and video: https://punchwalk.example.com/share/item/shr_1e05c2910f\n",
+  "slack_text": "*Unit 3A turnover: 1 general item*\n\n*1*  Grout missing at tub corner\nBathroom, right corner of the tub. Regrout the tub corner.\n<https://punchwalk.example.com/share/item/shr_1e05c2910f|View item and video>\n",
+  "item_ids": [
+    "itm_3a_01"
+  ]
+}

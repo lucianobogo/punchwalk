@@ -1,0 +1,26 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "carpentry_millwork",
+  "dispatches": [
+    {
+      "id": "dsp_2b_01",
+      "project_id": "prj_unit2b",
+      "trade": "carpentry_millwork",
+      "company": "Oakline Millwork",
+      "channel": "email",
+      "destination": "dev.patel@example.com",
+      "item_ids": [
+        "itm_2b_01",
+        "itm_2b_04"
+      ],
+      "sent_at": "2026-11-03T15:42:01Z",
+      "ok": true,
+      "error": null,
+      "payload": {
+        "to": "dev.patel@example.com",
+        "subject": "Unit 2B final punch: 2 carpentry & millwork items",
+        "text": "Unit 2B final punch: 2 carpentry & millwork items\n\n1. Missing cabinet knob\nKitchen, upper cabinet left of the sink. Install a matching knob.\nView item and video: https://punchwalk.example.com/share/item/shr_e33ec5bd7e\n\n4. Loose towel bar\nBathroom, towel bar by the shower. Tighten the towel bar mounts.\nView item and video: https://punchwalk.example.com/share/item/shr_55bf15051c\n"
+      }
+    }
+  ]
+}

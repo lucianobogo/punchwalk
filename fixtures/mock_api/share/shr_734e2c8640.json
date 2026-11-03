@@ -1,0 +1,66 @@
+{
+  "token": "shr_734e2c8640",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 7,
+  "title": "Scuff marks on wall",
+  "description": "Scuff marks on the bedroom wall to the left of the closet door.",
+  "action": "Touch up the paint",
+  "trade": "painting",
+  "company": "Brightline Painting",
+  "room": "Bedroom",
+  "location_detail": "Left of the closet door",
+  "severity": "cosmetic",
+  "status": "dispatched",
+  "quote": "Scuff marks on the wall left of the closet door.",
+  "quote_start_s": 104.0,
+  "quote_end_s": 107.0,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 101.0,
+  "video_end_s": 108.0,
+  "evidence": {
+    "t": 104.6,
+    "image_url": "/media/items/itm_2b_07/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_07/frame.jpg",
+    "crop_url": "/media/items/itm_2b_07/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M269 819 L554 789 L564 881 L279 910 Z",
+    "defect_svg": "M541 1000 L534 1024 L513 1046 L480 1063 L438 1074 L391 1078 L345 1074 L303 1063 L270 1046 L249 1024 L241 1000 L249 976 L270 954 L303 937 L345 926 L391 922 L438 926 L480 937 L513 954 L534 976 Z",
+    "tape_box": {
+      "x1": 269.5,
+      "y1": 789.0,
+      "x2": 563.5,
+      "y2": 910.4
+    },
+    "defect_box": {
+      "x1": 241.5,
+      "y1": 921.7,
+      "x2": 541.5,
+      "y2": 1077.7
+    },
+    "crop_box": {
+      "x1": 113.8,
+      "y1": 716.9,
+      "x2": 691.2,
+      "y2": 1149.9
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "wall scuff mark"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_11",
+    "quote": "Bedroom scuffs, still there.",
+    "after_t": 65.6,
+    "before_image_url": "/media/items/itm_2b_07/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_07/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_07/after_frame.jpg",
+    "voice_status": "not_fixed",
+    "vision_status": "still_visible",
+    "decision": "still_open",
+    "note": "Said not fixed, and the defect is still visible.",
+    "decided_at": "2026-11-04T13:21:12.600000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

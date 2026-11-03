@@ -1,0 +1,66 @@
+{
+  "token": "shr_55bf15051c",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 4,
+  "title": "Loose towel bar",
+  "description": "The towel bar by the shower is loose and moves when touched.",
+  "action": "Tighten the towel bar mounts",
+  "trade": "general",
+  "company": "Northfield Builders",
+  "room": "Bathroom",
+  "location_detail": "Towel bar by the shower",
+  "severity": "functional",
+  "status": "closed",
+  "quote": "Towel bar by the shower is loose, it wiggles.",
+  "quote_start_s": 57.0,
+  "quote_end_s": 60.6,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 54.0,
+  "video_end_s": 61.6,
+  "evidence": {
+    "t": 57.6,
+    "image_url": "/media/items/itm_2b_04/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_04/frame.jpg",
+    "crop_url": "/media/items/itm_2b_04/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M401 1043 L696 1027 L701 1119 L406 1134 Z",
+    "defect_svg": "M235 950 L859 1002 L867 902 L243 850 Z",
+    "tape_box": {
+      "x1": 400.7,
+      "y1": 1027.1,
+      "x2": 701.1,
+      "y2": 1134.5
+    },
+    "defect_box": {
+      "x1": 234.8,
+      "y1": 850.0,
+      "x2": 867.1,
+      "y2": 1001.6
+    },
+    "crop_box": {
+      "x1": 76.7,
+      "y1": 636.5,
+      "x2": 1025.2,
+      "y2": 1347.9
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "towel bar"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_07",
+    "quote": "Towel bar, fixed.",
+    "after_t": 38.6,
+    "before_image_url": "/media/items/itm_2b_04/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_04/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_04/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:07.500000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

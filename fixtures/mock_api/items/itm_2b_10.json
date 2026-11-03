@@ -1,0 +1,129 @@
+{
+  "id": "itm_2b_10",
+  "project_id": "prj_unit2b",
+  "number": 10,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_10",
+  "turn_ids": [
+    "trn_2b1_19"
+  ],
+  "title": "Sawdust on floor",
+  "description": "Sawdust on the living room floor by the window.",
+  "action": "Sweep the floor",
+  "trade": "cleaning",
+  "room": "Living room",
+  "location_detail": "Floor by the window",
+  "severity": "cosmetic",
+  "status": "closed",
+  "review_reason": null,
+  "quote": "And there's sawdust on the floor by the window, needs a sweep.",
+  "quote_start_s": 147.5,
+  "quote_end_s": 151.0,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 144.5,
+  "video_end_s": 152.0,
+  "confidence": 0.83,
+  "evidence": {
+    "t": 148.1,
+    "image_url": "/media/items/itm_2b_10/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_10/frame.jpg",
+    "crop_url": "/media/items/itm_2b_10/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M661 1177 L929 1243 L906 1333 L639 1266 Z",
+    "defect_svg": null,
+    "tape_box": {
+      "x1": 638.5,
+      "y1": 1176.7,
+      "x2": 928.6,
+      "y2": 1332.7
+    },
+    "defect_box": null,
+    "crop_box": {
+      "x1": 203.6,
+      "y1": 999.4,
+      "x2": 1073.6,
+      "y2": 1652.0
+    },
+    "grounding": "tape_only",
+    "sam_concept": "sawdust"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-03T15:41:54.800000Z"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_16",
+    "quote": "Floor's swept, fixed.",
+    "after_t": 96.6,
+    "before_image_url": "/media/items/itm_2b_10/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_10/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_10/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:17.700000Z"
+  },
+  "history": [
+    {
+      "at": "2026-11-03T15:41:30.900000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-03T15:41:54.800000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    },
+    {
+      "at": "2026-11-03T15:42:02Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
+    },
+    {
+      "at": "2026-11-04T13:21:17.700000Z",
+      "actor": "model",
+      "action": "rewalk_checked",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Marked fixed on the re-walk, and the defect is gone."
+    },
+    {
+      "at": "2026-11-04T13:21:17.900000Z",
+      "actor": "system",
+      "action": "status_changed",
+      "field": "status",
+      "from": "dispatched",
+      "to": "closed",
+      "note": "Signed off from the re-walk."
+    }
+  ],
+  "dispatch": {
+    "dispatch_id": "dsp_2b_02",
+    "trade": "cleaning",
+    "company": "Spotless Final Clean",
+    "channel": "email",
+    "sent_at": "2026-11-03T15:42:02Z",
+    "times_sent": 1
+  },
+  "created_at": "2026-11-03T15:41:30.900000Z",
+  "updated_at": "2026-11-04T13:21:17.900000Z"
+}

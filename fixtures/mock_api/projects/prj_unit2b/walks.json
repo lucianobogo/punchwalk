@@ -1,0 +1,377 @@
+{
+  "walks": [
+    {
+      "id": "wlk_2b_rewalk",
+      "project_id": "prj_unit2b",
+      "project_name": "Unit 2B final punch",
+      "kind": "rewalk",
+      "status": "ready",
+      "rewalk_of": "wlk_2b_first",
+      "job_id": "job_2b_rewalk",
+      "recorded_at": "2026-11-04T13:05:00Z",
+      "created_at": "2026-11-04T13:20:00Z",
+      "updated_at": "2026-11-04T13:21:15.900000Z",
+      "clips": [
+        {
+          "order": 0,
+          "filename": "walk2.mp4",
+          "duration_s": 104.0,
+          "offset_s": 0.0
+        }
+      ],
+      "stages": [
+        {
+          "stage": "ingest",
+          "label": "Preparing the video",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:05Z",
+          "finished_at": "2026-11-04T13:20:11.100000Z",
+          "duration_ms": 6100,
+          "counts": {
+            "clips": 1
+          },
+          "progress": null,
+          "detail": "1 clip, 1 min 44 s",
+          "model_label": null
+        },
+        {
+          "stage": "transcribe",
+          "label": "Listening to the walk",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:11.100000Z",
+          "finished_at": "2026-11-04T13:20:16.300000Z",
+          "duration_ms": 5200,
+          "counts": {
+            "lines": 17
+          },
+          "progress": null,
+          "detail": "Muse Voice Transcribe found 17 lines",
+          "model_label": "Muse Voice Transcribe"
+        },
+        {
+          "stage": "track_tape",
+          "label": "Finding tape",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:16.300000Z",
+          "finished_at": "2026-11-04T13:20:48.100000Z",
+          "duration_ms": 31800,
+          "counts": {
+            "marks": 4
+          },
+          "progress": null,
+          "detail": "SAM 3.1 found 4 tape marks",
+          "model_label": "SAM 3.1"
+        },
+        {
+          "stage": "merge_marks",
+          "label": "Following each strip of tape",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:48.100000Z",
+          "finished_at": "2026-11-04T13:20:49Z",
+          "duration_ms": 900,
+          "counts": {
+            "marks": 4
+          },
+          "progress": null,
+          "detail": "4 marks after joining repeat sightings",
+          "model_label": null
+        },
+        {
+          "stage": "classify_turns",
+          "label": "Sorting what was said",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:49Z",
+          "finished_at": "2026-11-04T13:20:53.100000Z",
+          "duration_ms": 4100,
+          "counts": {
+            "lines": 17
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten sorted 17 lines",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
+          "stage": "fuse",
+          "label": "Matching what was said to each mark",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:53.100000Z",
+          "finished_at": "2026-11-04T13:20:53.200000Z",
+          "duration_ms": 100,
+          "counts": {
+            "status_updates": 10
+          },
+          "progress": null,
+          "detail": "10 status updates",
+          "model_label": null
+        },
+        {
+          "stage": "pick_evidence",
+          "label": "Picking the clearest photo",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:53.200000Z",
+          "finished_at": "2026-11-04T13:20:56.100000Z",
+          "duration_ms": 2900,
+          "counts": {
+            "photos": 10
+          },
+          "progress": null,
+          "detail": "10 photos picked",
+          "model_label": null
+        },
+        {
+          "stage": "resolve_closures",
+          "label": "Checking what was fixed",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:56.100000Z",
+          "finished_at": "2026-11-04T13:21:15.500000Z",
+          "duration_ms": 19400,
+          "counts": {
+            "signed_off": 6,
+            "still_open": 3,
+            "needs_review": 1
+          },
+          "progress": null,
+          "detail": "6 signed off, 3 still open, 1 needs a look",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
+          "stage": "persist",
+          "label": "Saving the punch list",
+          "status": "done",
+          "started_at": "2026-11-04T13:21:15.500000Z",
+          "finished_at": "2026-11-04T13:21:15.900000Z",
+          "duration_ms": 400,
+          "counts": {},
+          "progress": null,
+          "detail": "Saved",
+          "model_label": null
+        }
+      ],
+      "media": {
+        "display_mp4": "/media/walks/wlk_2b_rewalk/display.mp4",
+        "poster": "/media/walks/wlk_2b_rewalk/poster.jpg"
+      },
+      "duration_s": 104.0,
+      "fps": 30.0,
+      "width": 1080,
+      "height": 1920,
+      "orientation": "portrait",
+      "device": "glasses",
+      "error": null,
+      "counts": {
+        "items": 10,
+        "marks": 4,
+        "turns": 17,
+        "needs_review": 1,
+        "signed_off": 6,
+        "still_open": 3,
+        "not_checked": 1
+      }
+    },
+    {
+      "id": "wlk_2b_first",
+      "project_id": "prj_unit2b",
+      "project_name": "Unit 2B final punch",
+      "kind": "initial",
+      "status": "ready",
+      "rewalk_of": null,
+      "job_id": "job_2b_first",
+      "recorded_at": "2026-11-03T15:12:00Z",
+      "created_at": "2026-11-03T15:40:00Z",
+      "updated_at": "2026-11-03T15:41:57Z",
+      "clips": [
+        {
+          "order": 0,
+          "filename": "walk1_a.mp4",
+          "duration_s": 82.4,
+          "offset_s": 0.0
+        },
+        {
+          "order": 1,
+          "filename": "walk1_b.mp4",
+          "duration_s": 71.1,
+          "offset_s": 82.4
+        }
+      ],
+      "stages": [
+        {
+          "stage": "ingest",
+          "label": "Preparing the video",
+          "status": "done",
+          "started_at": "2026-11-03T15:40:05Z",
+          "finished_at": "2026-11-03T15:40:14.200000Z",
+          "duration_ms": 9200,
+          "counts": {
+            "clips": 2
+          },
+          "progress": null,
+          "detail": "2 clips, 2 min 34 s",
+          "model_label": null
+        },
+        {
+          "stage": "transcribe",
+          "label": "Listening to the walk",
+          "status": "done",
+          "started_at": "2026-11-03T15:40:14.200000Z",
+          "finished_at": "2026-11-03T15:40:21.300000Z",
+          "duration_ms": 7100,
+          "counts": {
+            "lines": 20
+          },
+          "progress": null,
+          "detail": "Muse Voice Transcribe found 20 lines",
+          "model_label": "Muse Voice Transcribe"
+        },
+        {
+          "stage": "track_tape",
+          "label": "Finding tape",
+          "status": "done",
+          "started_at": "2026-11-03T15:40:21.300000Z",
+          "finished_at": "2026-11-03T15:41:05.700000Z",
+          "duration_ms": 44400,
+          "counts": {
+            "marks": 11
+          },
+          "progress": null,
+          "detail": "SAM 3.1 found 11 tape marks",
+          "model_label": "SAM 3.1"
+        },
+        {
+          "stage": "merge_marks",
+          "label": "Following each strip of tape",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:05.700000Z",
+          "finished_at": "2026-11-03T15:41:08.100000Z",
+          "duration_ms": 2400,
+          "counts": {
+            "marks": 11
+          },
+          "progress": null,
+          "detail": "11 marks after joining repeat sightings",
+          "model_label": null
+        },
+        {
+          "stage": "classify_turns",
+          "label": "Sorting what was said",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:08.100000Z",
+          "finished_at": "2026-11-03T15:41:12.900000Z",
+          "duration_ms": 4800,
+          "counts": {
+            "lines": 20
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten sorted 20 lines",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
+          "stage": "fuse",
+          "label": "Matching what was said to each mark",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:12.900000Z",
+          "finished_at": "2026-11-03T15:41:13Z",
+          "duration_ms": 100,
+          "counts": {
+            "matched": 10,
+            "unnarrated": 1,
+            "voice_only": 1
+          },
+          "progress": null,
+          "detail": "10 matched, 1 mark with no description, 1 described with no tape",
+          "model_label": null
+        },
+        {
+          "stage": "pick_evidence",
+          "label": "Picking the clearest photo",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:13Z",
+          "finished_at": "2026-11-03T15:41:16.900000Z",
+          "duration_ms": 3900,
+          "counts": {
+            "photos": 12
+          },
+          "progress": null,
+          "detail": "12 photos picked",
+          "model_label": null
+        },
+        {
+          "stage": "write_items",
+          "label": "Writing items",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:16.900000Z",
+          "finished_at": "2026-11-03T15:41:33.100000Z",
+          "duration_ms": 16200,
+          "counts": {
+            "written": 11,
+            "total": 11
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten wrote 11 items",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
+          "stage": "ground_defects",
+          "label": "Outlining each defect",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:33.100000Z",
+          "finished_at": "2026-11-03T15:41:41.800000Z",
+          "duration_ms": 8700,
+          "counts": {
+            "outlined": 9
+          },
+          "progress": null,
+          "detail": "SAM 3.1 outlined 9 defects",
+          "model_label": "SAM 3.1"
+        },
+        {
+          "stage": "verify",
+          "label": "Checking each item against its photo",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:41.800000Z",
+          "finished_at": "2026-11-03T15:41:56.400000Z",
+          "duration_ms": 14600,
+          "counts": {
+            "checked": 11,
+            "matched": 11,
+            "total": 11
+          },
+          "progress": null,
+          "detail": "11 match the photo and what was said, 1 tape with no description",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
+          "stage": "persist",
+          "label": "Saving the punch list",
+          "status": "done",
+          "started_at": "2026-11-03T15:41:56.400000Z",
+          "finished_at": "2026-11-03T15:41:57Z",
+          "duration_ms": 600,
+          "counts": {},
+          "progress": null,
+          "detail": "Saved",
+          "model_label": null
+        }
+      ],
+      "media": {
+        "display_mp4": "/media/walks/wlk_2b_first/display.mp4",
+        "poster": "/media/walks/wlk_2b_first/poster.jpg"
+      },
+      "duration_s": 153.5,
+      "fps": 30.0,
+      "width": 1080,
+      "height": 1920,
+      "orientation": "portrait",
+      "device": "glasses",
+      "error": null,
+      "counts": {
+        "items": 12,
+        "marks": 11,
+        "turns": 20,
+        "needs_review": 2,
+        "signed_off": 6,
+        "still_open": 4,
+        "not_checked": 0
+      }
+    }
+  ]
+}

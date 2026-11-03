@@ -1,0 +1,66 @@
+{
+  "token": "shr_e33ec5bd7e",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 1,
+  "title": "Missing cabinet knob",
+  "description": "The upper cabinet left of the sink is missing its knob, leaving the mounting hole exposed.",
+  "action": "Install a matching knob",
+  "trade": "carpentry_millwork",
+  "company": "Oakline Millwork",
+  "room": "Kitchen",
+  "location_detail": "Upper cabinet left of the sink",
+  "severity": "cosmetic",
+  "status": "closed",
+  "quote": "Upper cabinet left of the sink, uh, knob's missing.",
+  "quote_start_s": 14.0,
+  "quote_end_s": 17.2,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 11.0,
+  "video_end_s": 18.2,
+  "evidence": {
+    "t": 14.6,
+    "image_url": "/media/items/itm_2b_01/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_01/frame.jpg",
+    "crop_url": "/media/items/itm_2b_01/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M584 812 L897 768 L911 865 L598 909 Z",
+    "defect_svg": "M651 961 L649 975 L643 988 L633 998 L620 1005 L605 1007 L591 1005 L578 998 L568 988 L562 975 L559 961 L562 947 L568 934 L578 924 L591 917 L605 915 L620 917 L633 924 L643 934 L649 947 Z",
+    "tape_box": {
+      "x1": 584.2,
+      "y1": 768.4,
+      "x2": 910.8,
+      "y2": 909.4
+    },
+    "defect_box": {
+      "x1": 559.5,
+      "y1": 914.9,
+      "x2": 651.5,
+      "y2": 1006.9
+    },
+    "crop_box": {
+      "x1": 455.1,
+      "y1": 677.6,
+      "x2": 1015.1,
+      "y2": 1097.6
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "cabinet knob hole"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_03",
+    "quote": "Cabinet knob, fixed.",
+    "after_t": 9.6,
+    "before_image_url": "/media/items/itm_2b_01/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_01/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_01/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:02.400000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

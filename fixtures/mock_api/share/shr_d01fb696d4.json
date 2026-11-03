@@ -1,0 +1,66 @@
+{
+  "token": "shr_d01fb696d4",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 6,
+  "title": "Door doesn't latch",
+  "description": "The bedroom door doesn't latch when it's closed.",
+  "action": "Adjust the strike plate so the door latches",
+  "trade": "doors_hardware",
+  "company": "Keystone Door & Hardware",
+  "room": "Bedroom",
+  "location_detail": "Bedroom door",
+  "severity": "functional",
+  "status": "closed",
+  "quote": "Bedroom door won't latch when you close it.",
+  "quote_start_s": 92.0,
+  "quote_end_s": 95.4,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 89.0,
+  "video_end_s": 96.4,
+  "evidence": {
+    "t": 92.6,
+    "image_url": "/media/items/itm_2b_06/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_06/frame.jpg",
+    "crop_url": "/media/items/itm_2b_06/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M598 848 L863 829 L870 919 L604 937 Z",
+    "defect_svg": "M846 1009 L906 1009 L906 1155 L846 1155 Z",
+    "tape_box": {
+      "x1": 598.0,
+      "y1": 829.0,
+      "x2": 869.6,
+      "y2": 937.3
+    },
+    "defect_box": {
+      "x1": 845.8,
+      "y1": 1009.1,
+      "x2": 905.8,
+      "y2": 1155.1
+    },
+    "crop_box": {
+      "x1": 425.7,
+      "y1": 747.4,
+      "x2": 1078.0,
+      "y2": 1236.7
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "door strike plate"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_10",
+    "quote": "Bedroom door latches now, fixed.",
+    "after_t": 57.6,
+    "before_image_url": "/media/items/itm_2b_06/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_06/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_06/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:10.900000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

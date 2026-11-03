@@ -1,0 +1,792 @@
+// Mirrors punchwalk/api/schemas.py. Change both or neither.
+// Enums and label maps mirror punchwalk/core/enums.py. tests/test_contracts.py checks that every
+// schema, field, nullability, enum value and label below matches the Python side.
+//
+// Conventions: snake_case fields; every field is always present (optional values are null);
+// times are ISO 8601 UTC strings; video times are seconds; media URLs are root-relative (/media/...).
+// Mock responses for every route live in fixtures/mock_api/ (see its README.md).
+
+// =========================================================================== enums
+
+export type Trade =
+  | 'electrical'
+  | 'plumbing'
+  | 'drywall'
+  | 'painting'
+  | 'carpentry_millwork'
+  | 'doors_hardware'
+  | 'flooring'
+  | 'windows_glazing'
+  | 'hvac'
+  | 'appliances'
+  | 'cleaning'
+  | 'general';
+
+export type Severity = 'cosmetic' | 'functional' | 'safety';
+
+/** Internal status. UI shows: open + dispatched -> "Open", needs_review -> "Needs a look", closed -> "Signed off". */
+export type ItemStatus = 'open' | 'dispatched' | 'closed' | 'needs_review';
+
+export type WalkKind = 'initial' | 'rewalk';
+
+export type WalkStatus = 'uploaded' | 'processing' | 'ready' | 'failed';
+
+export type TurnKind = 'location' | 'defect' | 'status_update' | 'other';
+
+/** How the defect outline was found. tape_only = no defect outline. */
+export type Grounding = 'sam_concept' | 'sam_box' | 'tape_only';
+
+export type Channel = 'slack' | 'email' | 'outbox';
+
+/** meta-fallback = Muse Spark 1.3 answered after Baseten failed twice. */
+export type Provider = 'meta' | 'baseten' | 'meta-fallback';
+
+export type ReasoningProvider = 'baseten' | 'meta';
+
+export type JobKind = 'process_walk';
+
+export type JobStatus = 'queued' | 'running' | 'done' | 'failed';
+
+export type StageStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
+
+export type Stage =
+  | 'ingest'
+  | 'transcribe'
+  | 'track_tape'
+  | 'merge_marks'
+  | 'classify_turns'
+  | 'fuse'
+  | 'pick_evidence'
+  | 'write_items'
+  | 'ground_defects'
+  | 'verify'
+  | 'resolve_closures'
+  | 'persist';
+
+export type Orientation = 'portrait' | 'landscape';
+
+export type Device = 'glasses' | 'phone' | 'unknown';
+
+export type HistoryActor = 'human' | 'system' | 'model';
+
+export type HistoryAction =
+  | 'created'
+  | 'verified'
+  | 'flagged'
+  | 'dispatched'
+  | 'edited'
+  | 'status_changed'
+  | 'rewalk_checked'
+  | 'dismissed'
+  | 'noted';
+
+export type ClaimedStatus = 'fixed' | 'not_fixed' | 'unclear';
+
+export type VoiceStatus = 'fixed' | 'not_fixed' | 'unclear' | 'not_mentioned';
+
+export type VisionStatus = 'fixed' | 'still_visible' | 'unclear' | 'not_checked';
+
+export type ClosureDecision = 'signed_off' | 'still_open' | 'needs_review' | 'not_checked';
+
+// =========================================================================== constants
+
+export const MODEL_ASR = 'muse-voice-transcribe-1.0';
+export const MODEL_SAM = 'sam-3.1';
+export const MODEL_SPARK_OPEN = 'meta-models/muse-spark-open-1026';
+export const MODEL_SPARK_HOSTED = 'muse-spark-1.3';
+
+export const REVIEW_NO_DESCRIPTION = 'Tape mark with no description';
+export const REVIEW_FALSE_FIX = 'Marked fixed on the re-walk, but the defect is still visible.';
+export const NOT_CHECKED_ON_REWALK = 'Not checked on re-walk';
+
+// =========================================================================== UI labels (DESIGN.md "Words")
+
+export const STATUS_LABEL: Record<ItemStatus, string> = {
+  open: 'Open',
+  dispatched: 'Open',
+  needs_review: 'Needs a look',
+  closed: 'Signed off',
+};
+
+export const SEVERITY_LABEL: Record<Severity, string> = {
+  cosmetic: 'Cosmetic',
+  functional: 'Functional',
+  safety: 'Safety',
+};
+
+export const TRADE_LABEL: Record<Trade, string> = {
+  electrical: 'Electrical',
+  plumbing: 'Plumbing',
+  drywall: 'Drywall',
+  painting: 'Painting',
+  carpentry_millwork: 'Carpentry & millwork',
+  doors_hardware: 'Doors & hardware',
+  flooring: 'Flooring',
+  windows_glazing: 'Windows & glazing',
+  hvac: 'HVAC',
+  appliances: 'Appliances',
+  cleaning: 'Cleaning',
+  general: 'General',
+};
+
+/** Processing checklist step names (DESIGN.md "Record"). */
+export const STAGE_LABEL: Record<Stage, string> = {
+  ingest: 'Preparing the video',
+  transcribe: 'Listening to the walk',
+  track_tape: 'Finding tape',
+  merge_marks: 'Following each strip of tape',
+  classify_turns: 'Sorting what was said',
+  fuse: 'Matching what was said to each mark',
+  pick_evidence: 'Picking the clearest photo',
+  write_items: 'Writing items',
+  ground_defects: 'Outlining each defect',
+  verify: 'Checking each item against its photo',
+  resolve_closures: 'Checking what was fixed',
+  persist: 'Saving the punch list',
+};
+
+/** outbox = the dispatch is recorded in the app and its link is copied. */
+export const CHANNEL_LABEL: Record<Channel, string> = {
+  slack: 'Slack',
+  email: 'Email',
+  outbox: 'Copy link',
+};
+
+export const WALK_KIND_LABEL: Record<WalkKind, string> = {
+  initial: 'First walk',
+  rewalk: 'Re-walk',
+};
+
+export const WALK_STATUS_LABEL: Record<WalkStatus, string> = {
+  uploaded: 'Processing',
+  processing: 'Processing',
+  ready: 'Ready',
+  failed: 'Failed',
+};
+
+/** Plain model names (keyed by model id). */
+export const MODEL_LABEL: Record<string, string> = {
+  'muse-voice-transcribe-1.0': 'Muse Voice Transcribe',
+  'sam-3.1': 'SAM 3.1',
+  'meta-models/muse-spark-open-1026': 'Muse Spark Open on Baseten',
+  'muse-spark-1.3': 'Muse Spark 1.3',
+};
+
+export const PROVIDER_LABEL: Record<Provider, string> = {
+  meta: 'Meta Model API',
+  baseten: 'Baseten',
+  'meta-fallback': 'Meta Model API (fallback)',
+};
+
+// =========================================================================== shared pieces
+
+export interface BoxOut {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface IntervalOut {
+  start_s: number;
+  end_s: number;
+}
+
+/** todo = open + dispatched + needs_review; open = open + dispatched. */
+export interface ItemCountsOut {
+  todo: number;
+  open: number;
+  needs_review: number;
+  signed_off: number;
+  all: number;
+}
+
+// =========================================================================== health
+
+/** GET /healthz */
+export interface HealthOut {
+  ok: boolean;
+  version: string;
+  demo_mode: boolean;
+  reasoning_provider: ReasoningProvider;
+  time: string;
+}
+
+// =========================================================================== projects
+
+/** Trades-directory entry as returned (the Slack webhook URL is never returned). */
+export interface TradeContactOut {
+  trade: Trade;
+  company: string;
+  contact: string | null;
+  email: string | null;
+  phone: string | null;
+  slack_channel: string | null;
+  has_slack_webhook: boolean;
+}
+
+export interface TradeContactIn {
+  trade: Trade;
+  company: string;
+  contact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  slack_channel?: string | null;
+  slack_webhook?: string | null;
+}
+
+/** GET /api/projects/{project_id} (also POST /api/projects, PATCH /api/projects/{project_id}) */
+export interface ProjectOut {
+  id: string;
+  name: string;
+  address: string | null;
+  trades: TradeContactOut[];
+  keywords: string[];
+  rooms: string[];
+  counts: ItemCountsOut;
+  walk_count: number;
+  last_walk_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** GET /api/projects */
+export interface ProjectListOut {
+  projects: ProjectOut[];
+}
+
+/** POST /api/projects (body). Omitted keys default to null / []. */
+export interface ProjectCreate {
+  name: string;
+  address?: string | null;
+  trades?: TradeContactIn[];
+  keywords?: string[];
+  rooms?: string[];
+}
+
+/** PATCH /api/projects/{project_id} (body; omitted = unchanged, trades replaces the directory) */
+export interface ProjectPatch {
+  name?: string | null;
+  address?: string | null;
+  trades?: TradeContactIn[] | null;
+  keywords?: string[] | null;
+  rooms?: string[] | null;
+}
+
+// =========================================================================== walks
+
+export interface ClipOut {
+  order: number;
+  filename: string;
+  duration_s: number;
+  offset_s: number;
+}
+
+/** One row of the processing checklist. */
+export interface StageProgressOut {
+  stage: Stage;
+  label: string;
+  status: StageStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  counts: Record<string, number>;
+  progress: number | null;
+  detail: string | null;
+  model_label: string | null;
+}
+
+export interface WalkMediaOut {
+  display_mp4: string | null;
+  poster: string | null;
+}
+
+/** Initial walk: items it created. Re-walk: items it checked (items = checked). */
+export interface WalkCountsOut {
+  items: number;
+  marks: number;
+  turns: number;
+  needs_review: number;
+  signed_off: number;
+  still_open: number;
+  not_checked: number;
+}
+
+/** Row of GET /api/walks and GET /api/projects/{project_id}/walks; header of walk detail. */
+export interface WalkOut {
+  id: string;
+  project_id: string;
+  project_name: string;
+  kind: WalkKind;
+  status: WalkStatus;
+  rewalk_of: string | null;
+  job_id: string | null;
+  recorded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  clips: ClipOut[];
+  stages: StageProgressOut[];
+  media: WalkMediaOut;
+  duration_s: number | null;
+  fps: number | null;
+  width: number | null;
+  height: number | null;
+  orientation: Orientation | null;
+  device: Device;
+  error: string | null;
+  counts: WalkCountsOut;
+}
+
+/** GET /api/walks (?project_id=) and GET /api/projects/{project_id}/walks, newest first. */
+export interface WalkListOut {
+  walks: WalkOut[];
+}
+
+/** One line of the transcript. */
+export interface TurnOut {
+  id: string;
+  walk_id: string;
+  idx: number;
+  start_ms: number;
+  end_ms: number;
+  text: string;
+  kind: TurnKind;
+  room: string | null;
+  claimed: ClaimedStatus | null;
+  item_ids: string[];
+}
+
+/** One strip of tape found in the walk (display pixels). */
+export interface MarkOut {
+  id: string;
+  walk_id: string;
+  item_id: string | null;
+  number: number | null;
+  sam_object_ids: string[];
+  intervals: IntervalOut[];
+  best_t: number | null;
+  box_at_best: BoxOut | null;
+  mean_conf: number | null;
+}
+
+/** POST /api/projects/{project_id}/walks (multipart: kind, rewalk_of?, clips[] in order). */
+export interface UploadOut {
+  walk_id: string;
+  job_id: string;
+  status: WalkStatus;
+}
+
+/** POST /api/walks/{walk_id}/rewalk-link (body) */
+export interface RewalkLinkIn {
+  initial_walk_id: string;
+}
+
+/** A tile in the "Items so far" strip. */
+export interface ItemThumbOut {
+  id: string;
+  number: number;
+  title: string;
+  crop_url: string | null;
+}
+
+/** GET /api/walks/{walk_id}/progress (SSE: /api/walks/{walk_id}/events); POST /api/walks/{walk_id}/retry */
+export interface JobProgressOut {
+  job_id: string;
+  walk_id: string;
+  kind: JobKind;
+  status: JobStatus;
+  walk_status: WalkStatus;
+  attempts: number;
+  stage: Stage | null;
+  stages: StageProgressOut[];
+  progress: number;
+  message: string | null;
+  items_so_far: ItemThumbOut[];
+  items_expected: number | null;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  updated_at: string;
+}
+
+// =========================================================================== items
+
+export interface EvidenceOut {
+  t: number;
+  image_url: string;
+  raw_url: string;
+  crop_url: string;
+  /** pixel size of image_url/raw_url; SVG paths and boxes use it (viewBox). */
+  width: number;
+  height: number;
+  tape_svg: string | null;
+  defect_svg: string | null;
+  tape_box: BoxOut | null;
+  defect_box: BoxOut | null;
+  crop_box: BoxOut | null;
+  grounding: Grounding;
+  sam_concept: string | null;
+}
+
+export interface VerificationOut {
+  consistent: boolean;
+  note: string | null;
+  issues: string[];
+  provider: Provider;
+  checked_at: string | null;
+}
+
+export interface ClosureOut {
+  rewalk_id: string;
+  rewalk_turn_id: string | null;
+  quote: string | null;
+  after_t: number | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
+  after_frame_url: string | null;
+  voice_status: VoiceStatus;
+  vision_status: VisionStatus;
+  decision: ClosureDecision;
+  note: string | null;
+  decided_at: string | null;
+}
+
+export interface HistoryEntryOut {
+  at: string;
+  actor: HistoryActor;
+  action: HistoryAction;
+  field: string | null;
+  from: string | null;
+  to: string | null;
+  note: string | null;
+}
+
+/** The latest send of this item ("Open, sent to Oakline Millwork Nov 3"). */
+export interface DispatchSummaryOut {
+  dispatch_id: string;
+  trade: Trade;
+  company: string | null;
+  channel: Channel;
+  sent_at: string;
+  times_sent: number;
+}
+
+/** GET /api/items/{item_id} (also PATCH /api/items/{item_id}) */
+export interface ItemOut {
+  id: string;
+  project_id: string;
+  number: number;
+  origin_walk_id: string;
+  mark_id: string | null;
+  turn_ids: string[];
+  title: string;
+  description: string;
+  action: string;
+  trade: Trade;
+  room: string | null;
+  location_detail: string | null;
+  severity: Severity;
+  status: ItemStatus;
+  review_reason: string | null;
+  quote: string | null;
+  quote_start_s: number | null;
+  quote_end_s: number | null;
+  video_url: string | null;
+  video_start_s: number;
+  video_end_s: number;
+  confidence: number | null;
+  evidence: EvidenceOut | null;
+  verification: VerificationOut | null;
+  closure: ClosureOut | null;
+  history: HistoryEntryOut[];
+  dispatch: DispatchSummaryOut | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Counts per filter value over the unfiltered list. */
+export interface FacetsOut {
+  trade: Partial<Record<Trade, number>>;
+  severity: Partial<Record<Severity, number>>;
+  room: Record<string, number>;
+  status: Partial<Record<ItemStatus, number>>;
+}
+
+/** GET /api/projects/{project_id}/items ?trade=&severity=&room=&status=&q=&sort=walk|severity */
+export interface ItemListOut {
+  project_id: string;
+  items: ItemOut[];
+  facets: FacetsOut;
+  counts: ItemCountsOut;
+  total: number;
+}
+
+/** PATCH /api/items/{item_id} (body; omitted = unchanged). DELETE /api/items/{item_id} dismisses. */
+export interface ItemPatch {
+  title?: string | null;
+  description?: string | null;
+  action?: string | null;
+  trade?: Trade | null;
+  room?: string | null;
+  location_detail?: string | null;
+  severity?: Severity | null;
+  status?: ItemStatus | null;
+  review_reason?: string | null;
+  note?: string | null;
+}
+
+/** POST /api/items/{item_id}/share */
+export interface ShareLinkOut {
+  token: string;
+  url: string;
+}
+
+/** GET /api/share/{token} (public; page at /share/item/{token}) */
+export interface ShareItemOut {
+  token: string;
+  project_name: string;
+  project_address: string | null;
+  number: number;
+  title: string;
+  description: string;
+  action: string;
+  trade: Trade;
+  company: string | null;
+  room: string | null;
+  location_detail: string | null;
+  severity: Severity;
+  status: ItemStatus;
+  quote: string | null;
+  quote_start_s: number | null;
+  quote_end_s: number | null;
+  video_url: string | null;
+  video_start_s: number;
+  video_end_s: number;
+  evidence: EvidenceOut | null;
+  closure: ClosureOut | null;
+  walked_at: string | null;
+}
+
+/** GET /api/walks/{walk_id}. items: created by an initial walk, or checked by a re-walk. */
+export interface WalkDetailOut {
+  walk: WalkOut;
+  turns: TurnOut[];
+  marks: MarkOut[];
+  items: ItemOut[];
+}
+
+// =========================================================================== overlay
+
+export interface OverlayMarkOut {
+  mark_id: string;
+  item_id: string | null;
+  number: number | null;
+  box: BoxOut;
+  svg: string;
+}
+
+export interface OverlayFrameOut {
+  t: number;
+  marks: OverlayMarkOut[];
+}
+
+export interface OverlayEventOut {
+  t: number;
+  item_id: string;
+  number: number;
+}
+
+/**
+ * GET /api/walks/{walk_id}/overlay. Sampled at fps (10); only frames with a visible mark are listed,
+ * so no frame within 1/fps of the current time means no outlines. Coordinates: width x height.
+ */
+export interface OverlayOut {
+  walk_id: string;
+  fps: number;
+  width: number;
+  height: number;
+  duration_s: number;
+  frames: OverlayFrameOut[];
+  events: OverlayEventOut[];
+}
+
+// =========================================================================== trades & dispatch
+
+export interface TradeSummaryOut {
+  trade: Trade;
+  contact: TradeContactOut | null;
+  open_count: number;
+  needs_review_count: number;
+  signed_off_count: number;
+  last_sent_at: string | null;
+}
+
+/** GET /api/projects/{project_id}/trades */
+export interface TradeListOut {
+  project_id: string;
+  trades: TradeSummaryOut[];
+}
+
+export interface DispatchChannelOut {
+  channel: Channel;
+  available: boolean;
+  destination: string | null;
+  reason: string | null;
+}
+
+export interface DispatchLineOut {
+  item_id: string;
+  number: number;
+  title: string;
+  line: string;
+  url: string;
+}
+
+/** GET /api/projects/{project_id}/trades/{trade}/preview */
+export interface DispatchPreviewOut {
+  project_id: string;
+  trade: Trade;
+  contact: TradeContactOut | null;
+  channel: Channel;
+  channels: DispatchChannelOut[];
+  heading: string;
+  lines: DispatchLineOut[];
+  subject: string;
+  message_text: string;
+  slack_text: string;
+  item_ids: string[];
+}
+
+/** POST /api/projects/{project_id}/trades/{trade}/dispatch (body) */
+export interface DispatchCreate {
+  channel: Channel;
+  item_ids: string[];
+}
+
+/** Response of POST .../dispatch; rows of GET .../dispatches */
+export interface DispatchOut {
+  id: string;
+  project_id: string;
+  trade: Trade;
+  company: string | null;
+  channel: Channel;
+  destination: string | null;
+  item_ids: string[];
+  sent_at: string;
+  ok: boolean;
+  error: string | null;
+  payload: Record<string, unknown>;
+}
+
+/** GET /api/projects/{project_id}/trades/{trade}/dispatches (newest first) */
+export interface DispatchListOut {
+  project_id: string;
+  trade: Trade | null;
+  dispatches: DispatchOut[];
+}
+
+// =========================================================================== re-walk
+
+export interface RewalkItemOut {
+  item_id: string;
+  number: number;
+  title: string;
+  room: string | null;
+  trade: Trade;
+  status: ItemStatus;
+  decision: ClosureDecision;
+  reason: string | null;
+  quote: string | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
+  before_at: string | null;
+  after_at: string | null;
+}
+
+export interface RewalkCountsOut {
+  checked: number;
+  signed_off: number;
+  still_open: number;
+  needs_a_look: number;
+  not_checked: number;
+}
+
+/** GET /api/walks/{walk_id}/rewalk-summary (re-walks only) */
+export interface RewalkSummaryOut {
+  walk_id: string;
+  initial_walk_id: string;
+  project_id: string;
+  recorded_at: string | null;
+  counts: RewalkCountsOut;
+  headline: string;
+  needs_a_look: RewalkItemOut[];
+  signed_off: RewalkItemOut[];
+  still_open: RewalkItemOut[];
+  not_checked: RewalkItemOut[];
+}
+
+// =========================================================================== model calls & processing
+
+export interface ModelCallOut {
+  id: string;
+  walk_id: string | null;
+  item_id: string | null;
+  stage: Stage | null;
+  model: string;
+  model_label: string;
+  provider: Provider;
+  latency_ms: number;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  frames: number | null;
+  est_cost_usd: number;
+  cached: boolean;
+  ok: boolean;
+  error: string | null;
+  started_at: string;
+}
+
+/** GET /api/walks/{walk_id}/model-calls (oldest first) */
+export interface ModelCallListOut {
+  walk_id: string;
+  calls: ModelCallOut[];
+}
+
+export interface ProcessingStepOut {
+  stage: Stage;
+  title: string;
+  model_label: string | null;
+  provider: Provider | null;
+  detail: string;
+  duration_ms: number;
+  calls: number;
+  fallback_calls: number;
+  cost_usd: number;
+}
+
+export interface EvalMetricOut {
+  key: string;
+  label: string;
+  value: number;
+  total: number;
+}
+
+export interface EvalSummaryOut {
+  source: string;
+  updated_at: string | null;
+  metrics: EvalMetricOut[];
+}
+
+/** GET /api/walks/{walk_id}/processing. eval null -> hide the "labeled test walks" section. */
+export interface ProcessingSummaryOut {
+  walk_id: string;
+  kind: WalkKind;
+  status: WalkStatus;
+  total_duration_ms: number;
+  total_cost_usd: number;
+  models_used: string[];
+  steps: ProcessingStepOut[];
+  calls: ModelCallOut[];
+  eval: EvalSummaryOut | null;
+}

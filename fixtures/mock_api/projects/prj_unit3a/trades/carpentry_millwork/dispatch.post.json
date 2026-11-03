@@ -1,0 +1,19 @@
+{
+  "id": "dsp_unit3a_new_carpentry_millwork",
+  "project_id": "prj_unit3a",
+  "trade": "carpentry_millwork",
+  "company": "Oakline Millwork",
+  "channel": "email",
+  "destination": "dev.patel@example.com",
+  "item_ids": [
+    "itm_3a_02"
+  ],
+  "sent_at": "2026-11-04T15:00:00Z",
+  "ok": true,
+  "error": null,
+  "payload": {
+    "to": "dev.patel@example.com",
+    "subject": "Unit 3A turnover: 1 carpentry & millwork item",
+    "text": "Unit 3A turnover: 1 carpentry & millwork item\n\n2. Gap under baseboard\nBedroom, by the closet. Close the gap at the baseboard.\nView item and video: https://punchwalk.example.com/share/item/shr_458b595f51\n"
+  }
+}

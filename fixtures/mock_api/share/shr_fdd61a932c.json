@@ -1,0 +1,66 @@
+{
+  "token": "shr_fdd61a932c",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 5,
+  "title": "Toothpaste splatter on mirror",
+  "description": "The bathroom mirror has toothpaste splatter across it.",
+  "action": "Clean the mirror",
+  "trade": "cleaning",
+  "company": "Spotless Final Clean",
+  "room": "Bathroom",
+  "location_detail": "Vanity mirror",
+  "severity": "cosmetic",
+  "status": "closed",
+  "quote": "Mirror's got toothpaste splatter all over it.",
+  "quote_start_s": 69.5,
+  "quote_end_s": 72.8,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 66.5,
+  "video_end_s": 73.8,
+  "evidence": {
+    "t": 70.1,
+    "image_url": "/media/items/itm_2b_05/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_05/frame.jpg",
+    "crop_url": "/media/items/itm_2b_05/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M155 1181 L441 1191 L438 1281 L152 1271 Z",
+    "defect_svg": "M773 695 L765 736 L742 774 L705 804 L659 823 L608 830 L557 823 L511 804 L475 774 L451 736 L443 695 L451 653 L475 615 L511 585 L557 566 L608 560 L659 566 L705 585 L742 615 L765 653 Z",
+    "tape_box": {
+      "x1": 151.7,
+      "y1": 1180.6,
+      "x2": 440.7,
+      "y2": 1280.5
+    },
+    "defect_box": {
+      "x1": 443.2,
+      "y1": 559.6,
+      "x2": 773.2,
+      "y2": 829.6
+    },
+    "crop_box": {
+      "x1": 0.0,
+      "y1": 515.1,
+      "x2": 1080.0,
+      "y2": 1325.1
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "toothpaste splatter"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_08",
+    "quote": "Mirror's clean, fixed.",
+    "after_t": 46.1,
+    "before_image_url": "/media/items/itm_2b_05/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_05/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_05/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:09.200000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

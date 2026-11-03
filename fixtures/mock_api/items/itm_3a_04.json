@@ -1,0 +1,82 @@
+{
+  "id": "itm_3a_04",
+  "project_id": "prj_unit3a",
+  "number": 4,
+  "origin_walk_id": "wlk_3a_first",
+  "mark_id": null,
+  "turn_ids": [
+    "trn_3a1_09"
+  ],
+  "title": "Cabinet door rubs frame",
+  "description": "The sink base cabinet door rubs the frame when it closes.",
+  "action": "Adjust the hinges so the door clears the frame",
+  "trade": "carpentry_millwork",
+  "room": "Kitchen",
+  "location_detail": "Cabinet under the sink",
+  "severity": "functional",
+  "status": "open",
+  "review_reason": null,
+  "quote": "Cabinet door under the sink rubs the frame when you close it.",
+  "quote_start_s": 53.0,
+  "quote_end_s": 56.8,
+  "video_url": "/media/walks/wlk_3a_first/display.mp4",
+  "video_start_s": 50.0,
+  "video_end_s": 57.8,
+  "confidence": 0.81,
+  "evidence": {
+    "t": 54.4,
+    "image_url": "/media/items/itm_3a_04/evidence.jpg",
+    "raw_url": "/media/items/itm_3a_04/frame.jpg",
+    "crop_url": "/media/items/itm_3a_04/crop.jpg",
+    "width": 1920,
+    "height": 1080,
+    "tape_svg": null,
+    "defect_svg": "M908 284 L998 284 L998 419 L908 419 Z",
+    "tape_box": null,
+    "defect_box": {
+      "x1": 908.3,
+      "y1": 283.7,
+      "x2": 998.3,
+      "y2": 418.7
+    },
+    "crop_box": {
+      "x1": 673.3,
+      "y1": 141.2,
+      "x2": 1233.3,
+      "y2": 561.2
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "cabinet door edge"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-04T14:53:22.300000Z"
+  },
+  "closure": null,
+  "history": [
+    {
+      "at": "2026-11-04T14:53:09Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-04T14:53:22.300000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    }
+  ],
+  "dispatch": null,
+  "created_at": "2026-11-04T14:53:09Z",
+  "updated_at": "2026-11-04T14:53:22.300000Z"
+}

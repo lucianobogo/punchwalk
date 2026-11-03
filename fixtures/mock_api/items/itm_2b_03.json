@@ -1,0 +1,134 @@
+{
+  "id": "itm_2b_03",
+  "project_id": "prj_unit2b",
+  "number": 3,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_03",
+  "turn_ids": [
+    "trn_2b1_06"
+  ],
+  "title": "Bulb out above the sink",
+  "description": "The light fixture over the kitchen sink has no bulb, so it doesn't light.",
+  "action": "Replace the bulb and test the fixture",
+  "trade": "electrical",
+  "room": "Kitchen",
+  "location_detail": "Fixture over the sink",
+  "severity": "functional",
+  "status": "closed",
+  "review_reason": null,
+  "quote": "Light over the sink is out, there's no bulb in it.",
+  "quote_start_s": 39.5,
+  "quote_end_s": 42.5,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 36.5,
+  "video_end_s": 43.5,
+  "confidence": 0.88,
+  "evidence": {
+    "t": 40.1,
+    "image_url": "/media/items/itm_2b_03/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_03/frame.jpg",
+    "crop_url": "/media/items/itm_2b_03/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M692 517 L962 574 L943 664 L673 607 Z",
+    "defect_svg": "M709 550 L704 595 L686 636 L659 672 L623 699 L582 717 L537 722 L493 717 L451 699 L416 672 L389 636 L371 595 L365 550 L371 506 L389 464 L416 429 L451 401 L493 384 L537 378 L582 384 L623 401 L659 429 L686 464 L704 506 Z",
+    "tape_box": {
+      "x1": 672.9,
+      "y1": 516.7,
+      "x2": 962.0,
+      "y2": 664.1
+    },
+    "defect_box": {
+      "x1": 365.5,
+      "y1": 378.4,
+      "x2": 709.5,
+      "y2": 722.4
+    },
+    "crop_box": {
+      "x1": 185.2,
+      "y1": 214.9,
+      "x2": 1080.0,
+      "y2": 886.0
+    },
+    "grounding": "sam_box",
+    "sam_concept": "ceiling light fixture"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-03T15:41:45.700000Z"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_05",
+    "quote": "Light over the sink, fixed.",
+    "after_t": 26.6,
+    "before_image_url": "/media/items/itm_2b_03/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_03/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_03/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "fixed",
+    "decision": "signed_off",
+    "note": "The defect is gone and the tape is off.",
+    "decided_at": "2026-11-04T13:21:05.800000Z"
+  },
+  "history": [
+    {
+      "at": "2026-11-03T15:41:21.100000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-03T15:41:45.700000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    },
+    {
+      "at": "2026-11-03T15:42:03Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+    },
+    {
+      "at": "2026-11-04T13:21:05.800000Z",
+      "actor": "model",
+      "action": "rewalk_checked",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Marked fixed on the re-walk, and the defect is gone."
+    },
+    {
+      "at": "2026-11-04T13:21:06Z",
+      "actor": "system",
+      "action": "status_changed",
+      "field": "status",
+      "from": "dispatched",
+      "to": "closed",
+      "note": "Signed off from the re-walk."
+    }
+  ],
+  "dispatch": {
+    "dispatch_id": "dsp_2b_03",
+    "trade": "electrical",
+    "company": "Ace Electric",
+    "channel": "slack",
+    "sent_at": "2026-11-03T15:42:03Z",
+    "times_sent": 1
+  },
+  "created_at": "2026-11-03T15:41:21.100000Z",
+  "updated_at": "2026-11-04T13:21:06Z"
+}

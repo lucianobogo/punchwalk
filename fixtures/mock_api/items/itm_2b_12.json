@@ -1,0 +1,65 @@
+{
+  "id": "itm_2b_12",
+  "project_id": "prj_unit2b",
+  "number": 12,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_12",
+  "turn_ids": [],
+  "title": "Tape with no description",
+  "description": "A strip of tape on the bedroom wall, but nobody said what's wrong here.",
+  "action": "Describe the problem or dismiss this item",
+  "trade": "general",
+  "room": "Bedroom",
+  "location_detail": "Bedroom wall",
+  "severity": "cosmetic",
+  "status": "needs_review",
+  "review_reason": "Tape mark with no description",
+  "quote": null,
+  "quote_start_s": null,
+  "quote_end_s": null,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 117.9,
+  "video_end_s": 123.1,
+  "confidence": null,
+  "evidence": {
+    "t": 120.5,
+    "image_url": "/media/items/itm_2b_12/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_12/frame.jpg",
+    "crop_url": "/media/items/itm_2b_12/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M421 936 L706 926 L710 1018 L424 1028 Z",
+    "defect_svg": null,
+    "tape_box": {
+      "x1": 420.5,
+      "y1": 926.1,
+      "x2": 709.6,
+      "y2": 1028.0
+    },
+    "defect_box": null,
+    "crop_box": {
+      "x1": 285.1,
+      "y1": 767.1,
+      "x2": 845.1,
+      "y2": 1187.1
+    },
+    "grounding": "tape_only",
+    "sam_concept": null
+  },
+  "verification": null,
+  "closure": null,
+  "history": [
+    {
+      "at": "2026-11-03T15:41:13.050000Z",
+      "actor": "system",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "needs_review",
+      "note": "Tape was in view for 5 seconds, but nobody described it."
+    }
+  ],
+  "dispatch": null,
+  "created_at": "2026-11-03T15:41:13.050000Z",
+  "updated_at": "2026-11-03T15:41:13.050000Z"
+}

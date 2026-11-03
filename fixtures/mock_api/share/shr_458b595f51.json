@@ -1,0 +1,48 @@
+{
+  "token": "shr_458b595f51",
+  "project_name": "Unit 3A turnover",
+  "project_address": "418 Alder Street, Unit 3A",
+  "number": 2,
+  "title": "Gap under baseboard",
+  "description": "There's a gap between the baseboard and the floor by the bedroom closet.",
+  "action": "Close the gap at the baseboard",
+  "trade": "carpentry_millwork",
+  "company": "Oakline Millwork",
+  "room": "Bedroom",
+  "location_detail": "By the closet",
+  "severity": "cosmetic",
+  "status": "open",
+  "quote": "Gap between the baseboard and the floor by the closet.",
+  "quote_start_s": 22.0,
+  "quote_end_s": 25.4,
+  "video_url": "/media/walks/wlk_3a_first/display.mp4",
+  "video_start_s": 19.0,
+  "video_end_s": 26.4,
+  "evidence": {
+    "t": 23.0,
+    "image_url": "/media/items/itm_3a_02/evidence.jpg",
+    "raw_url": "/media/items/itm_3a_02/frame.jpg",
+    "crop_url": "/media/items/itm_3a_02/crop.jpg",
+    "width": 1920,
+    "height": 1080,
+    "tape_svg": null,
+    "defect_svg": "M674 927 L1314 927 L1314 972 L674 972 Z",
+    "tape_box": null,
+    "defect_box": {
+      "x1": 674.2,
+      "y1": 926.8,
+      "x2": 1314.2,
+      "y2": 971.8
+    },
+    "crop_box": {
+      "x1": 514.2,
+      "y1": 360.0,
+      "x2": 1474.2,
+      "y2": 1080.0
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "baseboard"
+  },
+  "closure": null,
+  "walked_at": "2026-11-04T14:40:00Z"
+}

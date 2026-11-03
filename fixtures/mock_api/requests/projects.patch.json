@@ -1,0 +1,10 @@
+{
+  "rooms": [
+    "Kitchen",
+    "Bathroom",
+    "Bedroom",
+    "Hallway",
+    "Living room",
+    "Closet"
+  ]
+}

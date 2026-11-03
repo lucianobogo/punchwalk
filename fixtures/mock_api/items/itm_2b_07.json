@@ -1,0 +1,143 @@
+{
+  "id": "itm_2b_07",
+  "project_id": "prj_unit2b",
+  "number": 7,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_07",
+  "turn_ids": [
+    "trn_2b1_13"
+  ],
+  "title": "Scuff marks on wall",
+  "description": "Scuff marks on the bedroom wall to the left of the closet door.",
+  "action": "Touch up the paint",
+  "trade": "painting",
+  "room": "Bedroom",
+  "location_detail": "Left of the closet door",
+  "severity": "cosmetic",
+  "status": "dispatched",
+  "review_reason": null,
+  "quote": "Scuff marks on the wall left of the closet door.",
+  "quote_start_s": 104.0,
+  "quote_end_s": 107.0,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 101.0,
+  "video_end_s": 108.0,
+  "confidence": 0.94,
+  "evidence": {
+    "t": 104.6,
+    "image_url": "/media/items/itm_2b_07/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_07/frame.jpg",
+    "crop_url": "/media/items/itm_2b_07/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M269 819 L554 789 L564 881 L279 910 Z",
+    "defect_svg": "M541 1000 L534 1024 L513 1046 L480 1063 L438 1074 L391 1078 L345 1074 L303 1063 L270 1046 L249 1024 L241 1000 L249 976 L270 954 L303 937 L345 926 L391 922 L438 926 L480 937 L513 954 L534 976 Z",
+    "tape_box": {
+      "x1": 269.5,
+      "y1": 789.0,
+      "x2": 563.5,
+      "y2": 910.4
+    },
+    "defect_box": {
+      "x1": 241.5,
+      "y1": 921.7,
+      "x2": 541.5,
+      "y2": 1077.7
+    },
+    "crop_box": {
+      "x1": 113.8,
+      "y1": 716.9,
+      "x2": 691.2,
+      "y2": 1149.9
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "wall scuff mark"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "baseten",
+    "checked_at": "2026-11-03T15:41:50.900000Z"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_11",
+    "quote": "Bedroom scuffs, still there.",
+    "after_t": 65.6,
+    "before_image_url": "/media/items/itm_2b_07/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_07/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_07/after_frame.jpg",
+    "voice_status": "not_fixed",
+    "vision_status": "still_visible",
+    "decision": "still_open",
+    "note": "Said not fixed, and the defect is still visible.",
+    "decided_at": "2026-11-04T13:21:12.600000Z"
+  },
+  "history": [
+    {
+      "at": "2026-11-03T15:41:26.700000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-03T15:41:50.900000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said."
+    },
+    {
+      "at": "2026-11-03T15:42:05Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent to Brightline Painting by email (tom.reyes@example.com)."
+    },
+    {
+      "at": "2026-11-04T13:21:12.600000Z",
+      "actor": "model",
+      "action": "rewalk_checked",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Said not fixed on the re-walk. Still open."
+    },
+    {
+      "at": "2026-11-04T13:21:12.800000Z",
+      "actor": "system",
+      "action": "status_changed",
+      "field": "status",
+      "from": "dispatched",
+      "to": "open",
+      "note": "Still open after the re-walk."
+    },
+    {
+      "at": "2026-11-04T13:25:30Z",
+      "actor": "system",
+      "action": "dispatched",
+      "field": "status",
+      "from": "open",
+      "to": "dispatched",
+      "note": "Sent again to Brightline Painting by email (tom.reyes@example.com)."
+    }
+  ],
+  "dispatch": {
+    "dispatch_id": "dsp_2b_08",
+    "trade": "painting",
+    "company": "Brightline Painting",
+    "channel": "email",
+    "sent_at": "2026-11-04T13:25:30Z",
+    "times_sent": 2
+  },
+  "created_at": "2026-11-03T15:41:26.700000Z",
+  "updated_at": "2026-11-04T13:25:30Z"
+}

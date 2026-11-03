@@ -1,0 +1,40 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "carpentry_millwork",
+  "contact": {
+    "trade": "carpentry_millwork",
+    "company": "Oakline Millwork",
+    "contact": "Dev Patel",
+    "email": "dev.patel@example.com",
+    "phone": "(555) 010-2202",
+    "slack_channel": null,
+    "has_slack_webhook": false
+  },
+  "channel": "email",
+  "channels": [
+    {
+      "channel": "slack",
+      "available": false,
+      "destination": null,
+      "reason": "No Slack channel set up for Oakline Millwork."
+    },
+    {
+      "channel": "email",
+      "available": true,
+      "destination": "dev.patel@example.com",
+      "reason": null
+    },
+    {
+      "channel": "outbox",
+      "available": true,
+      "destination": "Outbox",
+      "reason": null
+    }
+  ],
+  "heading": "Unit 2B final punch: 0 carpentry & millwork items",
+  "lines": [],
+  "subject": "Unit 2B final punch: 0 carpentry & millwork items",
+  "message_text": "Unit 2B final punch: 0 carpentry & millwork items\n",
+  "slack_text": "*Unit 2B final punch: 0 carpentry & millwork items*\n",
+  "item_ids": []
+}

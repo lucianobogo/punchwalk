@@ -1,0 +1,58 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "electrical",
+  "contact": {
+    "trade": "electrical",
+    "company": "Ace Electric",
+    "contact": "Maria Chen",
+    "email": "maria.chen@example.com",
+    "phone": "(555) 010-2201",
+    "slack_channel": "#punch-electrical",
+    "has_slack_webhook": true
+  },
+  "channel": "slack",
+  "channels": [
+    {
+      "channel": "slack",
+      "available": true,
+      "destination": "#punch-electrical",
+      "reason": null
+    },
+    {
+      "channel": "email",
+      "available": true,
+      "destination": "maria.chen@example.com",
+      "reason": null
+    },
+    {
+      "channel": "outbox",
+      "available": true,
+      "destination": "Outbox",
+      "reason": null
+    }
+  ],
+  "heading": "Unit 2B final punch: 2 electrical items",
+  "lines": [
+    {
+      "item_id": "itm_2b_11",
+      "number": 11,
+      "title": "Outlet cover cracked",
+      "line": "Bedroom, left of the bed. Replace the cover.",
+      "url": "/share/item/shr_33dfa14b0c"
+    },
+    {
+      "item_id": "itm_2b_08",
+      "number": 8,
+      "title": "Switch plate crooked",
+      "line": "Hallway, by the hall closet. Straighten and tighten the plate.",
+      "url": "/share/item/shr_ae22731487"
+    }
+  ],
+  "subject": "Unit 2B final punch: 2 electrical items",
+  "message_text": "Unit 2B final punch: 2 electrical items\n\n11. Outlet cover cracked\nBedroom, left of the bed. Replace the cover.\nView item and video: https://punchwalk.example.com/share/item/shr_33dfa14b0c\n\n8. Switch plate crooked\nHallway, by the hall closet. Straighten and tighten the plate.\nView item and video: https://punchwalk.example.com/share/item/shr_ae22731487\n",
+  "slack_text": "*Unit 2B final punch: 2 electrical items*\n\n*11*  Outlet cover cracked\nBedroom, left of the bed. Replace the cover.\n<https://punchwalk.example.com/share/item/shr_33dfa14b0c|View item and video>\n\n*8*  Switch plate crooked\nHallway, by the hall closet. Straighten and tighten the plate.\n<https://punchwalk.example.com/share/item/shr_ae22731487|View item and video>\n",
+  "item_ids": [
+    "itm_2b_11",
+    "itm_2b_08"
+  ]
+}

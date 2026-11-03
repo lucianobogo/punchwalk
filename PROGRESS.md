@@ -19,3 +19,4 @@ One line per event, newest at the bottom:
 2026-11-03 16:44 ET | 0.7 | builder B | done: 8 SQLModel tables, 55 schemas w/ routes, types.ts mirror, 118 mock JSON + 74 media (4.6 MB), 130 tests; make test 221 pass | report | verifier
 2026-11-03 16:45 ET | 0.1-0.4 | builder A | fix round 1 done: strict_schema keeps title fields, probe replay no longer touches fixtures, .env.example complete, cap estimate; 221 tests | report | re-verify
 2026-11-03 16:48 ET | 0.1-0.4 | verifier | PASS after fix round 1 (221 tests; probe replay $0; mask IoU 0.92) | report | commit ckpt-0.1..0.4
+2026-11-03 16:49 ET | 0.7 | verifier | PASS (130 contract tests; deterministic mocks; media all resolve; 221 py tests) | report | commit ckpt-0.7; start Tracks A and C

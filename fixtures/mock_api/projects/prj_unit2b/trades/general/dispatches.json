@@ -1,0 +1,23 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "general",
+  "dispatches": [
+    {
+      "id": "dsp_2b_06",
+      "project_id": "prj_unit2b",
+      "trade": "general",
+      "company": "Northfield Builders",
+      "channel": "outbox",
+      "destination": "Outbox",
+      "item_ids": [
+        "itm_2b_04"
+      ],
+      "sent_at": "2026-11-03T16:06:00Z",
+      "ok": true,
+      "error": null,
+      "payload": {
+        "text": "Unit 2B final punch: 1 general item\n\n4. Loose towel bar\nBathroom, towel bar by the shower. Tighten the towel bar mounts.\nView item and video: https://punchwalk.example.com/share/item/shr_55bf15051c\n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "id": "itm_2b_09",
+  "project_id": "prj_unit2b",
+  "number": 9,
+  "origin_walk_id": "wlk_2b_first",
+  "mark_id": "mrk_2b1_09",
+  "turn_ids": [
+    "trn_2b1_18"
+  ],
+  "title": "Window screen missing",
+  "description": "The left living room window has no screen.",
+  "action": "Install the window screen",
+  "trade": "windows_glazing",
+  "room": "Living room",
+  "location_detail": "Left window",
+  "severity": "functional",
+  "status": "open",
+  "review_reason": null,
+  "quote": "Window screen's missing on the left window.",
+  "quote_start_s": 139.0,
+  "quote_end_s": 142.2,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 136.0,
+  "video_end_s": 143.2,
+  "confidence": 0.87,
+  "evidence": {
+    "t": 139.6,
+    "image_url": "/media/items/itm_2b_09/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_09/frame.jpg",
+    "crop_url": "/media/items/itm_2b_09/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M402 1372 L698 1372 L698 1464 L402 1464 Z",
+    "defect_svg": "M255 313 L845 313 L845 1283 L255 1283 Z",
+    "tape_box": {
+      "x1": 401.5,
+      "y1": 1372.4,
+      "x2": 697.5,
+      "y2": 1464.4
+    },
+    "defect_box": {
+      "x1": 254.5,
+      "y1": 313.4,
+      "x2": 844.5,
+      "y2": 1283.4
+    },
+    "crop_box": {
+      "x1": 0.0,
+      "y1": 483.9,
+      "x2": 1080.0,
+      "y2": 1293.9
+    },
+    "grounding": "sam_box",
+    "sam_concept": "window"
+  },
+  "verification": {
+    "consistent": true,
+    "note": "Matches the photo and what was said.",
+    "issues": [],
+    "provider": "meta-fallback",
+    "checked_at": "2026-11-03T15:41:53.500000Z"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_15",
+    "quote": "Window screen, still missing.",
+    "after_t": 88.6,
+    "before_image_url": "/media/items/itm_2b_09/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_09/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_09/after_frame.jpg",
+    "voice_status": "not_fixed",
+    "vision_status": "still_visible",
+    "decision": "still_open",
+    "note": "Said not fixed, and the defect is still visible.",
+    "decided_at": "2026-11-04T13:21:16Z"
+  },
+  "history": [
+    {
+      "at": "2026-11-03T15:41:29.500000Z",
+      "actor": "model",
+      "action": "created",
+      "field": "status",
+      "from": null,
+      "to": "open",
+      "note": "Written by Muse Spark Open on Baseten."
+    },
+    {
+      "at": "2026-11-03T15:41:53.500000Z",
+      "actor": "model",
+      "action": "verified",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Matches the photo and what was said. Checked by Muse Spark 1.3 after Baseten timed out."
+    },
+    {
+      "at": "2026-11-03T15:42:33.500000Z",
+      "actor": "system",
+      "action": "noted",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Not sent automatically: no email or Slack on file for Clearview Glass."
+    },
+    {
+      "at": "2026-11-04T13:21:16Z",
+      "actor": "model",
+      "action": "rewalk_checked",
+      "field": null,
+      "from": null,
+      "to": null,
+      "note": "Said not fixed on the re-walk. Still open."
+    }
+  ],
+  "dispatch": null,
+  "created_at": "2026-11-03T15:41:29.500000Z",
+  "updated_at": "2026-11-04T13:21:16Z"
+}

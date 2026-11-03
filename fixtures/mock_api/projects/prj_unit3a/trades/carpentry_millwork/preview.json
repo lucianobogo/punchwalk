@@ -1,0 +1,50 @@
+{
+  "project_id": "prj_unit3a",
+  "trade": "carpentry_millwork",
+  "contact": {
+    "trade": "carpentry_millwork",
+    "company": "Oakline Millwork",
+    "contact": "Dev Patel",
+    "email": "dev.patel@example.com",
+    "phone": "(555) 010-2202",
+    "slack_channel": null,
+    "has_slack_webhook": false
+  },
+  "channel": "email",
+  "channels": [
+    {
+      "channel": "slack",
+      "available": false,
+      "destination": null,
+      "reason": "No Slack channel set up for Oakline Millwork."
+    },
+    {
+      "channel": "email",
+      "available": true,
+      "destination": "dev.patel@example.com",
+      "reason": null
+    },
+    {
+      "channel": "outbox",
+      "available": true,
+      "destination": "Outbox",
+      "reason": null
+    }
+  ],
+  "heading": "Unit 3A turnover: 1 carpentry & millwork item",
+  "lines": [
+    {
+      "item_id": "itm_3a_02",
+      "number": 2,
+      "title": "Gap under baseboard",
+      "line": "Bedroom, by the closet. Close the gap at the baseboard.",
+      "url": "/share/item/shr_458b595f51"
+    }
+  ],
+  "subject": "Unit 3A turnover: 1 carpentry & millwork item",
+  "message_text": "Unit 3A turnover: 1 carpentry & millwork item\n\n2. Gap under baseboard\nBedroom, by the closet. Close the gap at the baseboard.\nView item and video: https://punchwalk.example.com/share/item/shr_458b595f51\n",
+  "slack_text": "*Unit 3A turnover: 1 carpentry & millwork item*\n\n*2*  Gap under baseboard\nBedroom, by the closet. Close the gap at the baseboard.\n<https://punchwalk.example.com/share/item/shr_458b595f51|View item and video>\n",
+  "item_ids": [
+    "itm_3a_02"
+  ]
+}

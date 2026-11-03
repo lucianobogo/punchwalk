@@ -1,0 +1,105 @@
+{
+  "id": "prj_unit2b",
+  "name": "Unit 2B final punch",
+  "address": "418 Alder Street, Unit 2B",
+  "trades": [
+    {
+      "trade": "electrical",
+      "company": "Ace Electric",
+      "contact": "Maria Chen",
+      "email": "maria.chen@example.com",
+      "phone": "(555) 010-2201",
+      "slack_channel": "#punch-electrical",
+      "has_slack_webhook": true
+    },
+    {
+      "trade": "carpentry_millwork",
+      "company": "Oakline Millwork",
+      "contact": "Dev Patel",
+      "email": "dev.patel@example.com",
+      "phone": "(555) 010-2202",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "cleaning",
+      "company": "Spotless Final Clean",
+      "contact": "Rosa Alvarez",
+      "email": "rosa.alvarez@example.com",
+      "phone": "(555) 010-2203",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "general",
+      "company": "Northfield Builders",
+      "contact": "Sam Okafor",
+      "email": null,
+      "phone": "(555) 010-2204",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "doors_hardware",
+      "company": "Keystone Door & Hardware",
+      "contact": "Lena Brooks",
+      "email": "lena.brooks@example.com",
+      "phone": "(555) 010-2205",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "painting",
+      "company": "Brightline Painting",
+      "contact": "Tom Reyes",
+      "email": "tom.reyes@example.com",
+      "phone": "(555) 010-2206",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "windows_glazing",
+      "company": "Clearview Glass",
+      "contact": "Ana Kowalski",
+      "email": null,
+      "phone": "(555) 010-2207",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    },
+    {
+      "trade": "plumbing",
+      "company": "Riverside Plumbing",
+      "contact": "Joe Lindqvist",
+      "email": "joe.lindqvist@example.com",
+      "phone": "(555) 010-2208",
+      "slack_channel": null,
+      "has_slack_webhook": false
+    }
+  ],
+  "keywords": [
+    "Unit 2B",
+    "strike plate",
+    "cover plate",
+    "towel bar",
+    "window screen",
+    "escutcheon"
+  ],
+  "rooms": [
+    "Kitchen",
+    "Bathroom",
+    "Bedroom",
+    "Hallway",
+    "Living room"
+  ],
+  "counts": {
+    "todo": 6,
+    "open": 4,
+    "needs_review": 2,
+    "signed_off": 6,
+    "all": 12
+  },
+  "walk_count": 2,
+  "last_walk_at": "2026-11-04T13:05:00Z",
+  "created_at": "2026-11-03T14:30:00Z",
+  "updated_at": "2026-11-04T13:25:30Z"
+}

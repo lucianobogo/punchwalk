@@ -1,0 +1,69 @@
+{
+  "project_id": "prj_unit3a",
+  "trades": [
+    {
+      "trade": "general",
+      "contact": {
+        "trade": "general",
+        "company": "Northfield Builders",
+        "contact": "Sam Okafor",
+        "email": null,
+        "phone": "(555) 010-2204",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 1,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    },
+    {
+      "trade": "carpentry_millwork",
+      "contact": {
+        "trade": "carpentry_millwork",
+        "company": "Oakline Millwork",
+        "contact": "Dev Patel",
+        "email": "dev.patel@example.com",
+        "phone": "(555) 010-2202",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 1,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    },
+    {
+      "trade": "painting",
+      "contact": {
+        "trade": "painting",
+        "company": "Brightline Painting",
+        "contact": "Tom Reyes",
+        "email": "tom.reyes@example.com",
+        "phone": "(555) 010-2206",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    },
+    {
+      "trade": "plumbing",
+      "contact": {
+        "trade": "plumbing",
+        "company": "Riverside Plumbing",
+        "contact": "Joe Lindqvist",
+        "email": "joe.lindqvist@example.com",
+        "phone": "(555) 010-2208",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    }
+  ]
+}

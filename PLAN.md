@@ -67,7 +67,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
   Handle iPhone HEVC. If HDR is detected, make a best-effort tonemap to SDR.
 - [ ] **0.6 `make record`.** Run ingest + transcribe + SAM tape tracking live once for every walk in `footage/`; store cache + fixtures. If a walk has parts, run SAM per part (ids reset per part) and offset frame indices by each part's start. **AC:** fixtures exist for walk1 and walk2 (and walk3 if present).
-- [ ] **0.7 Contracts.** These let Track B start right away:
+- [x] **0.7 Contracts.** These let Track B start right away:
   - SQLModel domain models (`punchwalk/core/models.py`) and API response schemas (`punchwalk/api/schemas.py`)
   - the same types in TypeScript (`web/src/api/types.ts`)
   - realistic mock API responses in `fixtures/mock_api/`: one project, an initial walk and a re-walk, ~11 items (one signed off with before/after, one needs a look, one safety), overlay data, transcript, model-call timeline. Use real frames from the footage where they already exist; synthetic placeholders are fine until Phase 3 refreshes them.

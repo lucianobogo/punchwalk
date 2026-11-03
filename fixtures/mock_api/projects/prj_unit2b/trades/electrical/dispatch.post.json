@@ -1,0 +1,18 @@
+{
+  "id": "dsp_unit2b_new_electrical",
+  "project_id": "prj_unit2b",
+  "trade": "electrical",
+  "company": "Ace Electric",
+  "channel": "slack",
+  "destination": "#punch-electrical",
+  "item_ids": [
+    "itm_2b_11",
+    "itm_2b_08"
+  ],
+  "sent_at": "2026-11-04T15:00:00Z",
+  "ok": true,
+  "error": null,
+  "payload": {
+    "text": "*Unit 2B final punch: 2 electrical items*\n\n*11*  Outlet cover cracked\nBedroom, left of the bed. Replace the cover.\n<https://punchwalk.example.com/share/item/shr_33dfa14b0c|View item and video>\n\n*8*  Switch plate crooked\nHallway, by the hall closet. Straighten and tighten the plate.\n<https://punchwalk.example.com/share/item/shr_ae22731487|View item and video>\n"
+  }
+}

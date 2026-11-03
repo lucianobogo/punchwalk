@@ -1,0 +1,66 @@
+{
+  "token": "shr_97cab565f7",
+  "project_name": "Unit 2B final punch",
+  "project_address": "418 Alder Street, Unit 2B",
+  "number": 2,
+  "title": "Coffee drips on counter",
+  "description": "Dried coffee drips on the counter next to the stove.",
+  "action": "Clean the counter",
+  "trade": "cleaning",
+  "company": "Spotless Final Clean",
+  "room": "Kitchen",
+  "location_detail": "Counter next to the stove",
+  "severity": "cosmetic",
+  "status": "needs_review",
+  "quote": "Coffee drips on the counter next to the stove, needs a wipe.",
+  "quote_start_s": 27.0,
+  "quote_end_s": 30.4,
+  "video_url": "/media/walks/wlk_2b_first/display.mp4",
+  "video_start_s": 24.0,
+  "video_end_s": 31.4,
+  "evidence": {
+    "t": 27.6,
+    "image_url": "/media/items/itm_2b_02/evidence.jpg",
+    "raw_url": "/media/items/itm_2b_02/frame.jpg",
+    "crop_url": "/media/items/itm_2b_02/crop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "tape_svg": "M626 1326 L922 1326 L922 1420 L626 1420 Z",
+    "defect_svg": "M659 1428 L653 1457 L638 1484 L613 1505 L583 1518 L549 1523 L515 1518 L484 1505 L460 1484 L444 1457 L439 1428 L444 1399 L460 1372 L484 1351 L515 1338 L549 1333 L583 1338 L613 1351 L638 1372 L653 1399 Z",
+    "tape_box": {
+      "x1": 625.8,
+      "y1": 1326.1,
+      "x2": 921.8,
+      "y2": 1420.1
+    },
+    "defect_box": {
+      "x1": 438.8,
+      "y1": 1333.1,
+      "x2": 658.8,
+      "y2": 1523.1
+    },
+    "crop_box": {
+      "x1": 318.0,
+      "y1": 1152.9,
+      "x2": 1042.5,
+      "y2": 1696.3
+    },
+    "grounding": "sam_concept",
+    "sam_concept": "coffee stain"
+  },
+  "closure": {
+    "rewalk_id": "wlk_2b_rewalk",
+    "rewalk_turn_id": "trn_2b2_04",
+    "quote": "Coffee drips on the counter, fixed.",
+    "after_t": 18.6,
+    "before_image_url": "/media/items/itm_2b_02/crop.jpg",
+    "after_image_url": "/media/items/itm_2b_02/after.jpg",
+    "after_frame_url": "/media/items/itm_2b_02/after_frame.jpg",
+    "voice_status": "fixed",
+    "vision_status": "still_visible",
+    "decision": "needs_review",
+    "note": "Coffee drips are still visible next to the tape.",
+    "decided_at": "2026-11-04T13:21:04.100000Z"
+  },
+  "walked_at": "2026-11-03T15:12:00Z"
+}

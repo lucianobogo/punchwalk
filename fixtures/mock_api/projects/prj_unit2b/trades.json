@@ -1,0 +1,133 @@
+{
+  "project_id": "prj_unit2b",
+  "trades": [
+    {
+      "trade": "electrical",
+      "contact": {
+        "trade": "electrical",
+        "company": "Ace Electric",
+        "contact": "Maria Chen",
+        "email": "maria.chen@example.com",
+        "phone": "(555) 010-2201",
+        "slack_channel": "#punch-electrical",
+        "has_slack_webhook": true
+      },
+      "open_count": 2,
+      "needs_review_count": 0,
+      "signed_off_count": 1,
+      "last_sent_at": "2026-11-04T13:25:00Z"
+    },
+    {
+      "trade": "carpentry_millwork",
+      "contact": {
+        "trade": "carpentry_millwork",
+        "company": "Oakline Millwork",
+        "contact": "Dev Patel",
+        "email": "dev.patel@example.com",
+        "phone": "(555) 010-2202",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 0,
+      "signed_off_count": 1,
+      "last_sent_at": "2026-11-03T15:42:01Z"
+    },
+    {
+      "trade": "cleaning",
+      "contact": {
+        "trade": "cleaning",
+        "company": "Spotless Final Clean",
+        "contact": "Rosa Alvarez",
+        "email": "rosa.alvarez@example.com",
+        "phone": "(555) 010-2203",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 1,
+      "signed_off_count": 2,
+      "last_sent_at": "2026-11-03T15:42:02Z"
+    },
+    {
+      "trade": "general",
+      "contact": {
+        "trade": "general",
+        "company": "Northfield Builders",
+        "contact": "Sam Okafor",
+        "email": null,
+        "phone": "(555) 010-2204",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 1,
+      "signed_off_count": 1,
+      "last_sent_at": "2026-11-03T16:06:00Z"
+    },
+    {
+      "trade": "doors_hardware",
+      "contact": {
+        "trade": "doors_hardware",
+        "company": "Keystone Door & Hardware",
+        "contact": "Lena Brooks",
+        "email": "lena.brooks@example.com",
+        "phone": "(555) 010-2205",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 0,
+      "signed_off_count": 1,
+      "last_sent_at": "2026-11-03T15:42:04Z"
+    },
+    {
+      "trade": "painting",
+      "contact": {
+        "trade": "painting",
+        "company": "Brightline Painting",
+        "contact": "Tom Reyes",
+        "email": "tom.reyes@example.com",
+        "phone": "(555) 010-2206",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 1,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": "2026-11-04T13:25:30Z"
+    },
+    {
+      "trade": "windows_glazing",
+      "contact": {
+        "trade": "windows_glazing",
+        "company": "Clearview Glass",
+        "contact": "Ana Kowalski",
+        "email": null,
+        "phone": "(555) 010-2207",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 1,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    },
+    {
+      "trade": "plumbing",
+      "contact": {
+        "trade": "plumbing",
+        "company": "Riverside Plumbing",
+        "contact": "Joe Lindqvist",
+        "email": "joe.lindqvist@example.com",
+        "phone": "(555) 010-2208",
+        "slack_channel": null,
+        "has_slack_webhook": false
+      },
+      "open_count": 0,
+      "needs_review_count": 0,
+      "signed_off_count": 0,
+      "last_sent_at": null
+    }
+  ]
+}

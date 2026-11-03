@@ -1,0 +1,27 @@
+{
+  "project_id": "prj_unit2b",
+  "trade": "cleaning",
+  "dispatches": [
+    {
+      "id": "dsp_2b_02",
+      "project_id": "prj_unit2b",
+      "trade": "cleaning",
+      "company": "Spotless Final Clean",
+      "channel": "email",
+      "destination": "rosa.alvarez@example.com",
+      "item_ids": [
+        "itm_2b_02",
+        "itm_2b_05",
+        "itm_2b_10"
+      ],
+      "sent_at": "2026-11-03T15:42:02Z",
+      "ok": true,
+      "error": null,
+      "payload": {
+        "to": "rosa.alvarez@example.com",
+        "subject": "Unit 2B final punch: 3 cleaning items",
+        "text": "Unit 2B final punch: 3 cleaning items\n\n2. Coffee drips on counter\nKitchen, counter next to the stove. Clean the counter.\nView item and video: https://punchwalk.example.com/share/item/shr_97cab565f7\n\n5. Toothpaste splatter on mirror\nBathroom, vanity mirror. Clean the mirror.\nView item and video: https://punchwalk.example.com/share/item/shr_fdd61a932c\n\n10. Sawdust on floor\nLiving room, floor by the window. Sweep the floor.\nView item and video: https://punchwalk.example.com/share/item/shr_ee0b00cca8\n"
+      }
+    }
+  ]
+}
