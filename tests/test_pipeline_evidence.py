@@ -96,8 +96,9 @@ def test_voice_only_picks_sharpest_and_samples():
     frames = {10: blurred(base), 20: base, 30: blurred(blurred(base))}
     c = choose_sharpest(frames)
     assert c.frame == 20 and c.pointer is None
-    assert sample_frames(1.0, 5.0, 10.0, 100, 5) == [10, 20, 30, 40, 50]
-    assert sample_frames(9.0, 12.0, 10.0, 100, 5)[-1] == 99  # clamped to the last frame
+    assert sample_frames(1.0, 5.0, 10.0, 0, 99, 5) == [10, 20, 30, 40, 50]
+    assert sample_frames(9.0, 12.0, 10.0, 0, 99, 5)[-1] == 99  # clamped to the last frame
+    assert sample_frames(13.9, 16.7, 10.0, 140, 209, 5)[0] == 140  # never before its clip part
 
 
 def test_helpers():

@@ -325,10 +325,15 @@ def _run(
         res = parse_output(hit.raw_text or "", media, media_size or tuple(hit.meta.get("media_size") or ()) or None)
         res.usage, res.cached, res.request_summary = (hit.response or {}).get("usage"), True, summary
         res.complete = (hit.response or {}).get("completed", True)
+        if media == "video":  # frames processed, as on a live call (not frames with detections)
+            processed = (res.usage or {}).get("video_frames_processed")
+            n_frames = int(processed or frames_hint or (max(res.frames) + 1 if res.frames else 0))
+        else:
+            n_frames = 1
         res.record = calls.emit(
             calls.CallRecord(
                 provider=PROVIDER_META, model=s.SAM_MODEL, endpoint=ENDPOINT, cached=True, cache_key=key,
-                frames=len(res.frames), unit_kind="frames" if media == "video" else "images",
+                frames=n_frames, unit_kind="frames" if media == "video" else "images",
             )
         )
         return res

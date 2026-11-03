@@ -38,7 +38,7 @@ TRACK_VERSION = 1
 
 
 def hand_concept() -> str:
-    return getattr(get_settings(), "SAM_HAND_CONCEPT", None) or DEFAULT_HAND_CONCEPT
+    return get_settings().SAM_HAND_CONCEPT or DEFAULT_HAND_CONCEPT
 
 
 def part_label(order: int) -> str:

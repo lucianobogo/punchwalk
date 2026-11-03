@@ -374,7 +374,7 @@ def main() -> int:
         print(f"     {rec.provider}: {inst.model_dump()}")
 
     # 5. SAM concept on the 3 s video
-    concept = tape["best"] or s.SAM_TAPE_CONCEPT
+    concept = tape["best"] or s.SAM_HAND_CONCEPT
     vres = timed(f"5 sam.concept_on_video {concept!r}", lambda: sam.concept_on_video(clip, concept))
     if vres:
         save("sam_video.txt", vres.raw_text)
