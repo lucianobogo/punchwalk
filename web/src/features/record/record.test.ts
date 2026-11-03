@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { diskMock } from '../../test/fixtures';
 import type { JobProgressOut } from '../../api/types';
-import { checklistRows } from './checklist';
+import { FAILED_HERE, checklistRows, readableFailure } from './checklist';
 import { MAX_WALK_BYTES, clipsSummary, move, validateClips, type ClipInfo } from './clips';
 
 const clip = (over: Partial<ClipInfo> = {}): ClipInfo => ({ name: 'walk1_a.mp4', size: 50 * 1024 * 1024, type: 'video/mp4', duration: 150, ...over });
@@ -17,7 +17,7 @@ describe('clip validation', () => {
 
   it('blocks a walk over 10 minutes, in plain words', () => {
     expect(validateClips([clip({ duration: 601 })])).toEqual([
-      'This walk is longer than 10 minutes. Split it into parts and upload them together.',
+      'This walk is longer than 10 minutes. Record it as two separate walks.',
     ]);
     const parts = validateClips([clip({ duration: 400 }), clip({ name: 'b.mp4', duration: 300 })]);
     expect(parts[0]).toMatch(/^These clips add up to 11 min 40 s\. A walk can be up to 10 minutes/);
@@ -91,5 +91,16 @@ describe('processing checklist', () => {
       { stage: 'track_hands', label: 'Following your hand (SAM 3.1)', status: 'failed', started_at: null, finished_at: null, duration_ms: null, counts: {}, progress: null, detail: 'SAM 3.1, 71 of 780 frames', model_label: 'SAM 3.1', message: 'SAM 3.1 timed out twice.' },
     ]);
     expect(rows[1]).toMatchObject({ status: 'failed', detail: 'SAM 3.1 timed out twice.' });
+  });
+
+  it('keeps internal error text out of the checklist', () => {
+    const raw =
+      'transcribe failed: CacheMiss: cache miss in readonly mode for ASR audio.wav @ 0 ms (672078 bytes) (key c8f0511a0be9a860f842b5ffa6c992430f441a575) Record it with a live run (`make probe`).';
+    expect(readableFailure(raw)).toBeNull();
+    expect(readableFailure('Transcription failed: a recorded model answer is missing (offline mode).')).toMatch(/^Transcription failed/);
+    const rows = checklistRows([
+      { stage: 'transcribe', label: 'Listening to the walk', status: 'failed', started_at: null, finished_at: null, duration_ms: null, counts: {}, progress: null, detail: raw, model_label: null, message: raw },
+    ]);
+    expect(rows[0].detail).toBe(FAILED_HERE);
   });
 });

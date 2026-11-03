@@ -8,7 +8,10 @@ const API = 'http://localhost:8000';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const dataMode = process.env.VITE_DATA ?? env.VITE_DATA ?? 'mock';
+  // Live by default (PLAN 5.8): `pnpm build` and `pnpm dev` talk to the API. Mocks are for tests
+  // (vitest forces them) and screenshots (screenshots/run.ts sets VITE_DATA=mock); `VITE_DATA=mock pnpm dev`
+  // works offline.
+  const dataMode = process.env.VITEST ? 'mock' : (process.env.VITE_DATA ?? env.VITE_DATA ?? 'live');
   return {
     base: '/',
     plugins: [react(), tailwindcss(), mockApiPlugin(dataMode)],

@@ -29,6 +29,19 @@ const STEPS: { main: Stage; with: Stage[] }[] = [
 /** Saving the punch list folds into whichever step comes last. */
 const TAIL: Stage = 'persist';
 
+/**
+ * A failed stage's own message is shown only if it reads like a sentence for people; internal errors
+ * (exception names, cache keys, shell commands) stay out of the UI, and the job's readable error above
+ * the checklist explains what happened.
+ */
+export function readableFailure(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const internal = /`|\b[A-Z][a-z]+(Error|Exception|Miss)\b|Traceback|\bkey [0-9a-f]{8,}|[0-9a-f]{24,}|_[a-z]+ failed:|PUNCHWALK_/.test(text);
+  return internal || text.length > 180 ? null : text;
+}
+
+export const FAILED_HERE = 'Stopped here. The reason is above.';
+
 function groupStatus(statuses: StageStatus[]): RowStatus {
   if (statuses.includes('failed')) return 'failed';
   if (statuses.every((s) => s === 'done' || s === 'skipped')) return 'done';
@@ -48,7 +61,7 @@ export function checklistRows(stages: StageProgressOut[]): ChecklistRow[] {
     const failed = all.find((s) => s.status === 'failed');
     const runningExtra = extras.find((s) => s.status === 'running');
     const detail =
-      (failed ? (failed.message ?? failed.detail) : null) ??
+      (failed ? (readableFailure(failed.message) ?? readableFailure(failed.detail) ?? FAILED_HERE) : null) ??
       (main.status === 'pending' && runningExtra ? (runningExtra.detail ?? runningExtra.label) : main.detail);
     const durations = all.map((s) => s.duration_ms).filter((d): d is number => d != null);
     rows.push({

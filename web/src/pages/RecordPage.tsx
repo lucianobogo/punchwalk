@@ -15,7 +15,7 @@ import { ItemsSoFar, ProcessingChecklist } from '../features/record/ProcessingCh
 import { clipsSummary, move, validateClips } from '../features/record/clips';
 import { formatDuration, formatShortDate } from '../lib/format';
 import { WALK_KIND_LABEL, plural } from '../lib/labels';
-import { ErrorState } from './common';
+import { ErrorState, ProjectGate } from './common';
 
 export default function RecordPage() {
   const [params] = useSearchParams();
@@ -79,6 +79,11 @@ function RecordForm() {
   return (
     <>
       <LargeTitleBar title="Record a walk" />
+      {!projectId ? (
+        <div className="px-4 pt-4">
+          <ProjectGate loadingLabel="Loading projects">{null}</ProjectGate>
+        </div>
+      ) : (
       <div className="flex flex-col gap-5 px-4 pt-4">
         <Field label="Project" htmlFor="rec-project">
           <select
@@ -204,6 +209,7 @@ function RecordForm() {
           {uploading && <ProgressBar value={sent} label="Upload" className="mt-3" />}
         </div>
       </div>
+      )}
     </>
   );
 }
@@ -326,7 +332,10 @@ export function ProcessingBody({
       <ProcessingChecklist progress={p} />
       <ItemsSoFar progress={p} />
       {!done && !failed && (
-        <p className="mt-5 text-body text-pencil">You can leave this screen. Items appear on the punch list as they’re written.</p>
+        <p className="mt-5 text-body text-pencil">
+          {p.status === 'queued' ? 'Waiting for its turn. It starts on its own as soon as the server is free. ' : ''}
+          You can leave this screen. Items appear on the punch list as they’re written.
+        </p>
       )}
     </>
   );

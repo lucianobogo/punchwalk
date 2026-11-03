@@ -1,17 +1,18 @@
-// Picks the data source. VITE_DATA=mock (default until PLAN 5.8) answers from fixtures/mock_api;
-// VITE_DATA=live talks to the FastAPI app.
+// Picks the data source. VITE_DATA=live (the default) talks to the FastAPI app; VITE_DATA=mock answers
+// from fixtures/mock_api (tests, screenshots, offline dev). The check compares the build-time constant
+// directly, so a live build drops the mock adapter and its /mock-api/ paths entirely.
 import type { Api } from './api';
 import { liveApi } from './live';
 import { createMockApi, settingsFromLocation, type MockControl } from './mock';
 
 export type DataMode = 'mock' | 'live';
 
-export const DATA_MODE: DataMode = import.meta.env.VITE_DATA === 'live' ? 'live' : 'mock';
+export const DATA_MODE: DataMode = import.meta.env.VITE_DATA === 'mock' ? 'mock' : 'live';
 
 let mockControl: MockControl | null = null;
 
 function makeApi(): Api {
-  if (DATA_MODE === 'live') return liveApi;
+  if (import.meta.env.VITE_DATA !== 'mock') return liveApi;
   const { api, control } = createMockApi(undefined, { latencyMs: 0, ...settingsFromLocation() });
   mockControl = control;
   if (typeof window !== 'undefined') {

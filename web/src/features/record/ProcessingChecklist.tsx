@@ -48,7 +48,9 @@ export function ProcessingChecklist({ progress }: { progress: JobProgressOut }) 
               <span className="sr-only">{STATUS_WORDS[r.status]}: </span>
               {r.title}
             </p>
-            {r.detail && <p className={cx('mt-0.5 text-body', r.status === 'failed' ? 'text-safety' : 'text-pencil')}>{r.detail}</p>}
+            {r.detail && (
+              <p className={cx('mt-0.5 text-body break-words', r.status === 'failed' ? 'text-safety' : 'text-pencil')}>{r.detail}</p>
+            )}
             {r.status === 'running' && r.progress != null && <ProgressBar value={r.progress} label={r.title} className="mt-2.5" />}
           </div>
           {r.durationMs != null && <span className="shrink-0 pt-0.5 text-secondary tabular-nums text-pencil">{formatDuration(r.durationMs)}</span>}
@@ -61,9 +63,10 @@ export function ProcessingChecklist({ progress }: { progress: JobProgressOut }) 
 /** Thumbnails of the items written so far, plus a "Writing N" tile while more are coming. */
 export function ItemsSoFar({ progress }: { progress: JobProgressOut }) {
   const items = progress.items_so_far;
-  const running = progress.status === 'running' || progress.status === 'queued';
+  // The "Writing N" tile only while items are actually being written (not while queued or tracking).
+  const writing = progress.stages.some((s) => s.stage === 'write_items' && s.status === 'running');
   const next = items.length + 1;
-  const more = running && (progress.items_expected == null || items.length < progress.items_expected);
+  const more = writing && (progress.items_expected == null || items.length < progress.items_expected);
   if (!items.length && !more) return null;
   return (
     <section aria-label="Items so far" className="mt-6">
