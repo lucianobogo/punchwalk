@@ -49,7 +49,7 @@ export default function ProcessedPage() {
             <Skeleton className="h-96 w-full rounded-card" />
           </div>
         ) : p.isError || !p.data ? (
-          <ErrorState error={p.error} onRetry={() => p.refetch()} />
+          <ErrorState error={p.error} onRetry={() => p.refetch()} notFound="This walk isn’t here anymore." />
         ) : (
           <Body p={p.data} />
         )}

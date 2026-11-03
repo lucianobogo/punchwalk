@@ -108,6 +108,14 @@ export const SCREENS: Screen[] = [
     checklist: '1. Punch list: To do empty',
     path: '/?mock_scenario=todo_empty',
   },
+  {
+    name: 'punch-list-offline',
+    checklist: '8.4 Error state: the API doesn’t answer (calm card with Try again)',
+    path: '/?mock_scenario=offline',
+    setup: async (page) => {
+      await page.getByText('This didn’t load.').waitFor({ timeout: 6000 });
+    },
+  },
   // 2. Filter sheet
   {
     name: 'filter-sheet-trade',
@@ -162,6 +170,14 @@ export const SCREENS: Screen[] = [
     setup: async (page) => {
       await tapButton(page, 'More actions');
       await sheetOpen(page);
+    },
+  },
+  {
+    name: 'item-gone',
+    checklist: '8.4 Error state: an item that was dismissed or never existed',
+    path: '/items/itm_gone',
+    setup: async (page) => {
+      await page.getByText('This item isn’t here anymore.').waitFor({ timeout: 4000 });
     },
   },
   // 4. Play this moment

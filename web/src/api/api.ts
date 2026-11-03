@@ -65,6 +65,9 @@ export interface Api {
   approveAndSend(itemId: string, channel?: Channel): Promise<DispatchOut>;
 }
 
+/** What every screen says when the server doesn't answer at all. */
+export const OFFLINE_MESSAGE = 'Punchwalk can’t reach the server right now. Check the connection and try again.';
+
 /** An API error with the server's message, ready to show (DESIGN.md: say what happened and what to do). */
 export class ApiError extends Error {
   status: number;

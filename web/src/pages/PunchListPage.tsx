@@ -34,7 +34,7 @@ import {
 import { clearFilters, hasFilters, matchesSent, viewFromParams, viewToParams, type ListView } from '../features/punchlist/view';
 import { PlayMomentSheet } from '../features/play/PlayMomentSheet';
 import { formatClock } from '../lib/format';
-import { ErrorState } from './common';
+import { ErrorState, ProjectGate } from './common';
 
 const DIMENSIONS: Dimension[] = ['trade', 'severity', 'room'];
 
@@ -140,7 +140,9 @@ export default function PunchListPage() {
       )}
 
       <div className="px-4 pt-4">
-        {loading ? (
+        {!projectId ? (
+          <ProjectGate loadingLabel="Loading the punch list">{null}</ProjectGate>
+        ) : loading ? (
           <SkeletonRows label="Loading the punch list" count={5} />
         ) : items.isError ? (
           <ErrorState error={items.error} onRetry={() => items.refetch()} />

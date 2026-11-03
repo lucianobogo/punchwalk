@@ -56,6 +56,7 @@ The mock adapter (`src/api/mock.ts`) reads these from the URL and keeps them for
 |---|---|
 | `?mock_scenario=first_run` | no walks, no items (first-run empty state) |
 | `?mock_scenario=todo_empty` | every item signed off ("Everything is signed off.") |
+| `?mock_scenario=offline` | every call fails as if the server were down |
 | `?mock_progress=5` | pin the processing replay to `walks/wlk_3a_first/progress/05.json` (1–8) |
 | `?mock_latency=300` | delay every answer, to see skeletons |
 | `?mock_reset=1` | clear the switches |

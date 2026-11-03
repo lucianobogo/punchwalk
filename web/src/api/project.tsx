@@ -9,6 +9,10 @@ interface ProjectCtx {
   projectId: string | undefined;
   setProjectId: (id: string) => void;
   isLoading: boolean;
+  /** loading -> ready | empty (no projects on this server) | error (the list didn't load). */
+  status: 'loading' | 'ready' | 'empty' | 'error';
+  error: unknown;
+  retry: () => void;
 }
 
 const Ctx = createContext<ProjectCtx | null>(null);
@@ -36,9 +40,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const status: ProjectCtx['status'] = projects.isError
+    ? 'error'
+    : projects.isLoading || !projects.data
+      ? 'loading'
+      : list.length
+        ? 'ready'
+        : 'empty';
+  const { refetch } = projects;
   const value = useMemo(
-    () => ({ projectId, setProjectId, isLoading: projects.isLoading }),
-    [projectId, setProjectId, projects.isLoading],
+    () => ({ projectId, setProjectId, isLoading: projects.isLoading, status, error: projects.error, retry: () => void refetch() }),
+    [projectId, setProjectId, projects.isLoading, status, projects.error, refetch],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

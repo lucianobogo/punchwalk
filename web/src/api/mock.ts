@@ -13,10 +13,11 @@
 // Scenario switches (URL query, kept for the browser session; also on window.__punchwalkMock):
 //   ?mock_scenario=first_run   no walks and no items (first-run empty state)
 //   ?mock_scenario=todo_empty  every item signed off ("Everything is signed off.")
+//   ?mock_scenario=offline     every call fails as if the server were down
 //   ?mock_progress=5           pin the processing replay (walks/wlk_3a_first/progress/05.json)
 //   ?mock_latency=300          delay every answer (ms), to see skeletons
 //   ?mock_reset=1              clear the switches above
-import { ApiError, type Api } from './api';
+import { ApiError, OFFLINE_MESSAGE, type Api } from './api';
 import { applyFilters, countItems } from './filters';
 import {
   TRADE_LABEL,
@@ -50,7 +51,7 @@ export const MOCK_BASE = '/mock-api/';
 /** Returns the raw text of a fixture file (path relative to fixtures/mock_api/). */
 export type MockLoader = (file: string) => Promise<string>;
 
-export type MockScenario = 'first_run' | 'todo_empty' | null;
+export type MockScenario = 'first_run' | 'todo_empty' | 'offline' | null;
 
 export interface MockSettings {
   scenario: MockScenario;
@@ -105,6 +106,7 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
 
   async function answer<T>(fn: () => Promise<T>): Promise<T> {
     if (settings.latencyMs > 0) await sleep(settings.latencyMs);
+    if (settings.scenario === 'offline') throw new ApiError(0, OFFLINE_MESSAGE);
     return fn();
   }
 
@@ -430,7 +432,7 @@ export function settingsFromLocation(): Partial<MockSettings> {
   const q = new URLSearchParams(window.location.search);
   if (q.has('mock_reset')) saved = {};
   const scenario = q.get('mock_scenario');
-  if (scenario === 'first_run' || scenario === 'todo_empty') saved.scenario = scenario;
+  if (scenario === 'first_run' || scenario === 'todo_empty' || scenario === 'offline') saved.scenario = scenario;
   if (scenario === 'none') saved.scenario = null;
   const step = q.get('mock_progress');
   if (step) saved.progressStep = Number(step) || null;

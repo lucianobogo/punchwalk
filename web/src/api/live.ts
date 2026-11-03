@@ -1,5 +1,5 @@
 // Live adapter: HTTP to the FastAPI app (same origin in production; Vite proxies /api and /media in dev).
-import { ApiError, type Api, type UploadProgress, type UploadRequest } from './api';
+import { ApiError, OFFLINE_MESSAGE, type Api, type UploadProgress, type UploadRequest } from './api';
 import { filtersToSearchParams } from './filters';
 import type { UploadOut } from './types';
 
@@ -14,11 +14,23 @@ async function readError(res: Response): Promise<ApiError> {
   return new ApiError(res.status, message);
 }
 
+export { OFFLINE_MESSAGE };
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    ...init,
-    headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      ...init,
+      headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
+    });
+  } catch {
+    // fetch only throws when there's no answer at all (offline, server down, DNS).
+    throw new ApiError(0, OFFLINE_MESSAGE);
+  }
+  if (res.status >= 502 && res.status <= 504 && !(res.headers.get('content-type') ?? '').includes('json')) {
+    // A proxy answered instead of the app (restarting, or down).
+    throw new ApiError(res.status, OFFLINE_MESSAGE);
+  }
   if (!res.ok) throw await readError(res);
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

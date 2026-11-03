@@ -34,7 +34,9 @@ export default function WalkDetailPage() {
       {walk.isLoading ? (
         <div role="status" aria-label="Loading the walk" className="animate-pulse-soft bg-track" style={{ height: HERO_HEIGHT }} />
       ) : walk.isError || !walk.data || !w ? (
-        <ErrorState error={walk.error} onRetry={() => walk.refetch()} />
+        <div className="px-4">
+          <ErrorState error={walk.error} onRetry={() => walk.refetch()} notFound="This walk isn’t here anymore." />
+        </div>
       ) : ready ? (
         <ReadyWalk detail={walk.data} startAt={params.has('t') ? Number(params.get('t')) || 0 : null} />
       ) : (

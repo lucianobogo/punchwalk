@@ -60,7 +60,9 @@ export default function ItemDetailPage() {
           <Skeleton className="mt-2 h-4 w-2/3 rounded-full" />
         </div>
       ) : item.isError || !item.data ? (
-        <ErrorState error={item.error} onRetry={() => item.refetch()} />
+        <div className="px-4">
+          <ErrorState error={item.error} onRetry={() => item.refetch()} notFound="This item isn’t here anymore." />
+        </div>
       ) : (
         <ItemBody item={item.data} sheet={sheet} setSheet={setSheet} />
       )}
