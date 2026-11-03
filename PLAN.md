@@ -158,7 +158,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 5: Web app (Track B; mobile first, follow DESIGN.md exactly)
 
-- [ ] **5.1 Design system & shell.**
+- [x] **5.1 Design system & shell.**
   - Tailwind tokens from DESIGN.md (color, type, radii, spacing); Archivo variable font, self-hosted.
   - Shared components: tape tab, buttons, chips, pills, cards, sheets (`vaul`), tab bar, top bars, toasts, skeletons.
   - Router, and a react-query data layer with `VITE_DATA=mock|live`.
@@ -167,16 +167,16 @@ Track ownership and paths are in the orchestrator's instructions.
   - `make screenshots`: Playwright WebKit, `iPhone 15 Pro` profile, writes every DESIGN.md checklist screen to `.verify/screens/`.
 
   **AC:** the gallery screenshot matches DESIGN.md, and the manifest and icons are valid.
-- [ ] **5.2 Punch list (home)** per DESIGN.md and `docs/design/01-punch-list.png`:
+- [x] **5.2 Punch list (home)** per DESIGN.md and `docs/design/01-punch-list.png`:
   - status segments (To do, Signed off, All), with Needs a look pinned first
   - filter chips + sheets with counts; search, group and sort; filters in the URL
   - compact item rows with tape-tab thumbnails and play buttons
   - empty states
-- [ ] **5.3 Item detail** per DESIGN.md and `docs/design/02-item-detail.png`:
+- [x] **5.3 Item detail** per DESIGN.md and `docs/design/02-item-detail.png`:
   - evidence with pinch-zoom and an outline toggle; before/after slider when signed off
   - quote card with Play this moment; details list; checked and history
   - one status-dependent primary action plus a More sheet; edits logged as human overrides
-- [ ] **5.4 Play this moment** sheet per DESIGN.md: starts at `video_start_s`, caption of the quote, pauses at `video_end_s`, "Keep watching".
+- [x] **5.4 Play this moment** sheet per DESIGN.md: starts at `video_start_s`, caption of the quote, pauses at `video_end_s`, "Keep watching".
 - [ ] **5.5 Walks** list + walk detail (the demo's hero screen) per DESIGN.md and `docs/design/04-walk-detail.png`:
   - portrait video with hand outlines and numbered tabs at the fingertip while pointing
   - the new-item card slides up over the video at its moment, then settles into the list
