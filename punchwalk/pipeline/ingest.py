@@ -2,7 +2,8 @@
 
 Steps (PLAN 0.5):
   1. Normalize each clip: apply rotation (ffmpeg autorotates; portrait stays portrait), fit to the canvas
-     (short side ≤ 1080, even dims, never letterboxed), constant frame rate, yuv420p, best-effort
+     (short side ≤ 1080, even dims, never letterboxed), constant frame rate capped at 30 fps (higher rates,
+     e.g. 120 fps glasses footage, are decimated by the fps filter), yuv420p, best-effort
      HDR→SDR, an audio track (silent if the clip has none). Each clip is trimmed to a frame count that
      is a whole number of tenths of a second (a multiple of fps / gcd(fps, 10) frames), so part
      boundaries fall exactly on SAM frames at any frame rate.
@@ -45,12 +46,12 @@ from punchwalk.pipeline.media import ClipInfo, MediaError
 log = logging.getLogger(__name__)
 
 # Bump when output settings change, so existing outputs are rebuilt instead of skipped.
-INGEST_VERSION = 2
+INGEST_VERSION = 3  # 3: display.mp4 capped at 30 fps (glasses record 120 fps)
 
 DISPLAY_MAX_SHORT_SIDE = 1080
 SAM_SHORT_SIDE = 720
 SAM_FPS = 10
-MIN_FPS, MAX_FPS = 10, 60
+MIN_FPS, MAX_FPS = 10, 30  # faster sources (Ray-Ban Meta: 120 fps) are decimated to 30 fps
 AUDIO_RATE = 48000  # intermediate / display audio
 WAV_RATE = 16000  # Muse Voice Transcribe input
 ASR_MAX_DURATION_S = 600
