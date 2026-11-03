@@ -10,6 +10,8 @@
   (uploaded -> processing -> ready | failed), mirrors StageEvents into `Job.progress`, and retries a
   failed job up to `MAX_JOB_ATTEMPTS` times in total (the runner retries each stage on its own and
   skips completed stages, so a retry resumes where it stopped).
+- After a successful run of a first walk, verified items are sent automatically
+  (`punchwalk.dispatch.policy`, PLAN 6.2; `AUTO_SEND=0` turns it off).
 - `PUNCHWALK_WORKER=0` disables the threads (tests); `run_pending_jobs_once()` drives jobs
   synchronously instead. Tests swap the runner with `set_runner()`.
 """
@@ -214,7 +216,31 @@ def _finish_ok(job_id: str, walk_id: str) -> JobStatus:
             s.add(walk)
         s.commit()
     invalidate_overlay(walk_id)
+    if not failed_by_runner:
+        auto_send(walk_id)
     return JobStatus.failed if failed_by_runner else JobStatus.done
+
+
+def auto_send(walk_id: str) -> None:
+    """PLAN 6.2: send verified items of a processed first walk (no-op for re-walks or AUTO_SEND=0).
+
+    Idempotent, so it's safe if the pipeline's persist stage already did it. Never fails the job.
+    """
+    try:
+        from punchwalk.dispatch.policy import auto_dispatch_after_processing
+
+        with session_factory() as s:
+            report = auto_dispatch_after_processing(s, walk_id)
+        if report.sent or report.held or report.failed:
+            log.info(
+                "walk %s: auto-sent %d item(s), held %d, %d trade(s) failed",
+                walk_id,
+                len(report.sent_items),
+                len(report.held),
+                len(report.failed),
+            )
+    except Exception:
+        log.exception("walk %s: auto-send crashed; the items stay open", walk_id)
 
 
 def _finish_failed(job_id: str, walk_id: str, exc: BaseException, *, retry: bool) -> JobStatus:

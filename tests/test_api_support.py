@@ -74,6 +74,7 @@ def api(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     from punchwalk.db import reset_engines
 
     monkeypatch.setenv("PUNCHWALK_WORKER", "0")
+    monkeypatch.setenv("AUTO_SEND", "0")  # tests/test_dispatch_*.py turn it on where they need it
     reset_settings()
     reset_engines()
     upload_limiter.reset()
