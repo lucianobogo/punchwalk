@@ -1,0 +1,4 @@
+walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+synth_walk,1,Kitchen,Upper cabinet left of the sink missing knob,carpentry_millwork,00:00,1,,,a
+synth_walk,2,Hallway,Switch plate is crooked,electrical,00:00,1,,,b
+synth_walk,3,Bedroom,Scuff marks on the wall by the door,painting,00:00,0,,,c
