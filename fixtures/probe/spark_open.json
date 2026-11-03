@@ -1,0 +1,50 @@
+{
+ "result": {
+  "object_seen": "Yes - a small rectangular strip on the beige/tan wall to the right of the white door near the bottom of the image",
+  "color": "solid medium blue",
+  "confidence": 0.98,
+  "rationale": "Directly visible on the flat beige wall surface, angled slightly, distinct from the white door with dark doorknob on the left."
+ },
+ "provider": "baseten",
+ "model": "meta-models/muse-spark-open",
+ "format_mode": {},
+ "resolved_model": {
+  "baseten": "meta-models/muse-spark-open"
+ },
+ "tried_models": [
+  "meta-models/muse-spark-open",
+  "meta-models/muse-spark-open-1026"
+ ],
+ "schema": {
+  "properties": {
+   "object_seen": {
+    "description": "the most prominent object or mark on the wall, a short noun phrase",
+    "type": "string"
+   },
+   "color": {
+    "description": "its main color, or null",
+    "type": [
+     "string",
+     "null"
+    ]
+   },
+   "confidence": {
+    "maximum": 1,
+    "minimum": 0,
+    "type": "number"
+   },
+   "rationale": {
+    "description": "one short sentence, at most 200 characters",
+    "type": "string"
+   }
+  },
+  "required": [
+   "object_seen",
+   "color",
+   "confidence",
+   "rationale"
+  ],
+  "type": "object",
+  "additionalProperties": false
+ }
+}

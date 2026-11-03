@@ -1,0 +1,22 @@
+{
+ "key": "ecc395e9b0b7ce4bb1f42b3f9567f19fae2e0cee8f5d5dd75fc20e7ef7114617",
+ "provider": "meta",
+ "endpoint": "/asr/transcribe",
+ "model": "muse-voice-transcribe-1.0",
+ "description": "ASR audio5s.wav @ 0 ms (160078 bytes)",
+ "created_at": "2026-11-03T21:25:57+00:00",
+ "meta": {},
+ "response": {
+  "sessionId": "voyager/transcribe/63DC2164F6574E499F465D6E06A438C5",
+  "transcript": "kitchen, upper upper cabinet left of the sink, knob missing.",
+  "audioDurationMs": 5040,
+  "turns": [
+   {
+    "turnId": 0,
+    "startMs": 0,
+    "endMs": 3180,
+    "transcript": "kitchen, upper upper cabinet left of the sink, knob missing."
+   }
+  ]
+ }
+}

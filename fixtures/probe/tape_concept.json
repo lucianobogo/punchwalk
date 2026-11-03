@@ -1,0 +1,56 @@
+{
+ "best": "strip of blue painter's tape",
+ "provisional": true,
+ "image_input_mode": "data_url",
+ "comparison": [
+  {
+   "concept": "blue painter's tape",
+   "detections": 1,
+   "max_confidence": 0.9101123809814453,
+   "boxes": [
+    [
+     362,
+     923,
+     496,
+     981
+    ]
+   ],
+   "confidences": [
+    0.9101123809814453
+   ]
+  },
+  {
+   "concept": "blue tape",
+   "detections": 1,
+   "max_confidence": 0.7104072570800781,
+   "boxes": [
+    [
+     361,
+     923,
+     496,
+     981
+    ]
+   ],
+   "confidences": [
+    0.7104072570800781
+   ]
+  },
+  {
+   "concept": "strip of blue painter's tape",
+   "detections": 1,
+   "max_confidence": 0.9532163739204407,
+   "boxes": [
+    [
+     362,
+     923,
+     496,
+     981
+    ]
+   ],
+   "confidences": [
+    0.9532163739204407
+   ]
+  }
+ ],
+ "note": "synthetic frame; re-check on real footage"
+}

@@ -1,0 +1,78 @@
+{
+ "request": {
+  "model": "sam-3.1",
+  "media": "image",
+  "text": "blue painter's tape",
+  "metadata": {
+   "include_confidence": "true",
+   "mask_encoding": "one_bit"
+  },
+  "media_ref": {
+   "image_sha256": "bfecf603f94ef8344178baf0b5170bfdc21018ab9bc5f2088859113799417e54"
+  }
+ },
+ "media_size": [
+  720,
+  1280
+ ],
+ "complete": true,
+ "usage": {
+  "images_processed": 1,
+  "input_tokens": 0,
+  "input_tokens_details": {
+   "cached_tokens": 0
+  },
+  "output_tokens": 0,
+  "output_tokens_details": {
+   "reasoning_tokens": 0
+  },
+  "total_tokens": 0
+ },
+ "diagnostics": [],
+ "n_frames_with_output": 1,
+ "frame_indices": [
+  0
+ ],
+ "object_ids": [
+  0
+ ],
+ "records": [
+  {
+   "frame": 0,
+   "object_id": 0,
+   "box": [
+    362.0,
+    923.0,
+    496.0,
+    981.0
+   ],
+   "confidence": 0.9101123809814453,
+   "mask_confidence": 0.9101123809814453,
+   "mask_wh": [
+    134,
+    58
+   ],
+   "mask_pixels": 5535,
+   "mapping_evidence": {
+    "mask_wh": [
+     134,
+     58
+    ],
+    "box_wh": [
+     134.0,
+     58.0
+    ],
+    "frame_wh": [
+     720,
+     1280
+    ],
+    "mask_aspect": 2.31,
+    "box_aspect": 2.31,
+    "frame_aspect": 0.562,
+    "scale_x": 1.0,
+    "scale_y": 1.0,
+    "looks": "box"
+   }
+  }
+ ]
+}

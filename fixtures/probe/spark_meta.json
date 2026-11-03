@@ -1,0 +1,10 @@
+{
+ "result": {
+  "object_seen": "strip of painter's tape",
+  "color": "blue",
+  "confidence": 0.95,
+  "rationale": "A blue rectangular tape strip is visible on the wall beside the white door."
+ },
+ "provider": "meta",
+ "model": "muse-spark-1.3"
+}

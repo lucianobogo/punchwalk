@@ -1,0 +1,78 @@
+{
+ "request": {
+  "model": "sam-3.1",
+  "media": "image",
+  "text": "white cabinet door",
+  "metadata": {
+   "include_confidence": "true",
+   "mask_encoding": "one_bit"
+  },
+  "media_ref": {
+   "image_sha256": "bfecf603f94ef8344178baf0b5170bfdc21018ab9bc5f2088859113799417e54"
+  }
+ },
+ "media_size": [
+  720,
+  1280
+ ],
+ "complete": true,
+ "usage": {
+  "images_processed": 1,
+  "input_tokens": 0,
+  "input_tokens_details": {
+   "cached_tokens": 0
+  },
+  "output_tokens": 0,
+  "output_tokens_details": {
+   "reasoning_tokens": 0
+  },
+  "total_tokens": 0
+ },
+ "diagnostics": [],
+ "n_frames_with_output": 1,
+ "frame_indices": [
+  0
+ ],
+ "object_ids": [
+  0
+ ],
+ "records": [
+  {
+   "frame": 0,
+   "object_id": 0,
+   "box": [
+    23.0,
+    744.0,
+    308.0,
+    1219.0
+   ],
+   "confidence": 0.9452055096626282,
+   "mask_confidence": 0.9452055096626282,
+   "mask_wh": [
+    285,
+    475
+   ],
+   "mask_pixels": 134466,
+   "mapping_evidence": {
+    "mask_wh": [
+     285,
+     475
+    ],
+    "box_wh": [
+     285.0,
+     475.0
+    ],
+    "frame_wh": [
+     720,
+     1280
+    ],
+    "mask_aspect": 0.6,
+    "box_aspect": 0.6,
+    "frame_aspect": 0.562,
+    "scale_x": 1.0,
+    "scale_y": 1.0,
+    "looks": "box"
+   }
+  }
+ ]
+}

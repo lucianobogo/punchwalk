@@ -1,0 +1,53 @@
+{
+ "key": "1739afae1a4494e8c45b399b45a5e9221b426745525891759d714a394a8df021",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'blue tape' on image frame.jpg",
+ "created_at": "2026-11-03T21:25:52+00:00",
+ "meta": {
+  "media_size": [
+   720,
+   1280
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "blue tape",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "bfecf603f94ef8344178baf0b5170bfdc21018ab9bc5f2088859113799417e54"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

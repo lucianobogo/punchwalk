@@ -1,0 +1,22 @@
+{
+ "key": "09ebbd37fc3c7268270c219917af880936399dfdf47127c2558db88404a97743",
+ "provider": "meta",
+ "endpoint": "/files",
+ "model": "",
+ "description": "Files upload clip3s.mp4 (130686 bytes, sha256 191fa0c3465e)",
+ "created_at": "2026-11-03T21:25:47+00:00",
+ "meta": {
+  "sha256": "191fa0c3465e49458c6b7b6f221cf24f65e1151faf5d2c5da664cd971a5c94aa",
+  "filename": "clip3s.mp4"
+ },
+ "response": {
+  "id": "file-1158971913483628",
+  "bytes": 130686,
+  "created_at": 1793741147,
+  "expires_at": null,
+  "filename": "clip3s.mp4",
+  "object": "file",
+  "purpose": "user_data",
+  "status": "uploaded"
+ }
+}
