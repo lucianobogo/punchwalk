@@ -5,6 +5,12 @@ import { Pause, Play } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import type { ItemOut } from '../../api/types';
+
+/** What the sheet needs: an item, or a public share (which has no walk id, so no overlay or walk link). */
+export type Playable = Pick<
+  ItemOut,
+  'number' | 'title' | 'video_url' | 'video_start_s' | 'video_end_s' | 'quote' | 'quote_start_s' | 'quote_end_s'
+> & { id: string; origin_walk_id: string | null };
 import { useOverlay } from '../../api/hooks';
 import { Button, HandOverlay, Sheet, TapeTab } from '../../components';
 import { formatClock } from '../../lib/format';
@@ -16,7 +22,7 @@ export function PlayMomentSheet({
   open,
   onOpenChange,
 }: {
-  item: ItemOut | null | undefined;
+  item: Playable | null | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -34,10 +40,10 @@ export function PlayMomentSheet({
   );
 }
 
-function PlayBody({ item }: { item: ItemOut }) {
+function PlayBody({ item }: { item: Playable }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const ctl = useMemo(() => new MomentController({ start: item.video_start_s, end: item.video_end_s }), [item.id, item.video_start_s, item.video_end_s]);
-  const overlay = useOverlay(item.origin_walk_id);
+  const overlay = useOverlay(item.origin_walk_id ?? undefined);
   const [, force] = useState(0);
   const rerender = () => force((n) => n + 1);
   const clock = useVideoClock(videoRef, (t) => {
@@ -134,6 +140,7 @@ function PlayBody({ item }: { item: ItemOut }) {
             Keep watching
           </Button>
         </div>
+        {item.origin_walk_id && (
         <p className="text-center">
           <Link
             to={`/walks/${item.origin_walk_id}?t=${Math.floor(item.video_start_s)}`}
@@ -142,6 +149,7 @@ function PlayBody({ item }: { item: ItemOut }) {
             Open the whole walk
           </Link>
         </p>
+        )}
       </div>
     </div>
   );
