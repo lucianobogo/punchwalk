@@ -10,7 +10,8 @@ import RecordPage from './pages/RecordPage';
 import SharePage from './pages/SharePage';
 import { TradePage, TradesPage } from './pages/TradesPage';
 import WalkDetailPage from './pages/WalkDetailPage';
-import { ProcessedPage, RewalkPage } from './pages/WalkSubPages';
+import ProcessedPage from './pages/ProcessedPage';
+import { RewalkPage } from './pages/WalkSubPages';
 import WalksPage from './pages/WalksPage';
 import { EmptyState, ButtonLink } from './components';
 
