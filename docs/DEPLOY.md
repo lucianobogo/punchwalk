@@ -66,7 +66,7 @@ the job worker runs inside the web process. It mounts `punchwalk_data` at `/data
 APP=https://punchwalk.fly.dev
 curl -s $APP/healthz                                   # {"ok":true,"demo_mode":true,...}
 curl -s -o /dev/null -w "%{http_code}\n" $APP/          # 200
-curl -s -o /dev/null -w "%{http_code}\n" $APP/mock-api/projects.json   # not JSON (see "Known gaps")
+curl -s -o /dev/null -w "%{http_code}\n" $APP/mock-api/projects.json   # 404 (no mock data in a live build)
 
 PID=$(curl -s -X POST $APP/api/projects -H 'content-type: application/json' \
   -d '{"name":"Smoke test","rooms":["Kitchen"]}' | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
@@ -87,17 +87,45 @@ curl -s -o /tmp/punch-report.pdf -w "%{http_code} %{content_type}\n" $APP/api/pr
 Then open `https://punchwalk.fly.dev` on an iPhone (or Playwright's `iPhone 15 Pro` profile) and check the
 punch list loads.
 
-## Seed the demo project (PLAN 8.1, once `scripts/seed.py` exists)
+## Seed the demo project (PLAN 8.1)
 
-`fly ssh console` runs as root. Run scripts as the app user, or the files they write in `/data` (the SQLite
-database and its WAL) will be root-owned, and the app can no longer write to them:
+`scripts/seed.py` creates project `prj_demo` ("Unit 2B final punch", with a fictional trades directory),
+then replays the recorded walks through the real pipeline from the cache, at $0. It forces
+`PUNCHWALK_CACHE=readonly`, ignores any real Slack or Resend key while it runs, and stops on a cache miss,
+naming the walk and stage. Walk ids are stable (`wlk_demo_<walk>`), so re-running is safe; `--reset`
+starts the demo project over.
+
+**On Fly, import a snapshot; don't re-run the pipeline.** Spark Open prompts include JPEG frames that
+ffmpeg extracts at run time. The image's ffmpeg (7.1, Linux) extracts different bytes than the Mac where
+the walks were recorded, so a replay in the container misses the cache at `write_items`. Checked: the
+synthetic walk misses there. So seed on the machine that recorded the walks, export it, and import the
+snapshot on Fly. The import writes rows and media only, and makes no model calls:
 
 ```bash
-fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py'"
+# On the recording machine (cache hits here):
+uv run python scripts/seed.py --reset --export demo/seed_snapshot.tar.gz          # real walks
+#   or, before they exist:  uv run python scripts/seed.py --walks synth_walk --reset --export demo/seed_snapshot.tar.gz
+
+# Put it on the volume (or bake it: demo/ is copied into the image; rebuild + deploy):
+fly ssh sftp shell -a punchwalk      # then:  put demo/seed_snapshot.tar.gz /data/seed_snapshot.tar.gz
+fly ssh console -a punchwalk -C "chown punch:punch /data/seed_snapshot.tar.gz"
+
+# Import as the app user. `fly ssh console` runs as root, and root-owned files in /data (the SQLite
+# database and its WAL) would lock the app out:
+fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py --import /data/seed_snapshot.tar.gz'"
 ```
 
-The seed reads the recorded results from `/app/fixtures/cache` (baked into the image, so it costs nothing)
-and media from `/app/demo` or `/app/fixtures`. Rebuild and redeploy after adding demo media.
+A snapshot holds the demo project's rows plus each walk's public media and `stages/` (display.mp4,
+poster.jpg, meta.json, stages/*.json, items/**). It leaves out audio.wav and sam*.mp4: about 0.4 MB for
+the synthetic walk, and mostly display.mp4 for real walks. `--import` replaces the demo project.
+
+Recording the real walks: use the demo rooms, because the rooms and their order are part of the prompts:
+`uv run python scripts/record.py --full --rooms Kitchen Bathroom Bedroom Hallway "Living room"`. The seed
+finds the media in `data/record/<walk>/` and the cache entries in `fixtures/cache/`, where record.py
+promotes them. For recordings made with other rooms, put `{"rooms": [...], "keywords": [...]}` in
+`demo/recording.json` or `data/record/recording.json`, or pass `--rooms`.
+
+Locally: `make seed` (= `uv run python scripts/seed.py`), or `uv run python scripts/seed.py --walks synth_walk`.
 
 ## Operations
 
@@ -107,6 +135,7 @@ fly status -a punchwalk                     # machine, health checks
 fly ssh console -a punchwalk                # shell (root; see the seeding note)
 fly ssh sftp get /data/cost_ledger.jsonl -a punchwalk   # live spend ledger
 fly volumes list -a punchwalk
+fly ssh console -a punchwalk -C "chown -R punch:punch /data"   # repair ownership (the entrypoint only fixes 2 levels deep)
 ```
 
 - A restart re-queues interrupted jobs, and the pipeline resumes from the last finished stage.
@@ -115,7 +144,4 @@ fly volumes list -a punchwalk
 
 ## Known gaps
 
-- `/mock-api/...` returns the PWA's `index.html` (200, `text/html`), because the SPA fallback serves every
-  unknown path. No mock data is shipped, and the bundle only calls `/api`. A 404 there needs
-  `"mock-api/"` added to `RESERVED_PREFIXES` in `punchwalk/api/media.py`.
 - Item numbers in the PDF use DejaVu Sans. Archivo isn't embedded in the PDF; the web app self-hosts it.
