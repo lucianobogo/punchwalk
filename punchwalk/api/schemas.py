@@ -177,8 +177,9 @@ class StageProgressOut(Schema):
     duration_ms: int | None
     counts: dict[str, int]
     progress: float | None  # 0..1 for stages with a progress bar, else null
-    detail: str | None  # e.g. "Muse Voice Transcribe found 20 lines"
+    detail: str | None  # e.g. "Muse Voice Transcribe found 20 lines" (= `message` when the runner sent one)
     model_label: str | None  # e.g. "SAM 3.1"; null for in-app stages
+    message: str | None  # the runner's own line for this stage, e.g. "Following your hand (SAM 3.1): 11 points found"
 
 
 class WalkMediaOut(Schema):
@@ -272,7 +273,7 @@ class UploadOut(Schema):
     status: WalkStatus
 
 
-# POST /api/walks/{walk_id}/rewalk-link  (body: link a re-walk to the walk it checks)
+# POST /api/walks/{walk_id}/rewalk-link  (body: link a re-walk to the walk it checks) -> WalkOut
 class RewalkLinkIn(Schema):
     initial_walk_id: str
 
@@ -558,6 +559,7 @@ class DispatchPreviewOut(Schema):
     trade: Trade
     contact: TradeContactOut | None
     channel: Channel  # suggested channel
+    channel_reason: str | None  # why `channel`: "Ace Electric has a Slack channel (#punch-electrical)."
     channels: list[DispatchChannelOut]
     heading: str  # bold first line: "Unit 2B final punch: 2 electrical items"
     lines: list[DispatchLineOut]
@@ -574,6 +576,8 @@ class DispatchCreate(Schema):
 
 
 # Response of POST .../dispatch; rows of GET .../dispatches
+# Also the response of POST /api/items/{item_id}/approve-and-send?channel=  ("Approve and send to
+#   Ace Electric": a needs-a-look item becomes open, logged as a human override, then goes out; 201)
 class DispatchOut(Schema):
     id: str
     project_id: str

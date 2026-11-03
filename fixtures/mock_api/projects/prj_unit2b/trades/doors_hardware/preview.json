@@ -11,6 +11,7 @@
     "has_slack_webhook": false
   },
   "channel": "email",
+  "channel_reason": "Keystone Door & Hardware gets email at lena.brooks@example.com.",
   "channels": [
     {
       "channel": "slack",

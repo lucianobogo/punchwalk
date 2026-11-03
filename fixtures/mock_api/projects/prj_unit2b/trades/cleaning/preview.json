@@ -11,6 +11,7 @@
     "has_slack_webhook": false
   },
   "channel": "email",
+  "channel_reason": "Spotless Final Clean gets email at rosa.alvarez@example.com.",
   "channels": [
     {
       "channel": "slack",

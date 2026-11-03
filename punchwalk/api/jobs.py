@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -27,6 +26,7 @@ from typing import Any
 from sqlalchemy import update
 from sqlmodel import Session, col, select
 
+from punchwalk.config import get_settings
 from punchwalk.core.enums import JobKind, JobStatus, Stage, WalkStatus
 from punchwalk.core.models import Job, Walk, utcnow
 from punchwalk.db import session_factory
@@ -69,7 +69,7 @@ def get_runner() -> Runner:
 
 
 def worker_enabled() -> bool:
-    return os.environ.get("PUNCHWALK_WORKER", "1").strip().lower() not in ("0", "false", "no", "off")
+    return get_settings().PUNCHWALK_WORKER > 0
 
 
 # --------------------------------------------------------------------------- queue

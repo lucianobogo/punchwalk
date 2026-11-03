@@ -27,7 +27,7 @@ IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".webp"})
 WALK_PUBLIC_FILES = frozenset({"display.mp4", "poster.jpg"})
 PRIVATE_SEGMENTS = frozenset({"clips", "stages", "_work", "cache"})
 STATIC_DIR = REPO_ROOT / "punchwalk" / "static"
-RESERVED_PREFIXES = ("api/", "media/", "healthz")
+RESERVED_PREFIXES = ("api/", "media/", "healthz", "mock-api/")  # never the SPA index (mock-api: mock builds only)
 
 mimetypes.add_type("video/mp4", ".mp4")
 mimetypes.add_type("video/quicktime", ".mov")

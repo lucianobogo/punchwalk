@@ -142,6 +142,7 @@ class StageState(_Shape):
     duration_ms: int | None = None
     counts: dict[str, int] = PField(default_factory=dict)  # e.g. {"lines": 20} / {"written": 7, "total": 12}
     error: str | None = None
+    message: str | None = None  # plain line for the checklist ("Following your hand (SAM 3.1): 11 points found")
 
 
 class WalkMediaPaths(_Shape):

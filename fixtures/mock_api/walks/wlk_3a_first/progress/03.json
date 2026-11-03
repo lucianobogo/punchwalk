@@ -19,7 +19,8 @@
       },
       "progress": null,
       "detail": "1 clip, 1 min 18 s",
-      "model_label": null
+      "model_label": null,
+      "message": null
     },
     {
       "stage": "transcribe",
@@ -33,7 +34,8 @@
       },
       "progress": null,
       "detail": "Muse Voice Transcribe found 10 lines",
-      "model_label": "Muse Voice Transcribe"
+      "model_label": "Muse Voice Transcribe",
+      "message": null
     },
     {
       "stage": "classify_turns",
@@ -45,7 +47,8 @@
       "counts": {},
       "progress": 0.69,
       "detail": "Muse Spark Open on Baseten, working",
-      "model_label": "Muse Spark Open on Baseten"
+      "model_label": "Muse Spark Open on Baseten",
+      "message": null
     },
     {
       "stage": "track_hands",
@@ -57,7 +60,8 @@
       "counts": {},
       "progress": null,
       "detail": "SAM 3.1, waiting",
-      "model_label": "SAM 3.1"
+      "model_label": "SAM 3.1",
+      "message": null
     },
     {
       "stage": "find_points",
@@ -69,7 +73,8 @@
       "counts": {},
       "progress": null,
       "detail": null,
-      "model_label": null
+      "model_label": null,
+      "message": null
     },
     {
       "stage": "fuse",
@@ -81,7 +86,8 @@
       "counts": {},
       "progress": null,
       "detail": null,
-      "model_label": null
+      "model_label": null,
+      "message": null
     },
     {
       "stage": "pick_evidence",
@@ -93,7 +99,8 @@
       "counts": {},
       "progress": null,
       "detail": null,
-      "model_label": null
+      "model_label": null,
+      "message": null
     },
     {
       "stage": "write_items",
@@ -105,7 +112,8 @@
       "counts": {},
       "progress": null,
       "detail": "Muse Spark Open on Baseten, waiting",
-      "model_label": "Muse Spark Open on Baseten"
+      "model_label": "Muse Spark Open on Baseten",
+      "message": null
     },
     {
       "stage": "ground_defects",
@@ -117,7 +125,8 @@
       "counts": {},
       "progress": null,
       "detail": "SAM 3.1, waiting",
-      "model_label": "SAM 3.1"
+      "model_label": "SAM 3.1",
+      "message": null
     },
     {
       "stage": "verify",
@@ -129,7 +138,8 @@
       "counts": {},
       "progress": null,
       "detail": "Muse Spark Open on Baseten, waiting",
-      "model_label": "Muse Spark Open on Baseten"
+      "model_label": "Muse Spark Open on Baseten",
+      "message": null
     },
     {
       "stage": "persist",
@@ -141,7 +151,8 @@
       "counts": {},
       "progress": null,
       "detail": null,
-      "model_label": null
+      "model_label": null,
+      "message": null
     }
   ],
   "progress": 0.19,

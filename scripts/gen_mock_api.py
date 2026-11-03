@@ -2493,6 +2493,7 @@ class Gen:
                     progress=prog,
                     detail=detail,
                     model_label=STAGE_MODEL.get(st),
+                    message=None,  # the runner's own line; the API falls back to `detail`
                 )
             )
         return rows
@@ -2680,6 +2681,7 @@ class Gen:
                     progress=None,
                     detail=(f"{STAGE_MODEL[st]}, waiting" if st in STAGE_MODEL else None),
                     model_label=STAGE_MODEL.get(st),
+                    message=None,
                 )
                 for st in order
             ]
@@ -2949,6 +2951,15 @@ class Gen:
             S.DispatchChannelOut(channel=Channel.outbox, available=True, destination="Outbox", reason=None),
         ]
         default = next(ch.channel for ch in channels if ch.available)
+        # Same sentences as punchwalk/dispatch/service.py::why()
+        if default == Channel.slack:
+            channel_reason = f"{company} has a Slack channel ({c.slack_channel})." if c and c.slack_channel else (
+                f"{company} gets the team's Slack channel."
+            )
+        elif default == Channel.email:
+            channel_reason = f"{company} gets email at {c.email}." if c else None
+        else:
+            channel_reason = f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
         base = f"projects/{project_id}/trades/{trade.value}"
         write_json(
             f"{base}/preview.json",
@@ -2957,6 +2968,7 @@ class Gen:
                 trade=trade,
                 contact=self.contact_out(c),
                 channel=default,
+                channel_reason=channel_reason,
                 channels=channels,
                 heading=heading,
                 lines=lines,

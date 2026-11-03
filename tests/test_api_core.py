@@ -144,13 +144,18 @@ def test_demo_mode_upload_rate_limit(api: TestClient, clip_path: Path, monkeypat
     assert body["error"] == "rate_limited" and "3 uploads per hour" in body["detail"]
     assert int(res.headers["retry-after"]) > 0
     files = [("clips", (clip_path.name, clip_path.read_bytes(), "video/mp4"))]
-    # proxy headers are ignored unless we know we're behind that proxy
+    # proxy headers are ignored unless we know we're behind that proxy.
+    # Regression note: TestClient talks to the app in-process, so it can't catch uvicorn's own
+    # `--proxy-headers` rewriting request.client from X-Forwarded-For for loopback peers before
+    # client_ip() runs. The Dockerfile CMD and `make dev` pass --no-proxy-headers for that reason.
     spoof = {"Fly-Client-IP": "203.0.113.9", "X-Forwarded-For": "198.51.100.7"}
     assert api.post(f"/api/projects/{pid}/walks", files=files, headers=spoof).status_code == 429
     monkeypatch.setenv("TRUST_PROXY", "1")
+    reset_settings()
     xff = {"X-Forwarded-For": "198.51.100.7, 10.0.0.1"}
     assert api.post(f"/api/projects/{pid}/walks", files=files, headers=xff).status_code == 201
     monkeypatch.delenv("TRUST_PROXY")
+    reset_settings()
     monkeypatch.setenv("FLY_APP_NAME", "punchwalk")  # on Fly, Fly-Client-IP is set by Fly's edge
     fly = {"Fly-Client-IP": "203.0.113.9"}
     assert api.post(f"/api/projects/{pid}/walks", files=files, headers=fly).status_code == 201
@@ -257,3 +262,4 @@ def test_spa_fallback(api: TestClient, tmp_path: Path, monkeypatch: pytest.Monke
     assert js.status_code == 200 and "immutable" in js.headers["cache-control"]
     assert_readable_error(api.get("/api/unknown"), 404)
     assert_readable_error(api.get("/media/nothing.mp4"), 404)
+    assert_readable_error(api.get("/mock-api/projects.json"), 404)  # never the SPA index

@@ -11,6 +11,7 @@
     "has_slack_webhook": false
   },
   "channel": "email",
+  "channel_reason": "Brightline Painting gets email at tom.reyes@example.com.",
   "channels": [
     {
       "channel": "slack",

@@ -11,6 +11,7 @@
     "has_slack_webhook": false
   },
   "channel": "email",
+  "channel_reason": "Riverside Plumbing gets email at joe.lindqvist@example.com.",
   "channels": [
     {
       "channel": "slack",

@@ -205,8 +205,9 @@ def stage_rows(walk: Walk) -> list[S.StageProgressOut]:
                 duration_ms=state.duration_ms,
                 counts=dict(state.counts or {}),
                 progress=_ratio(state.counts or {}) if running else None,
-                detail=stage_detail(stage, state, walk),
+                detail=state.message or stage_detail(stage, state, walk),
                 model_label=STAGE_MODEL.get(stage),
+                message=state.message,
             )
         )
     return rows

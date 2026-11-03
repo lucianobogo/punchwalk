@@ -15,6 +15,7 @@ from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from punchwalk.api.errors import ApiError, error_body
+from punchwalk.config import get_settings
 
 MiB = 1024 * 1024
 MAX_UPLOAD_BYTES = 400 * MiB  # all clips of one walk together
@@ -91,10 +92,6 @@ async def _send_json(send: Send, status: int, body: dict) -> None:
     await send({"type": "http.response.body", "body": payload})
 
 
-def _env_on(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
-
-
 def client_ip(request: Request) -> str:
     """The client's IP for rate limiting. Proxy headers are only trusted behind a proxy we know:
     Fly-Client-IP when running on Fly (FLY_APP_NAME is set; Fly's edge overwrites the header), and
@@ -103,7 +100,7 @@ def client_ip(request: Request) -> str:
         fly = request.headers.get("fly-client-ip")
         if fly:
             return fly.strip()
-    if _env_on("TRUST_PROXY"):
+    if get_settings().TRUST_PROXY:
         fwd = request.headers.get("x-forwarded-for")
         if fwd:
             return fwd.split(",")[0].strip()

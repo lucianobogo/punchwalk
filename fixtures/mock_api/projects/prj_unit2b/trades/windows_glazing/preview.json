@@ -11,6 +11,7 @@
     "has_slack_webhook": false
   },
   "channel": "outbox",
+  "channel_reason": "No Slack channel or email set up for Clearview Glass, so this goes to the Outbox, ready to share.",
   "channels": [
     {
       "channel": "slack",

@@ -31,7 +31,8 @@
         },
         "progress": null,
         "detail": "1 clip, 1 min 44 s",
-        "model_label": null
+        "model_label": null,
+        "message": null
       },
       {
         "stage": "transcribe",
@@ -45,7 +46,8 @@
         },
         "progress": null,
         "detail": "Muse Voice Transcribe found 17 lines",
-        "model_label": "Muse Voice Transcribe"
+        "model_label": "Muse Voice Transcribe",
+        "message": null
       },
       {
         "stage": "classify_turns",
@@ -59,7 +61,8 @@
         },
         "progress": null,
         "detail": "Muse Spark Open on Baseten sorted 17 lines",
-        "model_label": "Muse Spark Open on Baseten"
+        "model_label": "Muse Spark Open on Baseten",
+        "message": null
       },
       {
         "stage": "track_hands",
@@ -74,7 +77,8 @@
         },
         "progress": null,
         "detail": "10 points found",
-        "model_label": "SAM 3.1"
+        "model_label": "SAM 3.1",
+        "message": null
       },
       {
         "stage": "find_points",
@@ -90,7 +94,8 @@
         },
         "progress": null,
         "detail": "10 places you pointed",
-        "model_label": null
+        "model_label": null,
+        "message": null
       },
       {
         "stage": "fuse",
@@ -104,7 +109,8 @@
         },
         "progress": null,
         "detail": "10 status updates",
-        "model_label": null
+        "model_label": null,
+        "message": null
       },
       {
         "stage": "pick_evidence",
@@ -118,7 +124,8 @@
         },
         "progress": null,
         "detail": "10 photos picked",
-        "model_label": null
+        "model_label": null,
+        "message": null
       },
       {
         "stage": "resolve_closures",
@@ -134,7 +141,8 @@
         },
         "progress": null,
         "detail": "6 signed off, 3 still open, 1 needs a look",
-        "model_label": "Muse Spark Open on Baseten"
+        "model_label": "Muse Spark Open on Baseten",
+        "message": null
       },
       {
         "stage": "persist",
@@ -146,7 +154,8 @@
         "counts": {},
         "progress": null,
         "detail": "Saved",
-        "model_label": null
+        "model_label": null,
+        "message": null
       }
     ],
     "media": {

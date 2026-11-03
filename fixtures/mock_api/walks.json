@@ -32,7 +32,8 @@
           },
           "progress": null,
           "detail": "1 clip, 1 min 18 s",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "transcribe",
@@ -46,7 +47,8 @@
           },
           "progress": null,
           "detail": "Muse Voice Transcribe found 10 lines",
-          "model_label": "Muse Voice Transcribe"
+          "model_label": "Muse Voice Transcribe",
+          "message": null
         },
         {
           "stage": "classify_turns",
@@ -60,7 +62,8 @@
           },
           "progress": null,
           "detail": "Muse Spark Open on Baseten sorted 10 lines",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "track_hands",
@@ -75,7 +78,8 @@
           },
           "progress": null,
           "detail": "4 points found",
-          "model_label": "SAM 3.1"
+          "model_label": "SAM 3.1",
+          "message": null
         },
         {
           "stage": "find_points",
@@ -91,7 +95,8 @@
           },
           "progress": null,
           "detail": "4 places you pointed",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "fuse",
@@ -107,7 +112,8 @@
           },
           "progress": null,
           "detail": "4 matched to where you pointed",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "pick_evidence",
@@ -121,7 +127,8 @@
           },
           "progress": null,
           "detail": "4 photos picked",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "write_items",
@@ -136,7 +143,8 @@
           },
           "progress": 0.5,
           "detail": "Muse Spark Open on Baseten, 2 of 4 written",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "ground_defects",
@@ -148,7 +156,8 @@
           "counts": {},
           "progress": null,
           "detail": "SAM 3.1, waiting",
-          "model_label": "SAM 3.1"
+          "model_label": "SAM 3.1",
+          "message": null
         },
         {
           "stage": "verify",
@@ -160,7 +169,8 @@
           "counts": {},
           "progress": null,
           "detail": "Muse Spark Open on Baseten, waiting",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "persist",
@@ -172,7 +182,8 @@
           "counts": {},
           "progress": null,
           "detail": null,
-          "model_label": null
+          "model_label": null,
+          "message": null
         }
       ],
       "media": {
@@ -228,7 +239,8 @@
           },
           "progress": null,
           "detail": "1 clip, 1 min 44 s",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "transcribe",
@@ -242,7 +254,8 @@
           },
           "progress": null,
           "detail": "Muse Voice Transcribe found 17 lines",
-          "model_label": "Muse Voice Transcribe"
+          "model_label": "Muse Voice Transcribe",
+          "message": null
         },
         {
           "stage": "classify_turns",
@@ -256,7 +269,8 @@
           },
           "progress": null,
           "detail": "Muse Spark Open on Baseten sorted 17 lines",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "track_hands",
@@ -271,7 +285,8 @@
           },
           "progress": null,
           "detail": "10 points found",
-          "model_label": "SAM 3.1"
+          "model_label": "SAM 3.1",
+          "message": null
         },
         {
           "stage": "find_points",
@@ -287,7 +302,8 @@
           },
           "progress": null,
           "detail": "10 places you pointed",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "fuse",
@@ -301,7 +317,8 @@
           },
           "progress": null,
           "detail": "10 status updates",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "pick_evidence",
@@ -315,7 +332,8 @@
           },
           "progress": null,
           "detail": "10 photos picked",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "resolve_closures",
@@ -331,7 +349,8 @@
           },
           "progress": null,
           "detail": "6 signed off, 3 still open, 1 needs a look",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "persist",
@@ -343,7 +362,8 @@
           "counts": {},
           "progress": null,
           "detail": "Saved",
-          "model_label": null
+          "model_label": null,
+          "message": null
         }
       ],
       "media": {
@@ -405,7 +425,8 @@
           },
           "progress": null,
           "detail": "2 clips, 2 min 34 s",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "transcribe",
@@ -419,7 +440,8 @@
           },
           "progress": null,
           "detail": "Muse Voice Transcribe found 21 lines",
-          "model_label": "Muse Voice Transcribe"
+          "model_label": "Muse Voice Transcribe",
+          "message": null
         },
         {
           "stage": "classify_turns",
@@ -433,7 +455,8 @@
           },
           "progress": null,
           "detail": "Muse Spark Open on Baseten sorted 21 lines",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "track_hands",
@@ -448,7 +471,8 @@
           },
           "progress": null,
           "detail": "11 points found",
-          "model_label": "SAM 3.1"
+          "model_label": "SAM 3.1",
+          "message": null
         },
         {
           "stage": "find_points",
@@ -464,7 +488,8 @@
           },
           "progress": null,
           "detail": "11 places you pointed, 1 described without pointing",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "fuse",
@@ -480,7 +505,8 @@
           },
           "progress": null,
           "detail": "11 matched to where you pointed, 1 described without pointing",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "pick_evidence",
@@ -494,7 +520,8 @@
           },
           "progress": null,
           "detail": "12 photos picked",
-          "model_label": null
+          "model_label": null,
+          "message": null
         },
         {
           "stage": "write_items",
@@ -509,7 +536,8 @@
           },
           "progress": null,
           "detail": "Muse Spark Open on Baseten wrote 12 items",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "ground_defects",
@@ -523,7 +551,8 @@
           },
           "progress": null,
           "detail": "SAM 3.1 outlined 9 defects",
-          "model_label": "SAM 3.1"
+          "model_label": "SAM 3.1",
+          "message": null
         },
         {
           "stage": "verify",
@@ -539,7 +568,8 @@
           },
           "progress": null,
           "detail": "11 match the photo and what was said, 1 needs a look",
-          "model_label": "Muse Spark Open on Baseten"
+          "model_label": "Muse Spark Open on Baseten",
+          "message": null
         },
         {
           "stage": "persist",
@@ -551,7 +581,8 @@
           "counts": {},
           "progress": null,
           "detail": "Saved",
-          "model_label": null
+          "model_label": null,
+          "message": null
         }
       ],
       "media": {

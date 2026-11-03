@@ -55,9 +55,9 @@ export type StageStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
 export type Stage =
   | 'ingest'
   | 'transcribe'
+  | 'classify_turns'
   | 'track_hands'
   | 'find_points'
-  | 'classify_turns'
   | 'fuse'
   | 'pick_evidence'
   | 'write_items'
@@ -298,6 +298,7 @@ export interface StageProgressOut {
   progress: number | null;
   detail: string | null;
   model_label: string | null;
+  message: string | null;
 }
 
 export interface WalkMediaOut {
@@ -389,7 +390,7 @@ export interface UploadOut {
   status: WalkStatus;
 }
 
-/** POST /api/walks/{walk_id}/rewalk-link (body) */
+/** POST /api/walks/{walk_id}/rewalk-link (body) -> WalkOut */
 export interface RewalkLinkIn {
   initial_walk_id: string;
 }
@@ -670,6 +671,7 @@ export interface DispatchPreviewOut {
   trade: Trade;
   contact: TradeContactOut | null;
   channel: Channel;
+  channel_reason: string | null;
   channels: DispatchChannelOut[];
   heading: string;
   lines: DispatchLineOut[];
@@ -685,7 +687,7 @@ export interface DispatchCreate {
   item_ids: string[];
 }
 
-/** Response of POST .../dispatch; rows of GET .../dispatches */
+/** Response of POST .../dispatch and of POST /api/items/{item_id}/approve-and-send?channel=; rows of GET .../dispatches */
 export interface DispatchOut {
   id: string;
   project_id: string;

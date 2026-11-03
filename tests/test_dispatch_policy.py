@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import select
 
 from punchwalk.api import jobs
+from punchwalk.config import reset_settings
 from punchwalk.core.enums import ClosureDecision, ItemStatus, WalkKind
 from punchwalk.core.models import Closure, Dispatch, Item
 from punchwalk.db import session_factory
@@ -25,8 +26,8 @@ clip_path = support.clip_path
 
 @pytest.fixture(autouse=True)
 def _auto_send_on(monkeypatch: pytest.MonkeyPatch, api: TestClient) -> None:
-    clear_channel_env(monkeypatch)
     monkeypatch.setenv("AUTO_SEND", "1")
+    clear_channel_env(monkeypatch)  # also resets Settings
 
 
 def run_policy(walk_id: str):
@@ -59,7 +60,9 @@ def test_verified_items_go_out_and_needs_a_look_items_wait(api: TestClient) -> N
     assert item_row(ids[1]).history[-1]["note"] == (
         "Sent automatically to Ace Electric in Slack (#punch-electrical): checked against the photo and the quote."
     )
-    assert item_row(ids[0]).history[-1]["note"].startswith("Sent automatically to Oakline Millwork to the outbox")
+    assert item_row(ids[0]).history[-1]["note"] == (
+        "Put in the Outbox for Oakline Millwork automatically: checked against the photo and the quote."
+    )
     held = item_row(ids[3])
     assert held.status == ItemStatus.needs_review
     assert held.history[-1]["note"] == "Held for a look: The frame doesn't show the defect described."
@@ -109,8 +112,10 @@ def test_auto_send_off_and_rewalks_skip(api: TestClient, monkeypatch: pytest.Mon
     pid = make_project(api, webhook=None)["id"]
     walk_id, ids = seed_walk(pid)
     monkeypatch.setenv("AUTO_SEND", "0")
+    reset_settings()
     assert run_policy(walk_id).sent == {}
     monkeypatch.setenv("AUTO_SEND", "1")
+    reset_settings()
     rewalk_id, _ = seed_walk_rewalk(pid)
     assert run_policy(rewalk_id).sent == {}
     assert item_row(ids[0]).status == ItemStatus.open
@@ -133,7 +138,7 @@ def test_job_worker_auto_sends_after_a_first_walk(api: TestClient, clip_path: Pa
     items = api.get(f"/api/projects/{pid}/items").json()["items"]
     (item,) = items
     assert item["status"] == "dispatched"  # the fake runner's item passed its self-check
-    assert item["history"][-1]["note"].startswith("Sent automatically to Oakline Millwork to the outbox")
+    assert item["history"][-1]["note"].startswith("Put in the Outbox for Oakline Millwork automatically")
     assert item["dispatch"]["channel"] == "outbox"
     assert api.get(f"/api/walks/{up['walk_id']}/progress").json()["status"] == "done"
 

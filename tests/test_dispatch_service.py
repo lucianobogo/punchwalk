@@ -51,6 +51,7 @@ def test_preview_lists_open_items_safety_first_and_suggests_slack(api: TestClien
     # open #2 and #3 (needs-a-look #4 waits, signed-off #6 is done); safety first
     assert [ln.number for ln in p.lines] == [3, 2]
     assert p.channel == "slack" and p.heading == "Unit 2B final punch: 2 electrical items" == p.subject
+    assert p.channel_reason == "Ace Electric has a Slack channel (#punch-electrical)."
     assert [(c.channel, c.available, c.destination) for c in p.channels] == [
         ("slack", True, "#punch-electrical"),
         ("email", False, "maria.chen@example.com"),
@@ -78,6 +79,7 @@ def test_channel_policy(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> Non
     seed_walk(pid)
     p = preview(api, pid, "electrical")
     assert p.channel == "outbox" and p.channels[0].reason == "No Slack channel set up for Ace Electric."
+    assert p.channel_reason == "No Slack channel or email set up for Ace Electric, so this goes to the Outbox, ready to share."
     glass = preview(api, pid, "windows_glazing")
     assert glass.channels[1].reason == "No email on file for Clearview Glass." and glass.channel == "outbox"
     # the server-wide webhook is the fallback for every trade
@@ -85,6 +87,7 @@ def test_channel_policy(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> Non
     reset_settings()
     glass = preview(api, pid, "windows_glazing")
     assert glass.channel == "slack" and glass.channels[0].destination == "Slack"
+    assert glass.channel_reason == "Clearview Glass gets the team's Slack channel."
     # email becomes the pick when Resend is configured and Slack isn't
     monkeypatch.setenv("SLACK_WEBHOOK_URL", "")
     monkeypatch.setenv("RESEND_API_KEY", "re_test")
@@ -132,7 +135,8 @@ def test_send_over_slack_marks_items_and_logs_history(api: TestClient, public_ba
     again = api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "outbox", "item_ids": [ids[1]]})
     assert again.status_code == 201
     got = check(S.ItemOut, api.get(f"/api/items/{ids[1]}").json())
-    assert got.history[-1].note == "Sent again to Ace Electric from the outbox." and got.dispatch.times_sent == 2
+    assert got.history[-1].note == "Put in the Outbox again for Ace Electric, ready to share."
+    assert got.dispatch and got.dispatch.times_sent == 2
     hist = check(S.DispatchListOut, api.get(f"/api/projects/{pid}/trades/electrical/dispatches").json())
     assert [d.channel for d in hist.dispatches] == ["outbox", "slack"]
     trades = check(S.TradeListOut, api.get(f"/api/projects/{pid}/trades").json())
@@ -182,7 +186,7 @@ def test_outbox_send_and_refusals(api: TestClient) -> None:
     out = check(S.DispatchOut, api.post(url, json={"channel": "outbox", "item_ids": [ids[2]]}).json())
     assert out.channel == "outbox" and out.destination == "Outbox"
     assert set(out.payload) == {"subject", "text", "links"} and out.payload["links"][0].startswith("http://localhost")
-    assert item_row(ids[2]).history[-1]["note"] == "Sent to Ace Electric from the outbox."
+    assert item_row(ids[2]).history[-1]["note"] == "Put in the Outbox for Ace Electric, ready to share."
 
     def refused(body: dict, status: int, phrase: str) -> None:
         res = api.post(url, json=body)
@@ -262,3 +266,38 @@ def test_approve_and_send(api: TestClient) -> None:
     ]
     assert item.history[-2].note == "Approved by the project manager."
     assert api.post(f"/api/items/{ids[5]}/approve-and-send").status_code == 409  # signed off
+
+
+@respx.mock
+def test_global_webhook_history_has_no_empty_channel_name(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    respx.post(WEBHOOK).mock(return_value=httpx.Response(200, text="ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", WEBHOOK)
+    reset_settings()
+    pid = make_project(api, webhook=None)["id"]
+    _, ids = seed_walk(pid)
+    res = api.post(f"/api/projects/{pid}/trades/windows_glazing/dispatch", json={"channel": "slack", "item_ids": [ids[4]]})
+    assert res.status_code == 201, res.text
+    assert item_row(ids[4]).history[-1]["note"] == "Sent to Clearview Glass in Slack."
+
+
+@respx.mock
+def test_failed_approve_and_send_keeps_the_item_waiting(api: TestClient) -> None:
+    respx.post(WEBHOOK).mock(return_value=httpx.Response(404, text="no_service"))
+    pid = make_project(api)["id"]
+    _, ids = seed_walk(pid)
+    before = item_row(ids[3])
+    res = api.post(f"/api/items/{ids[3]}/approve-and-send?channel=slack")
+    assert res.status_code == 502 and "Nothing was marked as sent" in res.json()["detail"]
+    after = item_row(ids[3])
+    assert after.status == "needs_review" and after.review_reason == before.review_reason
+    assert after.history == before.history  # the approval was rolled back
+
+
+def test_example_domain_webhooks_are_never_contacted(api: TestClient) -> None:
+    pid = make_project(api, webhook="https://hooks.slack.example.com/services/T000DEMO/B000DEMO/demo")["id"]
+    _, ids = seed_walk(pid)
+    with respx.mock(assert_all_called=False) as mock:  # any real request would raise here
+        res = api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "slack", "item_ids": [ids[1]]})
+        assert not mock.calls
+    assert res.status_code == 201 and res.json()["destination"] == "#punch-electrical"
+    assert item_row(ids[1]).status == "dispatched"

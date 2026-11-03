@@ -11,6 +11,7 @@
     "has_slack_webhook": true
   },
   "channel": "slack",
+  "channel_reason": "Ace Electric has a Slack channel (#punch-electrical).",
   "channels": [
     {
       "channel": "slack",

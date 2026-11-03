@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     DATA_DIR: Path = REPO_ROOT / "data"
     APP_BASE_URL: str = "http://localhost:8000"
     DEMO_MODE: bool = False
+    AUTO_SEND: bool = True  # send verified items after a first walk is processed (PLAN 6.2)
+    TRUST_PROXY: bool = False  # trust X-Forwarded-For for the client IP (only behind a known proxy)
+    PUNCHWALK_WORKER: int = Field(default=1, ge=0)  # 0 = no in-process job worker (tests drive jobs)
 
     # Cache
     PUNCHWALK_CACHE: Literal["readwrite", "readonly", "off"] = "readwrite"
