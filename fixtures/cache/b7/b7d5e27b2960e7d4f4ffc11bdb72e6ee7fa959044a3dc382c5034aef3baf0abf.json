@@ -1,0 +1,54 @@
+{
+ "key": "b7d5e27b2960e7d4f4ffc11bdb72e6ee7fa959044a3dc382c5034aef3baf0abf",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:44+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-3785c685e19940acbab3150a694b68ed",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 7, \"claimed\": \"fixed\", \"confidence\": 0.99, \"rationale\": \"Inspector in Bathroom says cabinet doorknob is fixed and finger points to right cabinet door knob now present, matching item 7.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749001,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 284,
+   "prompt_tokens": 3187,
+   "total_tokens": 3471,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 192,
+    "audio_tokens": 0,
+    "reasoning_tokens": 221,
+    "rejected_prediction_tokens": 452,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

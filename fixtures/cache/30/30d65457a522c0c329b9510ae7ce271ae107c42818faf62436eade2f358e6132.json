@@ -1,0 +1,54 @@
+{
+ "key": "30d65457a522c0c329b9510ae7ce271ae107c42818faf62436eade2f358e6132",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:41+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-00301c9156b346649999dbda68315f2d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 6, \"claimed\": \"fixed\", \"confidence\": 0.96, \"rationale\": \"Speech names toothpaste smudge in Bathroom and finger points at bathroom mirror above sink, matching item 6.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748998,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 160,
+   "prompt_tokens": 3188,
+   "total_tokens": 3348,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 106,
+    "audio_tokens": 0,
+    "reasoning_tokens": 101,
+    "rejected_prediction_tokens": 272,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

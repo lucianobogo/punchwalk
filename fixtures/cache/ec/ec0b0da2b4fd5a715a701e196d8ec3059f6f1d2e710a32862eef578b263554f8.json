@@ -1,0 +1,54 @@
+{
+ "key": "ec0b0da2b4fd5a715a701e196d8ec3059f6f1d2e710a32862eef578b263554f8",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:37:39+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-679d347f9aae4dafad05da64a6a40be3",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\":\"no\",\"note\":\"Ceiling mount now has white detector installed where wires were exposed.\",\"rationale\":\"First-walk showed empty base with hanging wire. Re-walk wide photo shows white smoke/fire alarm on ceiling at same area - defect is fixed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749054,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 535,
+   "prompt_tokens": 5315,
+   "total_tokens": 5850,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 339,
+    "audio_tokens": 0,
+    "reasoning_tokens": 467,
+    "rejected_prediction_tokens": 1026,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

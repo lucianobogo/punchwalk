@@ -1,0 +1,52 @@
+{
+ "key": "7248ab042889fb7230de70375a7058f9a79ce129fd8ea457532d48e6b4d5d479",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'toothpaste smear on mirror' on image raw.jpg",
+ "created_at": "2026-11-03T23:25:46+00:00",
+ "meta": {
+  "media_size": [
+   1080,
+   1436
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "toothpaste smear on mirror",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "cd5c8136d6f4af4a5b01c2a38362a1b8c5bcde3b0ca4d275f0c3cd183fefb7ab"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

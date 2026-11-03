@@ -1,0 +1,54 @@
+{
+ "key": "949ca8fb89ccc5d87dcbe79792f47963a73b248a6d3a33dfed67303021278e75",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:25:08+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-61fbe89ea1444f99b51bd93b0fe0784d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Wall pencil marks and screws above TV need repaint\",\"description\":\"Wall above the TV has pencil marks and exposed screws that need patching and repainting. The marks and fasteners are on the wall surface in the living room.\",\"action\":\"Remove screws, patch holes, erase marks and repaint wall\",\"trade\":\"painting\",\"room\":\"Living room\",\"location_detail\":\"wall above TV\",\"severity\":\"cosmetic\",\"sam_concept\":\"wall surface\",\"defect_box\":[638,902,727,981],\"confidence\":0.88,\"rationale\":\"Narration says wall has pencil marks/screws needing repaint, and photos show marked wall with protruding fasteners near blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748303,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 323,
+   "prompt_tokens": 8907,
+   "total_tokens": 9230,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 203,
+    "audio_tokens": 0,
+    "reasoning_tokens": 173,
+    "rejected_prediction_tokens": 644,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

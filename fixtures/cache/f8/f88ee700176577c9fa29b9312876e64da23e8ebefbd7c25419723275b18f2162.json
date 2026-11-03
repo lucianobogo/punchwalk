@@ -1,0 +1,54 @@
+{
+ "key": "f88ee700176577c9fa29b9312876e64da23e8ebefbd7c25419723275b18f2162",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:26:16+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-013c09defcb74528834c16cf467064f8",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true,\"frame_shows_defect\": false,\"issues\": [\"Photo is overexposed and the outlined area on the white counter appears clean with no light brown coffee stains visible\"],\"suggested_fix\": \"Retake photo with correct exposure/close-up to clearly show the brown staining, or soften description to match what is visible\",\"rationale\": \"Item matches inspector's words about coffee stains on right side but the evidence photo does not show brown stains in the highlighted area.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748368,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1075,
+   "prompt_tokens": 2933,
+   "total_tokens": 4008,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 705,
+    "audio_tokens": 0,
+    "reasoning_tokens": 966,
+    "rejected_prediction_tokens": 1885,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

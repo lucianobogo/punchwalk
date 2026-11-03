@@ -1,0 +1,54 @@
+{
+ "key": "0ed3790e730fbe317ee40d42dd770520e3eff0518033e808babe9f493fafb318",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:24:39+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-7d508fcd63684eee9010980a49fcc411",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Light switch cover missing screw\",\"description\": \"The wall switch plate above the kitchen counter is missing a mounting screw.\",\"action\": \"Install matching cover plate screw and secure plate\",\"trade\": \"electrical\",\"room\": \"Kitchen\",\"location_detail\": \"on wall above countertop near corner\",\"severity\": \"cosmetic\",\"sam_concept\": \"light switch cover plate\",\"defect_box\": [471, 565, 498, 636],\"confidence\": 0.62,\"rationale\": \"Narration reports missing screw on light switch and Photo 1 shows wall switch plate above kitchen counter with indistinct screw detail, consistent with defect\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748275,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 438,
+   "prompt_tokens": 6844,
+   "total_tokens": 7282,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 287,
+    "audio_tokens": 0,
+    "reasoning_tokens": 294,
+    "rejected_prediction_tokens": 777,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,53 @@
+{
+ "key": "7a1dfb08ed8d63c151513abe811da81016f77ca10f9f852579ab5c0acff65cc5",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'light switch cover plate' on image raw.jpg",
+ "created_at": "2026-11-03T23:25:45+00:00",
+ "meta": {
+  "media_size": [
+   1080,
+   1436
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "light switch cover plate",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "5c7aba395708577d4fc4b57c7466c6416efee3321afa5c88e6756005761214ae"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

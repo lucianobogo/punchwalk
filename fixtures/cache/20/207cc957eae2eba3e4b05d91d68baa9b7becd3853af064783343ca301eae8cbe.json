@@ -1,0 +1,54 @@
+{
+ "key": "207cc957eae2eba3e4b05d91d68baa9b7becd3853af064783343ca301eae8cbe",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:50+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-078788c7588e497b8a8136729db88bae",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 8, \"claimed\": \"fixed\", \"confidence\": 0.9, \"rationale\": \"Words describe living room fire alarm now fixed which matches item 8, and photo shows smoke alarm installed on ceiling center.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749004,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1078,
+   "prompt_tokens": 3187,
+   "total_tokens": 4265,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 700,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1017,
+    "rejected_prediction_tokens": 1946,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "553a6137c72755b2b12edc8b74326cc213afbb1aad59cc98b47a91e29630a31c",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:24:18+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-d8b3026d3cb743daac4787926e776d7a",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Coffee stains on right side of countertop\",\"description\":\"The white countertop on the right side has light brown coffee stains near the coffee machine.\",\"action\":\"Clean countertop to remove all coffee stains\",\"trade\":\"cleaning\",\"room\":\"Kitchen\",\"location_detail\":\"right side of countertop near coffee machine\",\"severity\":\"cosmetic\",\"sam_concept\":\"countertop stain\",\"defect_box\":[545,1065,680,1145],\"confidence\":0.93,\"rationale\":\"Inspector notes coffee stains on right counter; photo shows brown ring stains at the pointed location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748252,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 382,
+   "prompt_tokens": 8900,
+   "total_tokens": 9282,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 255,
+    "audio_tokens": 0,
+    "reasoning_tokens": 253,
+    "rejected_prediction_tokens": 641,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 128,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

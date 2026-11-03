@@ -1,0 +1,54 @@
+{
+ "key": "11a4fe856da13204f5bea3d8378af9229b5be7caf0275bca94f37dff35f1a15b",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:28:02+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-9aa31defa1a94017a7535d264c34a0de",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Mold in washing machine detergent compartment\",\"description\": \"The detergent dispenser compartment of the washing machine has mold growth inside.\",\"action\": \"Thoroughly clean and disinfect detergent compartment to remove mold\",\"trade\": \"cleaning\",\"room\": null,\"location_detail\": \"washing machine detergent dispenser drawer\",\"severity\": \"safety\",\"sam_concept\": \"washing machine detergent dispenser\",\"defect_box\": [430, 645, 670, 830],\"confidence\": 0.62,\"rationale\": \"Narration reports mold in detergent compartment and photo shows dispenser drawer with discoloration near finger point\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748476,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 727,
+   "prompt_tokens": 8900,
+   "total_tokens": 9627,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 462,
+    "audio_tokens": 0,
+    "reasoning_tokens": 585,
+    "rejected_prediction_tokens": 1393,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "d68e6e7d999db64f45c188bd03a1941ffaa8d1de2b147011f8ebbd08c9a653da",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:37:34+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-3d8e5b3f5030418fb6e6ff151f54b4d3",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Right door knob is now present - both doors show silver knobs in photo 2, defect fixed.\", \"rationale\": \"Photo 1 small outline on right door showed empty surface where knob missing, with existing knob on left for reference. Photo 2 both doors now have knobs installed lower on door, empty outline area is now just wood but hardware is present and complete.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749050,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1116,
+   "prompt_tokens": 1215,
+   "total_tokens": 2331,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 777,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1014,
+    "rejected_prediction_tokens": 1596,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

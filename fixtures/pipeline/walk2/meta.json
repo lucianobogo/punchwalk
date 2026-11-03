@@ -1,0 +1,174 @@
+{
+  "version": 3,
+  "duration_s": 80.6,
+  "display": {
+    "path": "display.mp4",
+    "width": 1080,
+    "height": 1436,
+    "fps": 30,
+    "frame_count": 2418
+  },
+  "sam": {
+    "path": "sam.mp4",
+    "width": 720,
+    "height": 958,
+    "fps": 10,
+    "frame_count": 806
+  },
+  "audio": {
+    "path": "audio.wav",
+    "sample_rate": 16000,
+    "channels": 1,
+    "codec": "pcm_s16le"
+  },
+  "orientation": "portrait",
+  "scale": {
+    "sam_to_display_x": 1.5,
+    "sam_to_display_y": 1.498956
+  },
+  "clips": [
+    {
+      "order": 0,
+      "filename": "walk2_a.MOV",
+      "duration_s": 27.8,
+      "offset_s": 0.0,
+      "sam_frame_offset": 0,
+      "sam_frame_count": 278,
+      "sam_part_path": "sam_part_0.mp4",
+      "display_frame_offset": 0,
+      "display_frame_count": 834,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1552,
+        "height": 2064,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 30.005,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 48467859
+      }
+    },
+    {
+      "order": 1,
+      "filename": "walk2_b.MOV",
+      "duration_s": 11.9,
+      "offset_s": 27.8,
+      "sam_frame_offset": 278,
+      "sam_frame_count": 119,
+      "sam_part_path": "sam_part_1.mp4",
+      "display_frame_offset": 834,
+      "display_frame_count": 357,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1456,
+        "height": 1952,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 30.004,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 22418317
+      }
+    },
+    {
+      "order": 2,
+      "filename": "walk2_c.MOV",
+      "duration_s": 20.8,
+      "offset_s": 39.7,
+      "sam_frame_offset": 397,
+      "sam_frame_count": 208,
+      "sam_part_path": "sam_part_2.mp4",
+      "display_frame_offset": 1191,
+      "display_frame_count": 624,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1520,
+        "height": 2032,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 29.993,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 37692046
+      }
+    },
+    {
+      "order": 3,
+      "filename": "walk2_d.MOV",
+      "duration_s": 7.5,
+      "offset_s": 60.5,
+      "sam_frame_offset": 605,
+      "sam_frame_count": 75,
+      "sam_part_path": "sam_part_3.mp4",
+      "display_frame_offset": 1815,
+      "display_frame_count": 225,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1504,
+        "height": 2000,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 29.973,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 9427882
+      }
+    },
+    {
+      "order": 4,
+      "filename": "walk2_e.MOV",
+      "duration_s": 12.6,
+      "offset_s": 68.0,
+      "sam_frame_offset": 680,
+      "sam_frame_count": 126,
+      "sam_part_path": "sam_part_4.mp4",
+      "display_frame_offset": 2040,
+      "display_frame_count": 378,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1376,
+        "height": 1824,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 30.004,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 18601205
+      }
+    }
+  ],
+  "hdr_detected": true,
+  "hdr_tonemapped": true,
+  "hdr_method": "swscale",
+  "canvas_policy": "portrait_if_any_fit_pad",
+  "warnings": [],
+  "input_fingerprint": "15b46d2a2167ee3d2081644d42bd1d079559640cd8bd27c25af69cd287bf5cf7",
+  "tools": {
+    "ffmpeg": "ffmpeg version 9.0.2",
+    "ffprobe": "ffprobe version 9.0.2"
+  },
+  "timings_s": {
+    "normalize_0": 13.404,
+    "normalize_1": 5.696,
+    "normalize_2": 11.215,
+    "normalize_3": 4.148,
+    "normalize_4": 11.1,
+    "concat": 23.167,
+    "sam": 4.516,
+    "audio": 0.266,
+    "sam_parts": 4.378,
+    "total": 78.325
+  },
+  "created_at": "2026-11-03T23:08:29.998257Z"
+}

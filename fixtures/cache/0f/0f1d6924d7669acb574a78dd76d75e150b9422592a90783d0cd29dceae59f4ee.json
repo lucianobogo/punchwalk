@@ -1,0 +1,53 @@
+{
+ "key": "0f1d6924d7669acb574a78dd76d75e150b9422592a90783d0cd29dceae59f4ee",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'index finger' on image hand_frame_00079.jpg",
+ "created_at": "2026-11-03T23:20:27+00:00",
+ "meta": {
+  "media_size": [
+   720,
+   958
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "index finger",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "8e1992e2b144138cd7513f6f69a80e6d9041a319018d1bb7762aaedb16cdad92"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

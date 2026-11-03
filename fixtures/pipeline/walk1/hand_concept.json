@@ -1,0 +1,45 @@
+{
+ "frames": [
+  79,
+  150,
+  735
+ ],
+ "ranking": [
+  {
+   "phrase": "hand",
+   "per_frame_max_conf": [
+    0.9452,
+    0.9259,
+    0.8904
+   ],
+   "frames_detected": 3,
+   "mean_conf": 0.9205,
+   "score": 2.7615
+  },
+  {
+   "phrase": "index finger",
+   "per_frame_max_conf": [
+    0.8161,
+    0.8788,
+    0.5705
+   ],
+   "frames_detected": 3,
+   "mean_conf": 0.7551,
+   "score": 2.2653
+  },
+  {
+   "phrase": "pointing hand",
+   "per_frame_max_conf": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "frames_detected": 0,
+   "mean_conf": 0.0,
+   "score": 0.0
+  }
+ ],
+ "current_default": "hand",
+ "note": "frames chosen from the current concept's track; scores = mean max-confidence x frames detected",
+ "cost_usd": 0.0225
+}

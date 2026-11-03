@@ -1,0 +1,54 @@
+{
+ "key": "37cb281303d3b27c141285f885b5096098f73b0a89f01af41fe45ddff0e0f1b6",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:37:43+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-0218229bf18142ba863477a62c19beaf",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"Black gap where screen meets frame is still visible under the pink outline in photo 2, screen not seated properly.\", \"rationale\": \"Inside the outline photo 1 shows a gap/misalignment at the screen edge. Photo 2 shows the same dark gap under the outline, not a clean repaired frame.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749059,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 689,
+   "prompt_tokens": 2612,
+   "total_tokens": 3301,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 431,
+    "audio_tokens": 0,
+    "reasoning_tokens": 601,
+    "rejected_prediction_tokens": 1375,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

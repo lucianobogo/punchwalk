@@ -1,0 +1,72 @@
+{
+  "version": 3,
+  "duration_s": 15.8,
+  "display": {
+    "path": "display.mp4",
+    "width": 1080,
+    "height": 1436,
+    "fps": 30,
+    "frame_count": 474
+  },
+  "sam": {
+    "path": "sam.mp4",
+    "width": 720,
+    "height": 958,
+    "fps": 10,
+    "frame_count": 158
+  },
+  "audio": {
+    "path": "audio.wav",
+    "sample_rate": 16000,
+    "channels": 1,
+    "codec": "pcm_s16le"
+  },
+  "orientation": "portrait",
+  "scale": {
+    "sam_to_display_x": 1.5,
+    "sam_to_display_y": 1.498956
+  },
+  "clips": [
+    {
+      "order": 0,
+      "filename": "walk3.MOV",
+      "duration_s": 15.8,
+      "offset_s": 0.0,
+      "sam_frame_offset": 0,
+      "sam_frame_count": 158,
+      "sam_part_path": "sam.mp4",
+      "display_frame_offset": 0,
+      "display_frame_count": 474,
+      "padded": false,
+      "source": {
+        "codec": "hevc",
+        "width": 1552,
+        "height": 2064,
+        "rotation": 0,
+        "hdr": true,
+        "has_audio": true,
+        "fps": 30.022,
+        "color_transfer": "arib-std-b67",
+        "color_primaries": "bt2020",
+        "size_bytes": 30000562
+      }
+    }
+  ],
+  "hdr_detected": true,
+  "hdr_tonemapped": true,
+  "hdr_method": "swscale",
+  "canvas_policy": "portrait_if_any_fit_pad",
+  "warnings": [],
+  "input_fingerprint": "2e4f886d90258aa697a8904c4fd730e221890527fbe689ccce5338722eb29f69",
+  "tools": {
+    "ffmpeg": "ffmpeg version 9.0.2",
+    "ffprobe": "ffprobe version 9.0.2"
+  },
+  "timings_s": {
+    "normalize_0": 6.259,
+    "sam": 0.838,
+    "audio": 0.049,
+    "total": 7.281
+  },
+  "created_at": "2026-11-03T23:08:37.279709Z"
+}

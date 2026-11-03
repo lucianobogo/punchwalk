@@ -1,0 +1,54 @@
+{
+ "key": "84d32b892a08cdb575a64f42a346dd7b155c1e4b9941afcd288ac6d551dc9f2f",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:27:00+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b5cbb0955d3e45f496f5fe0f1df6a027",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true, \"frame_shows_defect\": true, \"issues\": [], \"suggested_fix\": null, \"rationale\": \"Photo shows left door knob present (red outline) and right door with no knob where finger points, matching 'knob missing on cabinet'.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748414,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1057,
+   "prompt_tokens": 2942,
+   "total_tokens": 3999,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 698,
+    "audio_tokens": 0,
+    "reasoning_tokens": 987,
+    "rejected_prediction_tokens": 1815,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

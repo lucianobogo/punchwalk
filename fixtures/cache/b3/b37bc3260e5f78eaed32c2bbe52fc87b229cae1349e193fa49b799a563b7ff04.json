@@ -1,0 +1,28 @@
+{
+ "key": "b37bc3260e5f78eaed32c2bbe52fc87b229cae1349e193fa49b799a563b7ff04",
+ "provider": "meta",
+ "endpoint": "/asr/transcribe",
+ "model": "muse-voice-transcribe-1.0",
+ "description": "ASR audio.wav @ 0 ms (505678 bytes)",
+ "created_at": "2026-11-03T23:19:45+00:00",
+ "meta": {},
+ "response": {
+  "sessionId": "voyager/transcribe/83F74C4EDDAB4173879F0D688DC88A89",
+  "transcript": "laundry room there is mold in the detergent compartment And there is spilled detergent on the laundry machine",
+  "audioDurationMs": 15840,
+  "turns": [
+   {
+    "turnId": 0,
+    "startMs": 460,
+    "endMs": 6300,
+    "transcript": "laundry room there is mold in the detergent compartment"
+   },
+   {
+    "turnId": 1,
+    "startMs": 9660,
+    "endMs": 13980,
+    "transcript": "And there is spilled detergent on the laundry machine"
+   }
+  ]
+ }
+}

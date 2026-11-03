@@ -1,0 +1,22 @@
+{
+ "key": "e61a610d4571ff770d44cac25b9807ec149eebd9b48bac547426e032e71fdc76",
+ "provider": "meta",
+ "endpoint": "/files",
+ "model": "",
+ "description": "Files upload sam_part_4.mp4 (2172638 bytes, sha256 3d0b4886557a)",
+ "created_at": "2026-11-03T23:19:11+00:00",
+ "meta": {
+  "sha256": "3d0b4886557afefb4cd695f294fa946d6cb2c0ad7f3927e0c64ef816d6b19da9",
+  "filename": "sam_part_4.mp4"
+ },
+ "response": {
+  "id": "file-1446389140935156",
+  "bytes": 2172638,
+  "created_at": 1793747949,
+  "expires_at": null,
+  "filename": "sam_part_4.mp4",
+  "object": "file",
+  "purpose": "user_data",
+  "status": "uploaded"
+ }
+}

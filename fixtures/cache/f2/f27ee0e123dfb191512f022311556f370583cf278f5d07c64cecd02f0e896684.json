@@ -1,0 +1,53 @@
+{
+ "key": "f27ee0e123dfb191512f022311556f370583cf278f5d07c64cecd02f0e896684",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'hand' on video sam_part_1.mp4",
+ "created_at": "2026-11-03T23:18:22+00:00",
+ "meta": {
+  "media_size": [
+   720,
+   958
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "video",
+   "text": "hand",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "video": "8aaeb4bb3c9688738fa50946d1600f61f80c329cf7f83b9225151cc139c466b8"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0,
+   "video_frames_processed": 119
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 62,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

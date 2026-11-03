@@ -1,0 +1,54 @@
+{
+ "key": "ead5d6f2dc36d9579d57dbf1b8c81a1e3536fc933fadd95f44e5928df1840818",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:26:32+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-8a67eb526031488d9d8e118ef7177663",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true, \"frame_shows_defect\": true, \"issues\": [], \"suggested_fix\": null, \"rationale\": \"Photo blue dot and visible heavy burn discoloration at bottom left burner match inspector's 'bottom left' damage and item description.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748387,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 924,
+   "prompt_tokens": 3635,
+   "total_tokens": 4559,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 639,
+    "audio_tokens": 0,
+    "reasoning_tokens": 857,
+    "rejected_prediction_tokens": 1356,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

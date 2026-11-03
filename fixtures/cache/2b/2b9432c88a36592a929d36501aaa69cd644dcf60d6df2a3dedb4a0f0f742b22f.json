@@ -1,0 +1,54 @@
+{
+ "key": "2b9432c88a36592a929d36501aaa69cd644dcf60d6df2a3dedb4a0f0f742b22f",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:26:53+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b3949245e52745a298ad2d53ce3a7a1d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":false,\"frame_shows_defect\":false,\"issues\":[\"Photo shows mirror reflection with no visible toothpaste smudge; red outline is on background wall, not on mirror surface\"],\"suggested_fix\":null,\"rationale\":\"Photo does not show a toothpaste smudge on the mirror surface as described.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748409,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 808,
+   "prompt_tokens": 2943,
+   "total_tokens": 3751,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 525,
+    "audio_tokens": 0,
+    "reasoning_tokens": 733,
+    "rejected_prediction_tokens": 1456,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

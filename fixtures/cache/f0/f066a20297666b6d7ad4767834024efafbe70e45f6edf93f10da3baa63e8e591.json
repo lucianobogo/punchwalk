@@ -1,0 +1,54 @@
+{
+ "key": "f066a20297666b6d7ad4767834024efafbe70e45f6edf93f10da3baa63e8e591",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:38+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-8701cf1a24db45b4aeacf4530f36c9e4",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 5, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Words describe light switch missing screw as fixed and finger/blue dot point to the kitchen switch plate above counter matching item 5 location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748995,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 182,
+   "prompt_tokens": 3187,
+   "total_tokens": 3369,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 108,
+    "audio_tokens": 0,
+    "reasoning_tokens": 117,
+    "rejected_prediction_tokens": 410,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

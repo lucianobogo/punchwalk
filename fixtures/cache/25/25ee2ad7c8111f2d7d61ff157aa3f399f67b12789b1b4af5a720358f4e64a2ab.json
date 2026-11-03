@@ -1,0 +1,54 @@
+{
+ "key": "25ee2ad7c8111f2d7d61ff157aa3f399f67b12789b1b4af5a720358f4e64a2ab",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:27:13+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-f693a83bfeda46d4a9943cd2a9e61390",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Photo shows wall above TV with visible screw holes/anchors and small pencil marks at the finger location, matching inspector words and item details.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748429,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 876,
+   "prompt_tokens": 2952,
+   "total_tokens": 3828,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 600,
+    "audio_tokens": 0,
+    "reasoning_tokens": 814,
+    "rejected_prediction_tokens": 1332,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "83b060e3d71958a57d60ddd7a48d70977a540a561977130e3b1ec9ee3cb09a94",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:24:35+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-9c18b30c09ed44408815240edb289a08",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Stove top damaged on bottom left burner\",\"description\":\"The glass-ceramic stove top on the front left burner shows heavy discoloration and surface damage around the burner ring.\",\"action\":\"Clean, repair or replace damaged stove top glass and verify burner operation\",\"trade\":\"appliances\",\"room\":\"Kitchen\",\"location_detail\":\"front left burner of stove\",\"severity\":\"cosmetic\",\"sam_concept\":\"stove top burner\",\"defect_box\":[316,680,732,904],\"confidence\":0.91,\"rationale\":\"Narration says bottom left stove top is damaged and finger points to discolored ring on front left burner matching photo 1 at blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748269,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 414,
+   "prompt_tokens": 8900,
+   "total_tokens": 9314,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 255,
+    "audio_tokens": 0,
+    "reasoning_tokens": 266,
+    "rejected_prediction_tokens": 858,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

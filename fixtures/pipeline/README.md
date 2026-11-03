@@ -53,3 +53,18 @@ uv run python scripts/record.py --footage $V/footage --out $V/out --fixtures $V/
 # then copy $V/out/walk1/{display.mp4,sam.mp4,sam_part_*.mp4,audio.wav,meta.json} -> synth_walk/media/
 #      $V/cache/* (without files_index.json) -> synth_walk/cache/, $V/fixtures/walk1/hand_concept.json -> synth_walk/
 ```
+
+## `synth_rewalk/` (re-walk integration fixture, tests/test_pipeline_rewalk.py)
+
+The re-walk of `synth_walk` (`uv run python scripts/synth_clip.py --out <dir> --rewalk`): the same three
+scenes, with the kitchen scuff gone ("Kitchen cabinet knob, fixed."), the hallway scuff still drawn but
+called fixed ("Hallway switch plate, fixed.": the false claim), and the bedroom scuff still there
+("Bedroom scuff marks, still there."). `media/` holds its ingest outputs; `cache/` holds only the entries
+`synth_walk/cache` doesn't already have (Files, SAM hands, ASR, classify, 3 match + 3 visual-check calls).
+Recorded with walk1 + walk2 in one footage folder:
+`scripts/record.py --footage <dir> --full --rooms Kitchen Hallway Bedroom` (walk2 runs as the re-walk).
+Expected: #1 signed off, #2 needs a look ("Marked fixed on the re-walk, but the defect is still visible."),
+#3 still open and sent again.
+
+Prompts carry no walk or item ids, so these replay for any walk ids; any change to the write_items, verify
+or resolve_closures prompts, or to the renders the model sees, needs a re-record of both fixtures.

@@ -1,0 +1,54 @@
+{
+ "key": "ecb955ceb5573a535b8ad094ecd1bb527ddec11f4d36ae1efa417dbba0701a40",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:37:57+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-e164825b9bc84f61a547bdb0ddb7ba54",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Outlet cover is now straight/vertical, not twisted.\", \"rationale\": \"Photo 1/3 shows cover rotated diagonal. Photo 2/4 shows same outlet upright and seated, twist fixed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749073,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 378,
+   "prompt_tokens": 5315,
+   "total_tokens": 5693,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 235,
+    "audio_tokens": 0,
+    "reasoning_tokens": 312,
+    "rejected_prediction_tokens": 766,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

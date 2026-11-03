@@ -1,0 +1,54 @@
+{
+ "key": "c93bc4ef10800eb49a1a208433c6029d0542a5558ca12441af97d7bec64a3e79",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:27:08+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ea4aa22ef12845d4b26ba4ffdd3b7a44",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true,\"frame_shows_defect\": true,\"issues\": [],\"suggested_fix\": null,\"rationale\": \"Photo shows window screen detached/loose in lower frame with hand pulling it, matching 'not attached properly' and action to re-seat it.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748424,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 564,
+   "prompt_tokens": 3625,
+   "total_tokens": 4189,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 366,
+    "audio_tokens": 0,
+    "reasoning_tokens": 498,
+    "rejected_prediction_tokens": 1020,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

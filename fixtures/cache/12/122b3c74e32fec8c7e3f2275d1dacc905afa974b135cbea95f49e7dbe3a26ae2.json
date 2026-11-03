@@ -1,0 +1,54 @@
+{
+ "key": "122b3c74e32fec8c7e3f2275d1dacc905afa974b135cbea95f49e7dbe3a26ae2",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:25:13+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-69581fa390884b47b60fcf26cb3929af",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Small wall nick in bedroom\",\"description\":\"The bedroom wall has a small nick/chip that may need repainting.\",\"action\":\"Patch nick and touch up paint to match\",\"trade\":\"painting\",\"room\":\"Bedroom\",\"location_detail\":null,\"severity\":\"cosmetic\",\"sam_concept\":\"wall nick\",\"defect_box\":[520,610,570,640],\"confidence\":0.82,\"rationale\":\"Narration describes bedroom wall small nick needing repaint; photo 1 shows tiny white chip near finger by blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748308,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 445,
+   "prompt_tokens": 8907,
+   "total_tokens": 9352,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 273,
+    "audio_tokens": 0,
+    "reasoning_tokens": 326,
+    "rejected_prediction_tokens": 931,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

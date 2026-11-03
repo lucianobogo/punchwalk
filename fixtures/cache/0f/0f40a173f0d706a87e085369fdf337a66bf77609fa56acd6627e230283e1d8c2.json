@@ -1,0 +1,54 @@
+{
+ "key": "0f40a173f0d706a87e085369fdf337a66bf77609fa56acd6627e230283e1d8c2",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:24:28+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-004ea19fd9ea41dfbad769713723495f",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Stove top damaged at bottom left burner\",\"description\":\"The glass stove top has heavy discoloration and surface damage around the bottom left burner.\",\"action\":\"Clean and polish burner area; replace glass top if damage remains\",\"trade\":\"appliances\",\"room\":\"Kitchen\",\"location_detail\":\"stove top, bottom left burner\",\"severity\":\"cosmetic\",\"sam_concept\":\"stovetop burner ring\",\"defect_box\":[334,668,736,871],\"confidence\":0.92,\"rationale\":\"Narration says stove top damaged bottom left and photos show whitish damaged ring around left front burner near blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748263,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 377,
+   "prompt_tokens": 8897,
+   "total_tokens": 9274,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 230,
+    "audio_tokens": 0,
+    "reasoning_tokens": 238,
+    "rejected_prediction_tokens": 806,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

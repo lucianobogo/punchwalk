@@ -1,0 +1,54 @@
+{
+ "key": "bdf230b98e13cb8db76ffaa806849cafa9c2ad8081ea5b67d6d431d4fb7a5bd1",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:28:20+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-477b11c438734ca8ae0fcee32435a66e",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": false, \"frame_shows_defect\": false, \"issues\": [\"The inspector reported mold in the detergent compartment but the photo shows the open dispenser drawer with no visible mold\", \"Room is null but inspector said laundry room\"], \"suggested_fix\": null, \"rationale\": \"The item matches the inspector's words but the photo shows the correct detergent drawer with no visible mold growth to confirm the defect.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748495,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 748,
+   "prompt_tokens": 2927,
+   "total_tokens": 3675,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 473,
+    "audio_tokens": 0,
+    "reasoning_tokens": 650,
+    "rejected_prediction_tokens": 1452,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

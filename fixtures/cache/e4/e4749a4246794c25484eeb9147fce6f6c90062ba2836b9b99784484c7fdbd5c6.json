@@ -1,0 +1,53 @@
+{
+ "key": "e4749a4246794c25484eeb9147fce6f6c90062ba2836b9b99784484c7fdbd5c6",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'pencil mark on wall' on image raw.jpg",
+ "created_at": "2026-11-03T23:26:08+00:00",
+ "meta": {
+  "media_size": [
+   1080,
+   1436
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "pencil mark on wall",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "fb42d72abd569ee2ec4620d26113d62322d2c68f75f275d4c74057527c2d8481"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

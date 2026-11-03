@@ -1,0 +1,54 @@
+{
+ "key": "577781c59fdefd84eb06c79874d4fc93e26ff3874e26f52c4067358cd6962aeb",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:27+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ba10bf7d0eb14351a9f8336be34fe67d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 1, \"claimed\": \"fixed\", \"confidence\": 0.97, \"rationale\": \"Inspector describes coffee stain fixed and blue dot points to right countertop near coffee machine matching item 1 location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748984,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 174,
+   "prompt_tokens": 3185,
+   "total_tokens": 3359,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 106,
+    "audio_tokens": 0,
+    "reasoning_tokens": 115,
+    "rejected_prediction_tokens": 370,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

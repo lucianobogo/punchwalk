@@ -1,0 +1,1 @@
+<0f>0<|box;x1=516;y1=611;x2=573;y2=641;w=1080;h=1436;c=0.5703125|><|mask;x=0;y=0;c=0.5703125;data=31,58,!!!!!XI-7Z$[@CE=fTdZBcZvKEPDd-05[7tvP*T0o^i9)=8KFT*5hIZd]B'w_Af&Je5xl|>

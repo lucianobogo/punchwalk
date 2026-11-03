@@ -1,0 +1,54 @@
+{
+ "key": "6d3a969168cd755ae109a7c1ce4f6aae0c900aeeefb029d3c3c91244f57599fd",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:24:56+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ff695848d1be4812928dea0dd0b74e4f",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Fire alarm missing on living room ceiling\",\"description\": \"Ceiling mount for fire alarm/smoke detector is empty with wires and base exposed and no alarm unit installed.\",\"action\": \"Install fire alarm/detector and verify operation\",\"trade\": \"electrical\",\"room\": \"Living room\",\"location_detail\": \"center of ceiling\",\"severity\": \"safety\",\"sam_concept\": \"smoke detector ceiling mount\",\"defect_box\": [483, 572, 623, 678],\"confidence\": 0.96,\"rationale\": \"Photo shows empty detector base with hanging wires matching narration of missing fire alarm on ceiling.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748291,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 328,
+   "prompt_tokens": 8899,
+   "total_tokens": 9227,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 201,
+    "audio_tokens": 0,
+    "reasoning_tokens": 186,
+    "rejected_prediction_tokens": 695,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

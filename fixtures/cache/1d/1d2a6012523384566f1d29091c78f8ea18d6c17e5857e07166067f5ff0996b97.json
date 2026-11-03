@@ -1,0 +1,54 @@
+{
+ "key": "1d2a6012523384566f1d29091c78f8ea18d6c17e5857e07166067f5ff0996b97",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:36:30+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ce62c32d23c44a17aa29d381b7ed5317",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 2, \"claimed\": \"fixed\", \"confidence\": 0.99, \"rationale\": \"Inspector names range hood missing light bulb as fixed and finger points to illuminated range hood light matching item 2 in Kitchen.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748987,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 215,
+   "prompt_tokens": 3187,
+   "total_tokens": 3402,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 127,
+    "audio_tokens": 0,
+    "reasoning_tokens": 154,
+    "rejected_prediction_tokens": 489,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

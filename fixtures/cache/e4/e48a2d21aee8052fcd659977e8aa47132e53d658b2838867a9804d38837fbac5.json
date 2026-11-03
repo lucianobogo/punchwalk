@@ -1,0 +1,54 @@
+{
+ "key": "e48a2d21aee8052fcd659977e8aa47132e53d658b2838867a9804d38837fbac5",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:28:07+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-bf7fc7a0d2f6463487e5169a90ff19b6",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Detergent residue on front of washing machine\",\"description\":\"Spilled detergent residue is present on the lower front panel of the laundry machine.\",\"action\":\"Clean and remove detergent residue from machine exterior\",\"trade\":\"cleaning\",\"room\":\"Living room\",\"location_detail\":null,\"severity\":\"cosmetic\",\"sam_concept\":\"detergent residue on washing machine front panel\",\"defect_box\":[492,837,607,943],\"confidence\":0.72,\"rationale\":\"Narration notes spilled detergent on laundry machine; finger points to lower front panel near blue dot where faint residue is visible.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748482,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 435,
+   "prompt_tokens": 8899,
+   "total_tokens": 9334,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 285,
+    "audio_tokens": 0,
+    "reasoning_tokens": 304,
+    "rejected_prediction_tokens": 772,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

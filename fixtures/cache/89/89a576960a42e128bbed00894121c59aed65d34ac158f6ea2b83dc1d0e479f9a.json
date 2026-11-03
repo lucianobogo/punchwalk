@@ -1,0 +1,53 @@
+{
+ "key": "89a576960a42e128bbed00894121c59aed65d34ac158f6ea2b83dc1d0e479f9a",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM 1 box prompt(s) on image raw.jpg",
+ "created_at": "2026-11-03T23:25:53+00:00",
+ "meta": {
+  "media_size": [
+   1080,
+   1436
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "<0f>0<|box;x1=532;y1=783;x2=597;y2=826;w=1080;h=1436|>",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "f1b2b1d04f5b1bcf79059fe5eebd6035051ef737d1e1ebccf8434c841ad7304d"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.delta": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

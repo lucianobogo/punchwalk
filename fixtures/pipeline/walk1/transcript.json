@@ -1,0 +1,202 @@
+{
+ "version": 1,
+ "model": "muse-voice-transcribe-1.0",
+ "mode": "ENDPOINTING",
+ "keywords": [
+  "electrical",
+  "plumbing",
+  "drywall",
+  "painting",
+  "carpentry",
+  "millwork",
+  "hardware",
+  "flooring",
+  "glazing",
+  "HVAC",
+  "appliances",
+  "cleaning",
+  "cover plate",
+  "switch plate",
+  "outlet",
+  "receptacle",
+  "GFCI",
+  "light fixture",
+  "bulb",
+  "strike plate",
+  "door stop",
+  "hinge",
+  "latch",
+  "deadbolt",
+  "knob",
+  "pull",
+  "escutcheon",
+  "faucet",
+  "aerator",
+  "P-trap",
+  "shutoff valve",
+  "towel bar",
+  "toilet paper holder",
+  "vanity",
+  "mirror",
+  "shower head",
+  "grout",
+  "tile",
+  "backsplash",
+  "countertop",
+  "cabinet",
+  "drawer",
+  "baseboard",
+  "casing",
+  "crown molding",
+  "trim",
+  "threshold",
+  "transition strip",
+  "window screen",
+  "sash",
+  "sill",
+  "register",
+  "grille",
+  "thermostat",
+  "smoke detector",
+  "range hood",
+  "dishwasher",
+  "refrigerator",
+  "GWB",
+  "caulk",
+  "touch-up",
+  "reveal",
+  "scuff",
+  "ding",
+  "nail pop",
+  "crack",
+  "chip",
+  "gouge",
+  "stain",
+  "smudge",
+  "overspray",
+  "drip",
+  "gap",
+  "misaligned",
+  "crooked",
+  "loose",
+  "missing",
+  "debris",
+  "sawdust",
+  "punch list",
+  "kitchen",
+  "bathroom",
+  "powder room",
+  "bedroom",
+  "primary bedroom",
+  "hallway",
+  "living room",
+  "dining room",
+  "laundry",
+  "closet",
+  "entry",
+  "foyer",
+  "Unit 1A",
+  "Unit 2B",
+  "Unit 3A"
+ ],
+ "transcript": "kitchen, there are coffee stains stains on the right side of the counter, there is a light bulb missing on the range hood, the stove top is damaged, on the bottom left part this light switch is missing a screw. bathroom, there is toothpaste smudged on the mirror. there is a knob missing on the on the cabinet. living room, there is a fire alarm missing on the ceiling. and that's a fire hazard. the window screen is not attached properly. so it needs to be attached. The the wall has pencil marks and screws so it needs to be repainted bedroom the wall has a a small nick so that may need to be repainted The hallway the outlet cover is not tightened and it's twisted. And there are pencil marks on the wall as well that need to be removed.",
+ "audio_duration_ms": 105280,
+ "turns": [
+  {
+   "idx": 0,
+   "start_ms": 460,
+   "end_ms": 4220,
+   "text": "kitchen,"
+  },
+  {
+   "idx": 1,
+   "start_ms": 4780,
+   "end_ms": 10380,
+   "text": "there are coffee stains stains on the right side of the counter,"
+  },
+  {
+   "idx": 2,
+   "start_ms": 12540,
+   "end_ms": 16540,
+   "text": "there is a light bulb missing on the range hood,"
+  },
+  {
+   "idx": 3,
+   "start_ms": 19420,
+   "end_ms": 22780,
+   "text": "the stove top is damaged,"
+  },
+  {
+   "idx": 4,
+   "start_ms": 23420,
+   "end_ms": 26460,
+   "text": "on the bottom left part"
+  },
+  {
+   "idx": 5,
+   "start_ms": 28940,
+   "end_ms": 32620,
+   "text": "this light switch is missing a screw."
+  },
+  {
+   "idx": 6,
+   "start_ms": 35820,
+   "end_ms": 41180,
+   "text": "bathroom, there is toothpaste smudged on the mirror."
+  },
+  {
+   "idx": 7,
+   "start_ms": 42940,
+   "end_ms": 47740,
+   "text": "there is a knob missing on the on the cabinet."
+  },
+  {
+   "idx": 8,
+   "start_ms": 49340,
+   "end_ms": 55100,
+   "text": "living room, there is a fire alarm missing on the ceiling."
+  },
+  {
+   "idx": 9,
+   "start_ms": 55660,
+   "end_ms": 57260,
+   "text": "and that's a fire hazard."
+  },
+  {
+   "idx": 10,
+   "start_ms": 59260,
+   "end_ms": 63500,
+   "text": "the window screen is not attached properly."
+  },
+  {
+   "idx": 11,
+   "start_ms": 63900,
+   "end_ms": 65980,
+   "text": "so it needs to be attached."
+  },
+  {
+   "idx": 12,
+   "start_ms": 68700,
+   "end_ms": 76620,
+   "text": "The the wall has pencil marks and screws so it needs to be repainted"
+  },
+  {
+   "idx": 13,
+   "start_ms": 79500,
+   "end_ms": 86620,
+   "text": "bedroom the wall has a a small nick so that may need to be repainted"
+  },
+  {
+   "idx": 14,
+   "start_ms": 88460,
+   "end_ms": 95180,
+   "text": "The hallway the outlet cover is not tightened and it's twisted."
+  },
+  {
+   "idx": 15,
+   "start_ms": 96700,
+   "end_ms": 103340,
+   "text": "And there are pencil marks on the wall as well that need to be removed."
+  }
+ ]
+}

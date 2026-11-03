@@ -1,0 +1,54 @@
+{
+ "key": "160c997575db65fc06912f7852826053bde5e3c46d3daf85acb2bb217776b230",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(TurnLabels) stage=classify_turns format=json_schema",
+ "created_at": "2026-11-03T23:35:11+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-eda62c7c5a8d471b8c6166f6827a589c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"turns\":[{\"idx\":0,\"kind\":\"status_update\",\"room\":\"Kitchen\",\"continues_previous\":false,\"defects\":[],\"status_target\":\"coffee stain\",\"claimed\":\"fixed\"},{\"idx\":1,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"light bulb on range hood\",\"claimed\":\"fixed\"},{\"idx\":2,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"damaged stove top\",\"claimed\":\"fixed\"},{\"idx\":3,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"screw on light switch\",\"claimed\":\"fixed\"},{\"idx\":4,\"kind\":\"status_update\",\"room\":\"Bathroom\",\"continues_previous\":false,\"defects\":[],\"status_target\":\"toothpaste smudge on mirror\",\"claimed\":\"fixed\"},{\"idx\":5,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"doorknob on cabinet\",\"claimed\":\"fixed\"},{\"idx\":6,\"kind\":\"status_update\",\"room\":\"Living room\",\"continues_previous\":false,\"defects\":[],\"status_target\":\"fire alarm\",\"claimed\":\"fixed\"},{\"idx\":7,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"window screen\",\"claimed\":\"fixed\"},{\"idx\":8,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"pencil marks and screws on wall\",\"claimed\":\"not_fixed\"},{\"idx\":9,\"kind\":\"status_update\",\"room\":\"Bedroom\",\"continues_previous\":false,\"defects\":[],\"status_target\":\"nick on wall\",\"claimed\":\"not_fixed\"},{\"idx\":10,\"kind\":\"status_update\",\"room\":\"Hallway\",\"continues_previous\":false,\"defects\":[],\"status_target\":\"outlet loose and crooked\",\"claimed\":\"fixed\"},{\"idx\":11,\"kind\":\"status_update\",\"room\":null,\"continues_previous\":false,\"defects\":[],\"status_target\":\"pencil marks on wall\",\"claimed\":\"fixed\"}] ,\"rationale\":\"All turns are re-walk status checks reporting prior defects as fixed or still present, with room set only when explicitly named.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748908,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 973,
+   "prompt_tokens": 877,
+   "total_tokens": 1850,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 763,
+    "audio_tokens": 0,
+    "reasoning_tokens": 508,
+    "rejected_prediction_tokens": 707,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

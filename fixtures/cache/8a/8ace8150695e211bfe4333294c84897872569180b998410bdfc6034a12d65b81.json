@@ -1,0 +1,54 @@
+{
+ "key": "8ace8150695e211bfe4333294c84897872569180b998410bdfc6034a12d65b81",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:27:26+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b337dc6116ce495ea3559697d5c8c415",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Photo shows hallway outlet cover twisted/crooked low on wall, exactly matching inspector's words and item description.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748442,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 331,
+   "prompt_tokens": 2937,
+   "total_tokens": 3268,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 214,
+    "audio_tokens": 0,
+    "reasoning_tokens": 274,
+    "rejected_prediction_tokens": 605,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

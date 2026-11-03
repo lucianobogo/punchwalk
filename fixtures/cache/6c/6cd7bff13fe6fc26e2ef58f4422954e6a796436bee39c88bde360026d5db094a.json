@@ -1,0 +1,54 @@
+{
+ "key": "6cd7bff13fe6fc26e2ef58f4422954e6a796436bee39c88bde360026d5db094a",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(TurnLabels) stage=classify_turns format=json_schema",
+ "created_at": "2026-11-03T23:22:47+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-44e7e80bb61c4f20abc3c17a5948db24",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"turns\": [{\"idx\": 0, \"kind\": \"location\", \"room\": \"Kitchen\", \"continues_previous\": false, \"defects\": [], \"status_target\": null, \"claimed\": null}, {\"idx\": 1, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"counter right side: coffee stains\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 2, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"range hood: light bulb missing\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 3, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"stove top: damaged\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 4, \"kind\": \"defect\", \"room\": null, \"continues_previous\": true, \"defects\": [\"stove top bottom left part: damaged\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 5, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"light switch: screw missing\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 6, \"kind\": \"defect\", \"room\": \"Bathroom\", \"continues_previous\": false, \"defects\": [\"mirror: toothpaste smudged\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 7, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"cabinet: knob missing\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 8, \"kind\": \"defect\", \"room\": \"Living room\", \"continues_previous\": false, \"defects\": [\"ceiling: fire alarm missing\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 9, \"kind\": \"other\", \"room\": null, \"continues_previous\": false, \"defects\": [], \"status_target\": null, \"claimed\": null}, {\"idx\": 10, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"window screen: not attached properly\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 11, \"kind\": \"other\", \"room\": null, \"continues_previous\": false, \"defects\": [], \"status_target\": null, \"claimed\": null}, {\"idx\": 12, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"wall: pencil marks and screws, needs repainting\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 13, \"kind\": \"defect\", \"room\": \"Bedroom\", \"continues_previous\": false, \"defects\": [\"wall: small nick, may need repainting\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 14, \"kind\": \"defect\", \"room\": \"Hallway\", \"continues_previous\": false, \"defects\": [\"outlet cover: not tightened and twisted\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 15, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"wall: pencil marks need to be removed\"], \"status_target\": null, \"claimed\": null}], \"rationale\": \"First walk has no status updates; only location, defect, and other turns; turn 4 continues defect from turn 3, turn 9 and 11 are comments with no new defect.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793748163,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1783,
+   "prompt_tokens": 983,
+   "total_tokens": 2766,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 1424,
+    "audio_tokens": 0,
+    "reasoning_tokens": 957,
+    "rejected_prediction_tokens": 1089,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 384,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}
