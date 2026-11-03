@@ -12,6 +12,12 @@ of the first walk where the hand is pointing (SAM image mode, 9 calls, about $0.
 mean confidence x frames detected. The default concept is not changed; the numbers are printed and
 saved to fixtures/pipeline/<walk>/hand_concept.json.
 
+`--full` then runs the whole pipeline (runner.run_walk: classify, pointing, evidence, Spark Open item
+writing, SAM defect outlines, verification) on each recorded walk, in a scratch SQLite DB under --out,
+with a project made from --rooms / --keywords (walks named in --rewalk run as re-walks of the first
+walk), prints items/cost/time per walk, and promotes those cache entries too. A seed or test that
+replays them must use the same project rooms/keywords (they are part of the prompts).
+
 Calls go through punchwalk/clients/* with the cache in readwrite mode (a re-run replays at $0).
 A walk whose estimated cost exceeds --max-walk-usd (default $2) is not sent. Replays need the exact
 same sam.mp4 / audio.wav bytes (cache keys hash them), so keep DATA_DIR/record/<walk>/ around.
@@ -186,6 +192,67 @@ def record_walk(name: str, clips: list[Path], args: argparse.Namespace, keywords
     return summary
 
 
+def run_full(done: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
+    """Run the pipeline on each recorded walk (scratch DB, prepared media) and promote its cache entries."""
+    from sqlmodel import Session, SQLModel, create_engine, select
+
+    from punchwalk.core.enums import WalkKind
+    from punchwalk.core.models import Item, Project, Walk
+    from punchwalk.pipeline.context import walk_dir
+    from punchwalk.pipeline.runner import run_walk
+
+    db = args.out / "record.sqlite3"
+    db.unlink(missing_ok=True)
+    engine = create_engine(f"sqlite:///{db}")
+    SQLModel.metadata.create_all(engine)
+
+    def factory() -> Session:
+        return Session(engine, expire_on_commit=False)
+
+    with factory() as s:
+        s.add(Project(id="prj_record", name="Recorded walks", rooms=list(args.rooms), keywords=list(args.keywords)))
+        s.commit()
+    results = []
+    first_id = None
+    for rec in done:
+        name = rec["walk"]
+        walk_id = f"wlk_record_{name}"
+        kind = WalkKind.rewalk if name in set(args.rewalk) and first_id else WalkKind.initial
+        wdir = walk_dir(walk_id)
+        shutil.rmtree(wdir, ignore_errors=True)
+        wdir.mkdir(parents=True)
+        meta = rec["_meta"]
+        for path in meta.output_paths(rec["_dir"]) + [rec["_dir"] / "meta.json"]:
+            shutil.copy2(path, wdir / path.name)
+        with factory() as s:
+            s.add(Walk(id=walk_id, project_id="prj_record", kind=kind, rewalk_of=first_id if kind == "rewalk" else None))
+            s.commit()
+        first_id = first_id or walk_id
+        col = Collector()
+        calls.add_sink(col)
+        t0 = time.monotonic()
+        try:
+            run_walk(walk_id, session_factory=factory)
+        finally:
+            calls.remove_sink(col)
+        promoted = [] if args.no_promote else cache_mod.get_cache().promote(col.keys(), dest=args.promote_to)
+        with factory() as s:
+            items = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
+            grounding: dict[str, int] = {}
+            lines = []
+            for i in items:
+                g = (i.evidence or {}).get("grounding", "-")
+                grounding[g] = grounding.get(g, 0) + 1
+                lines.append(f"#{i.number:03d} [{i.status}] {i.title} | {i.trade}/{i.severity} | {g}"
+                             + (f" | {i.review_reason}" if i.review_reason else ""))
+        results.append({"walk": name, "walk_id": walk_id, "items": len(items),
+                        "needs_review": sum(1 for i in items if i.status == "needs_review"),
+                        "grounding": grounding, "live_usd": col.live_usd(), "calls": len(col.records),
+                        "cached_calls": sum(1 for r in col.records if r.cached), "promoted": len(promoted),
+                        "seconds": round(time.monotonic() - t0, 1), "lines": lines, "dir": str(wdir)})
+    return results
+
+
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     s = get_settings()
     ap = argparse.ArgumentParser(description="Record live ASR + SAM hand tracking for every walk in footage/.")
@@ -199,6 +266,9 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     ap.add_argument("--skip-phrasings", action="store_true", help="skip the 3-phrasing hand concept comparison")
     ap.add_argument("--no-promote", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="ingest and estimate only; no API calls")
+    ap.add_argument("--full", action="store_true", help="also run the whole pipeline (Phase 1-2) on each walk")
+    ap.add_argument("--rooms", nargs="*", default=[], help="project rooms for --full (prompt context)")
+    ap.add_argument("--rewalk", nargs="*", default=["walk2"], help="walks that are re-walks (for --full)")
     return ap.parse_args(argv)
 
 
@@ -250,6 +320,14 @@ def main(argv: list[str] | None = None) -> int:
         if not cmp["ranking"]:
             print(f"   {cmp['note']}")
         print(f"   cost ${cmp['cost_usd']:.4f} -> {out}")
+    if done and args.full and not args.dry_run:
+        full = run_full(done, args)
+        for r in full:
+            print(f"\n== {r['walk']} full pipeline: {r['items']} items, {r['needs_review']} need a look, grounding "
+                  f"{r['grounding']}; cost ${r['live_usd']:.4f}, {r['calls']} calls ({r['cached_calls']} cached), "
+                  f"{r['seconds']}s, promoted {r['promoted']} entries")
+            for line in r["lines"]:
+                print(f"   {line}")
     print(f"\nledger after: ${cost.total_usd():.4f}")
     return 0 if done or args.dry_run else 1
 

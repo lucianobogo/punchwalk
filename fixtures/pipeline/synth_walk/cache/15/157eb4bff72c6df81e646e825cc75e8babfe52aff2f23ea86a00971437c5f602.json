@@ -1,0 +1,54 @@
+{
+ "key": "157eb4bff72c6df81e646e825cc75e8babfe52aff2f23ea86a00971437c5f602",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T22:36:28+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-9c8b12e17d0343a9b3bd3dcec6e96045",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Cabinet knob missing on upper cabinet left of sink\",\"description\":\"The knob is missing from the upper cabinet door to the left of the kitchen sink, leaving an empty mounting hole visible.\",\"action\":\"Install matching cabinet knob and secure properly\",\"trade\":\"doors_hardware\",\"room\":\"Kitchen\",\"location_detail\":\"upper cabinet left of left of the sink\",\"severity\":\"functional\",\"sam_concept\":\"cabinet knob hole\",\"defect_box\":[237,757,272,787],\"confidence\":0.93,\"rationale\":\"Narration identifies missing knob on upper cabinet left of sink and blue dot points to empty hole visible in photo 1.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793745385,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 412,
+   "prompt_tokens": 5506,
+   "total_tokens": 5918,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 261,
+    "audio_tokens": 0,
+    "reasoning_tokens": 271,
+    "rejected_prediction_tokens": 796,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

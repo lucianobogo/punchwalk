@@ -5,7 +5,7 @@ Each defect mention (see `mentions.py`) becomes exactly one draft, carrying the 
 only). The item's clip is [turn.start - 2.0 s, turn.end + 1.0 s], clamped to the walk.
 
 Provisional Item rows are created right away (status open, a provisional title from the defect
-text, point_id set or null) so the API/UI have rows before Phase 2's write_items fills title,
+text, point_id set or null; re-runs keep status/closure/history, see `save_items`) so the API/UI have rows before Phase 2's write_items fills title,
 description, action, trade and severity. Item ids are stable (hash of walk id + mention key) and
 numbers are project-scoped (an existing item keeps its number on a re-run). Status-update
 mentions (re-walk) do not create items; Phase 7 resolves them.
@@ -23,9 +23,10 @@ from typing import Any
 from sqlmodel import select
 
 from punchwalk.core.enums import HistoryAction, HistoryActor, ItemStatus, Stage
-from punchwalk.core.models import HistoryEvent, Item, utcnow
+from punchwalk.core.models import Item
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, stable_id
+from punchwalk.pipeline.items import add_history, is_protected
 from punchwalk.pipeline.mentions import Mention, mention_from_dict
 
 
@@ -70,8 +71,18 @@ def build_drafts(walk_id: str, mentions: list[Mention], point_ids: dict[str, str
     return drafts
 
 
+REVIEW_ORPHANED = "This item no longer matches anything said on the walk."
+
+
 def save_items(ctx: StageContext, drafts: list[dict[str, Any]]) -> None:
-    """Upsert provisional Item rows (keep numbers), delete this walk's items no draft produces."""
+    """Upsert provisional Item rows (numbers kept).
+
+    New items start open with a provisional title. Existing items keep their status, closure,
+    review note and history on a re-run; their text is reset to the provisional draft (write_items
+    rewrites it) unless a person touched the item or it is dispatched/closed (`items.is_protected`),
+    in which case the text is kept too. Items of this walk that no draft produces any more are not
+    deleted: they become needs_review with REVIEW_ORPHANED (protected ones only get a history note).
+    """
     with ctx.session() as s:
         project_items = s.exec(select(Item).where(Item.project_id == ctx.project_id)).all()
         by_id = {i.id: i for i in project_items}
@@ -82,18 +93,17 @@ def save_items(ctx: StageContext, drafts: list[dict[str, Any]]) -> None:
             item = by_id.get(d["item_id"])
             if item is None:
                 item = Item(id=d["item_id"], project_id=ctx.project_id, number=next_number,
-                            origin_walk_id=ctx.walk_id, title=d["title"])
+                            origin_walk_id=ctx.walk_id, title=d["title"], status=ItemStatus.open)
                 next_number += 1
-                item.history = [HistoryEvent(at=utcnow(), actor=HistoryActor.system, action=HistoryAction.created,
-                                             note="Created from the walk").model_dump(mode="json", by_alias=True)]
+                add_history(item, HistoryActor.system, HistoryAction.created, note="Created from the walk")
             d["number"] = item.number
-            item.title = d["title"]
-            item.description = ""
-            item.action = ""
-            item.room = d["room"]
+            d["protected"] = is_protected(item)
+            if not d["protected"]:
+                item.title = d["title"]
+                item.description = ""
+                item.action = ""
+                item.room = d["room"]
             item.turn_ids = d["turn_ids"]
-            item.status = ItemStatus.open
-            item.review_reason = None
             item.quote = d["quote"]
             item.quote_start_s = d["quote_start_s"]
             item.quote_end_s = d["quote_end_s"]
@@ -102,8 +112,14 @@ def save_items(ctx: StageContext, drafts: list[dict[str, Any]]) -> None:
             item.point_id = d["point_id"]
             s.add(item)
         for item in project_items:
-            if item.origin_walk_id == ctx.walk_id and item.id not in keep:
-                s.delete(item)
+            if item.origin_walk_id != ctx.walk_id or item.id in keep or item.review_reason == REVIEW_ORPHANED:
+                continue
+            if is_protected(item):
+                add_history(item, HistoryActor.system, HistoryAction.noted, note=REVIEW_ORPHANED)
+            else:
+                item.status, item.review_reason = ItemStatus.needs_review, REVIEW_ORPHANED
+                add_history(item, HistoryActor.system, HistoryAction.flagged, note=REVIEW_ORPHANED)
+            s.add(item)
         s.commit()
 
 

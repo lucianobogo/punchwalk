@@ -55,3 +55,13 @@ CLASSIFY_CHUNK_TURNS = 60  # SPEC: chunk if more than ~60 turns
 CLASSIFY_MAX_TOKENS_BASE = 1500
 CLASSIFY_MAX_TOKENS_PER_TURN = 120
 CLASSIFY_MAX_TOKENS_CAP = 12000
+
+# --------------------------------------------------------------------------- 2.2 ground defects
+GROUND_RADIUS_FRAC = 0.25  # SPEC: defect instance within ~25% of the frame width of the fingertip
+GROUND_BOX_EXPAND = 0.10  # SPEC: box prompt = Spark Open's defect_box grown 10%
+GROUND_MAX_AREA_FRAC = 0.35  # an "instance" bigger than this share of the frame is a wall, not a defect
+GROUND_SVG_EPSILON_PX = 1.5  # outline simplification (display px)
+
+# --------------------------------------------------------------------------- 2.5 runner
+STAGE_RETRIES = 2  # SPEC: retries per stage for retryable errors (5xx, timeouts)
+STAGE_RETRY_BACKOFF_S = (2.0, 6.0)

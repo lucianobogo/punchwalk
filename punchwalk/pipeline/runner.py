@@ -3,16 +3,20 @@
     run_walk(walk_id, session_factory=..., progress=..., force=False, stop_after=None)
 
 - Loads the Walk and its Project (keywords, rooms, trades) and works under DATA_DIR/walks/<id>/.
-- Stage order comes from `STAGES_INITIAL` / `STAGES_REWALK` (core/enums.py), with one dependency
-  rule enforced: `classify_turns` runs before `find_points`, which needs the defect windows.
+- Stage order comes from `STAGES_INITIAL` / `STAGES_REWALK` (core/enums.py); `classify_turns` comes
+  before `find_points`, which needs the defect windows.
 - After each stage: `Walk.stages[stage] = StageState(status, started_at, finished_at, duration_ms,
   counts)`. A stage already `done` is skipped unless `force`.
 - Every external call made during a stage is stored as a ModelCall row (walk_id + stage), via a
   `calls` sink filtered on this walk, flushed when the stage ends (also when it fails).
 - Any exception marks the stage `failed` with a readable error, sets the walk `failed`, emits a
   `failed` event and re-raises. A full successful run sets the walk `ready`.
-- Stages from later phases (write_items, ground_defects, verify, resolve_closures, persist) are
-  registered as no-ops that finish `done` with counts {} until they are implemented.
+- Retryable errors (5xx, 429, timeouts) re-run the stage up to STAGE_RETRIES times with backoff;
+  cache misses, the cost cap and missing inputs fail at once. Stages report running counts
+  (`ctx.report({"written": 3, "total": 12})`), stored in Walk.stages and emitted as events.
+- walk.error is a plain sentence ("Hand tracking failed: ..."); StageState.error has the detail.
+- Stages not built yet (resolve_closures, until Phase 7) are saved as `skipped`, never `done`, so a
+  later resume runs them.
 """
 
 from __future__ import annotations
@@ -24,6 +28,9 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from punchwalk.clients import calls
+from punchwalk.clients.base import ApiError
+from punchwalk.clients.cache import CacheMiss
+from punchwalk.clients.cost import CostCapReached
 from punchwalk.core.enums import (
     STAGES_INITIAL,
     STAGES_REWALK,
@@ -34,8 +41,20 @@ from punchwalk.core.enums import (
     WalkStatus,
 )
 from punchwalk.core.models import ModelCall, Project, StageState, Walk, utcnow
-from punchwalk.pipeline import classify, evidence, fuse, points, prepare, track, transcribe
-from punchwalk.pipeline.context import SessionFactory, StageContext, StageOutcome, walk_dir
+from punchwalk.pipeline import (
+    classify,
+    evidence,
+    fuse,
+    ground,
+    points,
+    prepare,
+    track,
+    transcribe,
+    verify,
+    write_items,
+)
+from punchwalk.pipeline import params as P
+from punchwalk.pipeline.context import SessionFactory, StageContext, StageInputMissing, StageOutcome, walk_dir
 
 log = logging.getLogger(__name__)
 
@@ -50,8 +69,24 @@ class StageEvent:
     message: str | None = None
 
 
+class NotImplementedStage(Exception):
+    """Raised by placeholder stages; the runner records them `skipped` (re-run on the next resume)."""
+
+
 def _not_implemented(ctx: StageContext) -> StageOutcome:
-    return StageOutcome(counts={}, message=None)
+    raise NotImplementedStage
+
+
+def _persist(ctx: StageContext) -> StageOutcome:
+    """Final step: every stage already saved its rows; report the punch list's totals."""
+    from punchwalk.core.enums import ItemStatus
+    from punchwalk.pipeline.items import walk_items
+
+    with ctx.session() as s:
+        items = walk_items(ctx, s)
+    review = sum(1 for i in items if ItemStatus(i.status) == ItemStatus.needs_review)
+    return StageOutcome(counts={"items": len(items), "needs_review": review},
+                        message=f"{len(items)} items saved, {review} need a look")
 
 
 # Keyed by stage value so this module imports even while stage names are being renamed.
@@ -63,18 +98,31 @@ STAGE_FUNCTIONS: dict[str, StageFn] = {
     "find_points": points.run,
     "fuse": fuse.run,
     "pick_evidence": evidence.run,
+    "write_items": write_items.run,
+    "ground_defects": ground.run,
+    "verify": verify.run,
+    "persist": _persist,
+}
+
+# walk.error in plain words (the technical detail stays in the stage's StageState.error).
+FAILURE_WORDS: dict[str, str] = {
+    "ingest": "Couldn't prepare the video",
+    "transcribe": "Transcription failed",
+    "track_hands": "Hand tracking failed",
+    "find_points": "Couldn't find where you pointed",
+    "classify_turns": "Couldn't sort what was said",
+    "fuse": "Couldn't match what was said to where you pointed",
+    "pick_evidence": "Couldn't pick the photos",
+    "write_items": "Writing the items failed",
+    "ground_defects": "Outlining the defects failed",
+    "verify": "Checking the items failed",
+    "resolve_closures": "Checking the fixes failed",
+    "persist": "Saving the punch list failed",
 }
 
 
 def stage_order(kind: WalkKind) -> list[Stage]:
-    order = list(STAGES_REWALK if kind == WalkKind.rewalk else STAGES_INITIAL)
-    names = [s.value for s in order]
-    if "find_points" in names and "classify_turns" in names and names.index("classify_turns") > names.index(
-        "find_points"
-    ):
-        cls = order.pop(names.index("classify_turns"))
-        order.insert([s.value for s in order].index("transcribe") + 1, cls)
-    return order
+    return list(STAGES_REWALK if kind == WalkKind.rewalk else STAGES_INITIAL)
 
 
 class _CallBuffer:
@@ -156,8 +204,41 @@ def _emit(progress: Callable[[StageEvent], None] | None, event: StageEvent) -> N
 
 
 def readable_error(stage: Stage, err: BaseException) -> str:
+    """Technical detail for StageState.error."""
     text = str(err).strip() or type(err).__name__
     return f"{stage.value} failed: {type(err).__name__}: {text}"[:1500]
+
+
+def plain_error(stage: Stage, err: BaseException) -> str:
+    """walk.error: what failed, in words a project manager understands, plus a hint when there is one."""
+    words = FAILURE_WORDS.get(stage.value, "Processing failed")
+    if isinstance(err, CostCapReached):
+        return f"{words}: the live model budget for this build is used up."
+    if isinstance(err, ApiError):
+        if err.auth_failed or "is not set" in err.body:
+            return f"{words}: the model service rejected our key."
+        if err.transient:
+            return f"{words}: the model service is not responding. Try again in a few minutes."
+        return f"{words}: the model service returned an error."
+    if isinstance(err, CacheMiss):
+        return f"{words}: a recorded model answer is missing (offline mode)."
+    from punchwalk.pipeline.ingest import IngestError
+
+    if isinstance(err, IngestError):
+        detail = str(err).splitlines()[0][:200]
+        return f"{words}: {detail}"
+    return f"{words}."
+
+
+def is_retryable(err: BaseException) -> bool:
+    """5xx / 429 / timeouts / connection errors. Never cache misses, the cost cap or missing inputs."""
+    if isinstance(err, CacheMiss | CostCapReached | StageInputMissing):
+        return False
+    if isinstance(err, ApiError):
+        return err.transient
+    import httpx
+
+    return isinstance(err, httpx.TimeoutException | httpx.TransportError | TimeoutError | ConnectionError)
 
 
 def run_walk(
@@ -206,9 +287,35 @@ def _run_stage(ctx: StageContext, stage: Stage, buffer: _CallBuffer,
     _set_stage(ctx.session_factory, ctx.walk_id,
                StageState(stage=stage, status=StageStatus.running, started_at=started))
     _emit(progress, StageEvent(stage, "running"))
+
+    def on_progress(counts: dict[str, int]) -> None:
+        _set_stage(ctx.session_factory, ctx.walk_id,
+                   StageState(stage=stage, status=StageStatus.running, started_at=started, counts=counts))
+        _emit(progress, StageEvent(stage, "running", counts))
+
+    ctx.on_progress = on_progress
+    attempt = 0
     try:
-        with calls.call_context(walk_id=ctx.walk_id, stage=stage.value):
-            outcome = fn(ctx)
+        while True:
+            attempt += 1
+            try:
+                with calls.call_context(walk_id=ctx.walk_id, stage=stage.value):
+                    outcome = fn(ctx)
+                break
+            except NotImplementedStage:
+                _set_stage(ctx.session_factory, ctx.walk_id, StageState(
+                    stage=stage, status=StageStatus.skipped, started_at=started, finished_at=utcnow(),
+                    duration_ms=int((time.monotonic() - t0) * 1000)))
+                _emit(progress, StageEvent(stage, "done", {}, "not built yet"))
+                return
+            except Exception as err:
+                if attempt > P.STAGE_RETRIES or not is_retryable(err):
+                    raise
+                wait = P.STAGE_RETRY_BACKOFF_S[min(attempt - 1, len(P.STAGE_RETRY_BACKOFF_S) - 1)]
+                log.warning("walk %s: %s attempt %d failed (%s); retrying in %.0fs",
+                            ctx.walk_id, stage.value, attempt, err, wait)
+                _emit(progress, StageEvent(stage, "running", {}, "Retrying after an error"))
+                time.sleep(wait)
     except BaseException as err:
         buffer.flush(ctx.session_factory)
         message = readable_error(stage, err)
@@ -216,9 +323,11 @@ def _run_stage(ctx: StageContext, stage: Stage, buffer: _CallBuffer,
         _set_stage(ctx.session_factory, ctx.walk_id, StageState(
             stage=stage, status=StageStatus.failed, started_at=started, finished_at=utcnow(),
             duration_ms=int((time.monotonic() - t0) * 1000), error=message,
-        ), walk_status=WalkStatus.failed, error=message)
+        ), walk_status=WalkStatus.failed, error=plain_error(stage, err))
         _emit(progress, StageEvent(stage, "failed", {}, message))
         raise
+    finally:
+        ctx.on_progress = None
     buffer.flush(ctx.session_factory)
     _set_stage(ctx.session_factory, ctx.walk_id, StageState(
         stage=stage, status=StageStatus.done, started_at=started, finished_at=utcnow(),

@@ -10,7 +10,7 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from punchwalk.core.enums import ItemStatus, WalkKind
 from punchwalk.core.models import Item, Point, Project, Walk
 from punchwalk.pipeline.context import StageContext
-from punchwalk.pipeline.fuse import build_drafts, item_id_for, provisional_title, save_items
+from punchwalk.pipeline.fuse import REVIEW_ORPHANED, build_drafts, item_id_for, provisional_title, save_items
 from punchwalk.pipeline.mentions import build_mentions
 
 
@@ -87,9 +87,19 @@ def test_save_items_numbers_continue_and_rerun_keeps_numbers(ctx):
         assert items[0].quote == "upper cabinet: knob missing." and items[0].room == "Kitchen"
         numbers = {i.id: i.number for i in items}
 
-    # re-run without the middle mention: numbers stay, the dropped item is deleted
+    # a verified status survives a re-run
+    with ctx.session() as s:
+        first = s.get(Item, drafts[0]["item_id"])
+        first.status = ItemStatus.needs_review
+        first.review_reason = "The frame doesn't show the defect described."
+        s.add(first)
+        s.commit()
+    # re-run without the middle mention: numbers stay, the dropped item is flagged, not deleted
     save_items(ctx, [drafts[0], drafts[2]])
     with ctx.session() as s:
-        items = s.exec(select(Item).where(Item.origin_walk_id == "wlk_1")).all()
-        assert {i.id: i.number for i in items} == {k: v for k, v in numbers.items() if k != drafts[1]["item_id"]}
-        assert len(s.exec(select(Item)).all()) == 3  # the older walk's item is untouched
+        items = {i.id: i for i in s.exec(select(Item).where(Item.origin_walk_id == "wlk_1")).all()}
+        assert {k: i.number for k, i in items.items()} == numbers
+        orphan = items[drafts[1]["item_id"]]
+        assert orphan.status == ItemStatus.needs_review and orphan.review_reason == REVIEW_ORPHANED
+        assert items[drafts[0]["item_id"]].status == ItemStatus.needs_review  # kept, not reset to open
+        assert len(s.exec(select(Item)).all()) == 4  # the older walk's item is untouched

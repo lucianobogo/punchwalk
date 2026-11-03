@@ -2,32 +2,41 @@
 
 The walk: three 7 s portrait parts (scripts/synth_clip.py). In parts a and b a drawn hand slides in
 from the right edge, points at a scuff for ~2 s and withdraws while the narration describes a
-defect; part c has narration but no hand (a voice-only mention). Its SAM 3.1 hand tracks, Files
-uploads and Muse Voice Transcribe response were recorded live with scripts/record.py and live in
-the fixture's cache/, so they replay offline.
+defect; part c has narration but no hand (a voice-only mention). Every model call of the full
+pipeline (Files, SAM 3.1 video + image, Muse Voice Transcribe, Muse Spark Open classify / write /
+verify) was recorded live with `scripts/record.py --full --rooms Kitchen Hallway Bedroom` into the
+fixture's cache/, so the whole run replays offline in readonly mode.
 
-Muse Spark Open (classify_turns) is answered by an offline mock on the first run (readwrite into
-the tmp cache); the second run re-runs every stage with force=True in readonly mode, so every
-model call replays from the cache.
+The narration of part b ("switch plate is crooked") doesn't match what its photo shows (a scuff on
+a plain wall), so Spark Open's check flags it: the natural contradictory case.
 """
 
 from __future__ import annotations
 
-import json
-import re
 import shutil
 from pathlib import Path
 
 import cv2
-import httpx2
 import numpy as np
 import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from punchwalk.clients import llm
 from punchwalk.config import get_settings, reset_settings
-from punchwalk.core.enums import Grounding, ItemStatus, Stage, StageStatus, TurnKind, WalkStatus
+from punchwalk.core.enums import (
+    REVIEW_NOT_IN_FRAME,
+    Grounding,
+    HistoryAction,
+    HistoryActor,
+    ItemStatus,
+    Severity,
+    Stage,
+    StageStatus,
+    Trade,
+    TurnKind,
+    WalkStatus,
+)
 from punchwalk.core.models import Evidence, Item, ModelCall, Point, Project, Turn, Walk
+from punchwalk.pipeline.items import add_history
 from punchwalk.pipeline.runner import StageEvent, run_walk, stage_order
 from tests.conftest import FIXTURES
 
@@ -35,29 +44,6 @@ SYNTH = FIXTURES / "pipeline" / "synth_walk"
 
 if shutil.which("ffmpeg") is None:
     pytest.skip("ffmpeg not installed", allow_module_level=True)
-
-
-def _fake_classify(request: httpx2.Request) -> httpx2.Response:
-    """Stand-in for Spark Open: label each turn from its words."""
-    body = json.loads(request.content)
-    user = next(m for m in reversed(body["messages"]) if m["role"] == "user")["content"]
-    turns = json.loads(user.split("Turns:\n", 1)[1])
-    labels = []
-    for t in turns:
-        text = t["text"]
-        room, _, rest = text.partition(",")
-        defect = re.search(r"missing|crooked|scuff", text)
-        labels.append({
-            "idx": t["idx"], "kind": "defect" if defect else "other", "room": room.strip().title(),
-            "continues_previous": False, "defects": [rest.strip(" .")] if defect else [],
-            "status_target": None, "claimed": None,
-        })
-    content = json.dumps({"turns": labels, "rationale": "keyword stand-in"})
-    return httpx2.Response(200, json={
-        "id": "x", "object": "chat.completion", "created": 1, "model": body["model"],
-        "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": content}}],
-        "usage": {"prompt_tokens": 900, "completion_tokens": 200, "total_tokens": 1100},
-    })
 
 
 def _scuff_center(path: Path) -> tuple[float, float]:
@@ -96,35 +82,33 @@ def make_walk(factory, rooms=("Kitchen", "Hallway", "Bedroom")) -> str:
     return walk_id
 
 
-@pytest.fixture
-def spark_mock(monkeypatch):
-    calls: list[httpx2.Request] = []
-
-    def handle(request):
-        calls.append(request)
-        return _fake_classify(request)
-
-    monkeypatch.setattr(llm, "http_client_factory", lambda: httpx2.Client(transport=httpx2.MockTransport(handle)))
-    return calls
-
-
 def test_stage_order_classifies_before_pointing():
     order = [s.value for s in stage_order("initial")]
     assert order.index("classify_turns") < order.index("find_points")
     assert order[:2] == ["ingest", "transcribe"] and order[-1] == "persist"
 
 
-def test_runner_end_to_end_and_readonly_replay(db, spark_mock, monkeypatch):
-    monkeypatch.setenv("PUNCHWALK_CACHE", "readwrite")
-    reset_settings()
+RED = (0xD9, 0x3B, 0x30)
+BLUE = (0x2F, 0x86, 0xE0)
+
+
+def _has_color(path: Path, rgb, tol: int = 40, at=None, radius: int = 30) -> bool:
+    img = cv2.imread(str(path))[..., ::-1].astype(int)
+    if at is not None:
+        x, y = int(at[0]), int(at[1])
+        img = img[max(0, y - radius): y + radius, max(0, x - radius): x + radius]
+    diff = np.abs(img - np.array(rgb)).max(axis=-1)
+    return int((diff < tol).sum()) > 15
+
+
+def test_runner_end_to_end_and_readonly_replay(db):
     walk_id = make_walk(db)
     events: list[StageEvent] = []
     run_walk(walk_id, session_factory=db, progress=events.append)
-    assert len(spark_mock) == 1  # one batched classify call
 
     with db() as s:
         walk = s.get(Walk, walk_id)
-        assert walk.status == WalkStatus.ready
+        assert walk.status == WalkStatus.ready and walk.error is None
         assert walk.duration_s == pytest.approx(21.0)
         assert (walk.width, walk.height) == (720, 1280) and walk.orientation == "portrait"
         assert walk.media["poster"] == f"walks/{walk_id}/poster.jpg"
@@ -148,56 +132,95 @@ def test_runner_end_to_end_and_readonly_replay(db, spark_mock, monkeypatch):
         items = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
         assert [i.number for i in items] == [1, 2, 3]
         assert [i.point_id for i in items] == [points[0].id, points[1].id, None]
-        assert all(i.status == ItemStatus.open for i in items)
         assert items[2].video_start_s == pytest.approx(max(0.0, turns[2].start_ms / 1000 - 2.0))
         assert items[2].video_end_s == pytest.approx(turns[2].end_ms / 1000 + 1.0)
-        assert items[0].quote and items[0].title[0].isupper()
+
+        # 2.1: every item written by Spark Open
+        for item in items:
+            assert item.title and len(item.title) <= 60 and item.action and len(item.action) <= 80
+            assert item.description and item.trade in set(Trade) and item.severity in set(Severity)
+            assert item.room in ("Kitchen", "Hallway", "Bedroom") and item.confidence is not None
+        assert items[0].trade != Trade.general and items[1].trade == Trade.electrical
 
         data = Path(get_settings().DATA_DIR)
-        for item in items:
-            ev = Evidence.model_validate(item.evidence)
+        evs = [Evidence.model_validate(i.evidence) for i in items]
+        for item, ev in zip(items, evs, strict=True):
             assert (ev.width, ev.height) == (720, 1280)
-            for rel in (ev.raw, ev.crop):
+            assert ev.grounding in {Grounding.sam_concept, Grounding.sam_box, Grounding.pointed_only, Grounding.none}
+            assert ev.image.endswith("evidence.jpg") and ev.crop.endswith("crop.jpg")
+            for rel in (ev.image, ev.raw, ev.crop):
                 assert (data / rel).is_file()
             for name in ("context_a.jpg", "context_b.jpg"):
                 assert (data / "walks" / walk_id / "items" / item.id / name).is_file()
-        pointed = [Evidence.model_validate(i.evidence) for i in items[:2]]
-        assert all(e.grounding == Grounding.pointed_only and e.pointer and e.pointing_frame for e in pointed)
-        voice = Evidence.model_validate(items[2].evidence)
-        assert voice.grounding == Grounding.none and voice.pointer is None and voice.pointing_frame is None
-        # the finger points at the scuff: in the (camera-motion compensated) evidence frame the pointer
-        # lands next to the scuff's dark pixels, and the hand is out of the way
-        for e in pointed:
-            sx, sy = _scuff_center(data / e.raw)
-            assert abs(e.pointer.x - sx) < 35 and abs(e.pointer.y - sy) < 35, (e.pointer, (sx, sy))
+        # 2.2: pointed items: defect outlined (red) in the evidence image, blue dot at the pointer,
+        # hand outlined in the pointing frame; the raw frame has neither
+        for ev in evs[:2]:
+            assert ev.pointer and ev.pointing_frame.endswith("pointing.jpg")
+            assert ev.grounding in (Grounding.sam_concept, Grounding.sam_box) and ev.defect_svg and ev.defect_box
+            assert _has_color(data / ev.image, RED) and _has_color(data / ev.image, BLUE, at=(ev.pointer.x, ev.pointer.y))
+            assert not _has_color(data / ev.raw, RED) and not _has_color(data / ev.raw, BLUE)
+            assert _has_color(data / ev.pointing_frame, BLUE)
+            sx, sy = _scuff_center(data / ev.raw)  # the finger points at the scuff
+            assert abs(ev.pointer.x - sx) < 35 and abs(ev.pointer.y - sy) < 35, (ev.pointer, (sx, sy))
+            b = ev.defect_box
+            assert b.x1 - 30 <= sx <= b.x2 + 30 and b.y1 - 30 <= sy <= b.y2 + 30  # outline on the scuff
+        voice = evs[2]
+        assert voice.pointer is None and voice.pointing_frame is None and voice.grounding == Grounding.none
+        assert voice.t >= 14.0  # photo from its own clip part (c), during its turn
+        assert not _has_color(data / voice.image, BLUE)
+
+        # 2.3: checked against the photo; the contradictory one needs a look, nothing is dropped
+        assert all(i.verification for i in items)
+        assert items[0].status == ItemStatus.open and items[0].verification["consistent"] is True
+        assert items[1].status == ItemStatus.needs_review and items[1].review_reason == REVIEW_NOT_IN_FRAME
+        assert items[1].verification["consistent"] is False and items[1].verification["provider"] == "baseten"
 
         mc = s.exec(select(ModelCall).where(ModelCall.walk_id == walk_id)).all()
         stages = {m.stage for m in mc}
-        assert {Stage.transcribe, Stage.track_hands, Stage.classify_turns} <= stages
-        assert any(m.provider == "baseten" and not m.cached for m in mc)  # the mocked live classify call
+        assert {Stage.transcribe, Stage.track_hands, Stage.classify_turns, Stage.write_items,
+                Stage.ground_defects, Stage.verify} <= stages
+        assert all(m.cached for m in mc)  # readonly replay
+        assert any(m.frames == 70 for m in mc if m.stage == Stage.track_hands and m.endpoint == "/responses")
 
     done = [e for e in events if e.status == "done"]
     assert [e.stage for e in done] == stage_order("initial")
     assert next(e for e in done if e.stage == Stage.find_points).counts["points"] == 2
+    running = [e.counts for e in events if e.status == "running" and e.stage == Stage.write_items and e.counts]
+    assert running[0] == {"written": 0, "total": 3} and running[-1] == {"written": 3, "total": 3}
 
-    # ---- replay: every stage again, readonly, all calls from the cache, same results
-    monkeypatch.setenv("PUNCHWALK_CACHE", "readonly")
-    reset_settings()
+    # ---- forced re-run: same results, all from the cache
     with db() as s:
-        before = {i.id: (i.number, i.point_id, i.evidence["t"]) for i in s.exec(select(Item)).all()}
+        before = {i.id: (i.number, i.point_id, i.evidence["t"], i.title, i.status) for i in s.exec(select(Item)).all()}
         n_calls = len(s.exec(select(ModelCall)).all())
     run_walk(walk_id, session_factory=db, force=True)
-    assert len(spark_mock) == 1  # no new model request
     with db() as s:
-        after = {i.id: (i.number, i.point_id, i.evidence["t"]) for i in s.exec(select(Item)).all()}
+        after = {i.id: (i.number, i.point_id, i.evidence["t"], i.title, i.status) for i in s.exec(select(Item)).all()}
         assert after == before
         new = s.exec(select(ModelCall)).all()[n_calls:]
         assert new and all(m.cached for m in new)
 
 
-def test_resume_skips_done_stages_and_failure_is_readable(db, spark_mock, monkeypatch):
-    monkeypatch.setenv("PUNCHWALK_CACHE", "readwrite")
-    reset_settings()
+def test_forced_rerun_keeps_human_edits_and_dispatch_state(db):
+    walk_id = make_walk(db)
+    run_walk(walk_id, session_factory=db)
+    with db() as s:
+        a, b, c = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
+        a.title = "Knob missing, kitchen upper cabinet (edited)"
+        add_history(a, HistoryActor.human, HistoryAction.edited, field="title")
+        b.status = ItemStatus.dispatched
+        s.add(a)
+        s.add(b)
+        s.commit()
+        a_hist, b_hist = len(a.history), len(b.history)
+    run_walk(walk_id, session_factory=db, force=True)
+    with db() as s:
+        a2, b2, c2 = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
+        assert a2.title == "Knob missing, kitchen upper cabinet (edited)" and len(a2.history) == a_hist
+        assert b2.status == ItemStatus.dispatched and len(b2.history) == b_hist
+        assert c2.status == ItemStatus.needs_review  # machine-managed item re-checked the same way
+
+
+def test_resume_skips_done_stages_and_failure_is_readable(db):
     walk_id = make_walk(db)
     run_walk(walk_id, session_factory=db, stop_after=Stage.transcribe)
     with db() as s:
@@ -212,7 +235,7 @@ def test_resume_skips_done_stages_and_failure_is_readable(db, spark_mock, monkey
     with db() as s:
         assert s.get(Walk, walk_id).stages["ingest"]["finished_at"] == first_ingest
 
-    # a broken input marks the stage failed with a readable error and re-raises
+    # a broken input marks the stage failed: plain words on the walk, the detail on the stage
     wdir = Path(get_settings().DATA_DIR) / "walks" / walk_id
     (wdir / "stages" / "track_hands.json").unlink()
     with db() as s:
@@ -228,4 +251,20 @@ def test_resume_skips_done_stages_and_failure_is_readable(db, spark_mock, monkey
         walk = s.get(Walk, walk_id)
         assert walk.status == WalkStatus.failed
         assert walk.stages["find_points"]["status"] == "failed"
-        assert "find_points failed" in walk.error and "track_hands" in walk.error
+        assert "track_hands.json is missing" in walk.stages["find_points"]["error"]
+        assert walk.error == "Couldn't find where you pointed."
+
+
+def test_voice_only_mode_ignores_pointing(db, monkeypatch):
+    monkeypatch.setenv("GROUNDING_MODE", "voice_only")
+    reset_settings()
+    walk_id = make_walk(db)
+    run_walk(walk_id, session_factory=db, stop_after=Stage.pick_evidence)
+    with db() as s:
+        items = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
+        evs = [Evidence.model_validate(i.evidence) for i in items]
+        assert len(items) == 3 and items[0].point_id is not None  # the point is still recorded...
+        assert all(e.pointer is None and e.pointing_frame is None and e.grounding == Grounding.none for e in evs)
+        turns = s.exec(select(Turn).where(Turn.walk_id == walk_id).order_by(Turn.idx)).all()
+        for e, t in zip(evs, turns, strict=True):  # ...but the photo is the sharpest frame of the turn window
+            assert t.start_ms / 1000 - 0.11 <= e.t <= t.end_ms / 1000 + 0.11

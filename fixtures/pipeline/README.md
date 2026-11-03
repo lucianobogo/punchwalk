@@ -23,9 +23,17 @@ slides in from the right edge, points at a scuff for ~2 s and withdraws while th
 mention.
 
 - `media/`: the ingest outputs (display.mp4, sam.mp4, sam_part_0..2.mp4, audio.wav, meta.json)
-- `cache/`: the live responses recorded for it on Nov 3, 2026 with `scripts/record.py` (Files uploads, SAM 3.1
-  "hand" per part, Muse Voice Transcribe; $0.043). The parts' SAM output: 26 hand records each in a and b,
-  none in c. Three ASR turns.
+- `cache/`: every live response the full pipeline needs, recorded on Nov 3, 2026 with
+  `scripts/record.py --full --rooms Kitchen Hallway Bedroom` (28 entries): Files uploads, SAM 3.1 "hand" per part
+  (26 hand records each in a and b, none in c), Muse Voice Transcribe (3 turns), Muse Spark Open classify / write
+  (3) / verify (3), SAM 3.1 image calls for the defect outlines, and the hand-phrasing comparison. Recording
+  cost: $0.043 (Phase 1) + $0.078 (Phase 2, two passes) + $0.023 (phrasings).
+- `hand_concept.json`: "index finger" 2.640 (mean conf 0.880 x 3 frames) > "hand" 2.585 (0.862 x 3) >
+  "pointing hand" 0 (0 frames), on 3 pointing frames of this synthetic walk. The default stays "hand".
+
+The integration test (tests/test_pipeline_integration.py) replays all of it readonly. Keys hash the exact
+frame bytes, so a different ffmpeg / libjpeg build can make the image calls miss; re-record with the
+commands below if that happens. The test project must keep rooms Kitchen, Hallway, Bedroom and no keywords.
 
 Re-create it (live, ~$0.05):
 
@@ -40,7 +48,8 @@ s.make_clip(d/"walk1_b.mp4", 7.0, variant=1, point_at=0.8, text="Hallway. Switch
 s.make_clip(d/"walk1_c.mp4", 7.0, variant=2, hand=False, text="Bedroom. Scuff marks on the wall by the door.")
 EOF
 V=.verify/record_synth
-uv run python scripts/record.py --footage $V/footage --out $V/out --fixtures $V/fixtures --promote-to $V/cache
+uv run python scripts/record.py --footage $V/footage --out $V/out --fixtures $V/fixtures --promote-to $V/cache \
+    --full --rooms Kitchen Hallway Bedroom
 # then copy $V/out/walk1/{display.mp4,sam.mp4,sam_part_*.mp4,audio.wav,meta.json} -> synth_walk/media/
-#      and $V/cache/* (without files_index.json) -> synth_walk/cache/
+#      $V/cache/* (without files_index.json) -> synth_walk/cache/, $V/fixtures/walk1/hand_concept.json -> synth_walk/
 ```
