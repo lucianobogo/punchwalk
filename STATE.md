@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:32 ET
+Updated: 2026-11-03 18:43 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 3.1–3.3 (71c7a54..e75329f; verify after synth re-record), 8.1 (7dc84f3; verified on synth; tag after real walks seed), 9.2/9.3 drafts. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 8.1 (7dc84f3 + fixes; verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -13,11 +13,9 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| 3.1–3.3 + follow-ups verify (worktree .verify/wt-eval @ 4e9a137) | verifier | 18:32 | read-only | synth_walk re-recorded by Track A, so the e2e replay is real |
+| eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
 | Track A: make record (walk1/2/3) + full runs (walk1, walk3) → 2.5 fixes → 7.1–7.4 → full run walk2 | builder (Track A, same agent) | 18:04 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
-| 8.1/CHANGE-2 small fixes (seed interrupt safety, channel_reason email case, --force ModelCall rows, hints, validators) | builder (fresh) | 18:25 | scripts/seed.py, punchwalk/dispatch/service.py, scripts/gen_mock_api.py (+ regen), punchwalk/config.py, punchwalk/api/schemas.py comment, docs/DEPLOY.md, tests | briefed |
-| 6.1 UI + 7.4 UI + 8.2 verify (worktree .verify/wt-ui3 @ 2d5783a) | verifier | 18:28 | read-only | committed untagged pending PASS |
-| 5.y fixes → 5.8 live data + 8.4 polish | ui-builder (same agent) | 18:28 | web/** except types.ts | briefed by message |
+| 5.y fixes + 6.1/7.4/8.2 fix round 1 (two 44 px targets + minors) → 5.8 live data + 8.4 polish | ui-builder (same agent) | 18:28 | web/** except types.ts | briefed by message |
 
 ## Needs human
 - **Deploy needs you (the permission classifier blocks me from running Fly deploys).** The image is built and tested (`docs/DEPLOY.md` has the full runbook). From the repo root:
@@ -34,13 +32,13 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
 - **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
 - Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
-- **Labels (blocks the PLAN 3.4 eval targets): `eval/labels/*.csv` are still byte-identical copies of the template.** To make it fast, the pipeline's own output was turned into DRAFTS at `eval/labels_draft/walk1.csv` (13 rows, parts a–e) and `walk3.csv` (2 rows) — see `eval/labels_draft/README.md`. Correct them against what you actually pointed at and said (delete the duplicate stove row, fill walk3's room, check every time, room, trade and `pointed`), then copy them to `eval/labels/walk1.csv` and `walk3.csv`. Write `eval/labels/walk2.csv` by hand per FOOTAGE.md (one row per item you addressed on the re-walk, same item_no as walk1, time within the part + clip letter, fixed_in_rewalk = truth, claimed_fixed_in_rewalk = what you said) — a walk2 draft will appear once the re-walk pipeline (Phase 7) has run. Then `make eval` scores for real.
+- Labels: DONE (18:42 ET) — walk1 (12 items), walk2 (re-walk statuses incl. two false claims) and walk3 (2 holdout items) are in `eval/labels/` and committed. Thank you.
 
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
 - make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
-- make eval: harness built; on real labels: blocked (labels are the template). Synthetic walk: recall 1.0, precision 1.0, trade 0.67, room 1.0
+- make eval: harness verified; real labels landed 18:42 → first real run on walk1/walk3 in progress; walk2 after Phase 7
 - make screenshots: 33/33 strict at 8.2 (ui-builder); verification of 6.1 UI/7.4 UI/8.2 running
 - Live API spend: $1.07 of $25 at 18:25 (probe + synthetic fixtures + real-walk recording in progress: data/record/walk1|walk2|walk3 exist)
 - Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md

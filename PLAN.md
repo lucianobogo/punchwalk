@@ -121,16 +121,16 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 3: Evaluation (Track A)
 
-- [ ] **3.1 `eval/run_eval.py`.** Load `eval/labels/*.csv` (format in FOOTAGE.md).
+- [x] **3.1 `eval/run_eval.py`.** Load `eval/labels/*.csv` (format in FOOTAGE.md).
   - Match predicted ↔ labeled items per walk: |t_pred − t_label| ≤ 6 s AND (room match OR token Jaccard of descriptions ≥ 0.2).
   - Hungarian assignment on match score.
   - If a row has a `clip` value, t_label = that part's offset in the concatenated walk + `time_mmss`.
-- [ ] **3.2 Metrics.**
+- [x] **3.2 Metrics.**
   - **Initial walks:** recall, precision, trade accuracy, room accuracy, grounding rate for pointed items (`pointed=1` rows whose item is grounded by `sam_concept` or `sam_box`), needs_review rate.
   - **Re-walk** (for each walk1 label matched to a predicted item):
     - closure accuracy: predicted signed-off vs. `fixed_in_rewalk`
     - **false-claim catch**: rows with `claimed_fixed_in_rewalk=1` and `fixed_in_rewalk=0` must end `needs_review`
-- [ ] **3.3 Report + real mocks.** Write `eval/report.md` (summary table + per-item diffs) on every run; `make eval` uses the cache. Add `scripts/build_mock_api.py`, which regenerates `fixtures/mock_api/` from real pipeline outputs so the UI shows real evidence.
+- [x] **3.3 Report + real mocks.** Write `eval/report.md` (summary table + per-item diffs) on every run; `make eval` uses the cache. Add `scripts/build_mock_api.py`, which regenerates `fixtures/mock_api/` from real pipeline outputs so the UI shows real evidence.
 - [ ] **3.4 Iterate** on prompts and thresholds until walk1 + walk2 reach:
   - recall ≥ 0.9, precision ≥ 0.9
   - trade ≥ 0.85, room ≥ 0.9
