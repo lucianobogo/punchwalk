@@ -1,0 +1,132 @@
+{
+  "labels_dir": "fixtures/eval/labels_synth",
+  "cache_mode": "readonly",
+  "rooms": [
+    "Kitchen",
+    "Hallway",
+    "Bedroom"
+  ],
+  "walks": [
+    {
+      "walk": "synth_walk",
+      "walk_id": "wlk_eval_synth_walk",
+      "kind": "initial",
+      "holdout": false,
+      "labels": 3,
+      "items": 3,
+      "error": null,
+      "metrics": {
+        "recall": {
+          "num": 3,
+          "den": 3,
+          "value": 1.0
+        },
+        "precision": {
+          "num": 3,
+          "den": 3,
+          "value": 1.0
+        },
+        "trade": {
+          "num": 2,
+          "den": 3,
+          "value": 0.6667
+        },
+        "room": {
+          "num": 3,
+          "den": 3,
+          "value": 1.0
+        },
+        "grounding": {
+          "num": 2,
+          "den": 2,
+          "value": 1.0
+        },
+        "needs_review": {
+          "num": 2,
+          "den": 3,
+          "value": 0.6667
+        }
+      }
+    }
+  ],
+  "summary": [
+    {
+      "walk": "synth_walk",
+      "key": "recall",
+      "metric": "Recall",
+      "value": "1.00 (3/3)",
+      "target": ">= 0.90",
+      "result": "pass",
+      "holdout": false
+    },
+    {
+      "walk": "synth_walk",
+      "key": "precision",
+      "metric": "Precision",
+      "value": "1.00 (3/3)",
+      "target": ">= 0.90",
+      "result": "pass",
+      "holdout": false
+    },
+    {
+      "walk": "synth_walk",
+      "key": "trade",
+      "metric": "Trade accuracy",
+      "value": "0.67 (2/3)",
+      "target": ">= 0.85",
+      "result": "FAIL",
+      "holdout": false
+    },
+    {
+      "walk": "synth_walk",
+      "key": "room",
+      "metric": "Room accuracy",
+      "value": "1.00 (3/3)",
+      "target": ">= 0.90",
+      "result": "pass",
+      "holdout": false
+    },
+    {
+      "walk": "synth_walk",
+      "key": "grounding",
+      "metric": "Grounding rate (pointed)",
+      "value": "1.00 (2/2)",
+      "target": "-",
+      "result": "-",
+      "holdout": false
+    },
+    {
+      "walk": "synth_walk",
+      "key": "needs_review",
+      "metric": "Needs-review rate",
+      "value": "0.67 (2/3)",
+      "target": "-",
+      "result": "-",
+      "holdout": false
+    }
+  ],
+  "app_summary": {
+    "source": "eval/report.md",
+    "updated_at": "2026-11-03T22:59:52.323804Z",
+    "metrics": [
+      {
+        "key": "defects_found",
+        "label": "Defects found",
+        "value": 3,
+        "total": 3
+      },
+      {
+        "key": "right_trade",
+        "label": "Right trade",
+        "value": 2,
+        "total": 3
+      },
+      {
+        "key": "right_room",
+        "label": "Right room",
+        "value": 3,
+        "total": 3
+      }
+    ]
+  }
+}
