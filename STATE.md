@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:55 ET
+Updated: 2026-11-03 18:56 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 8.1 (7dc84f3 + fixes; verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 8.1 (verified on synth; tag after real walks seed), 5.8 + 8.4 + UI fix rounds (verifying), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 7.1–7.3, 7.4-pipeline, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -14,7 +14,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
-| 0.6 + 2.5 fixes + 7.1–7.4 + ingest fps verify (worktree .verify/wt-phase7 @ 0179d57) | verifier | 18:45 | read-only | commits untagged pending PASS |
+| CHANGE-4: Closure.before_after (+ ClosureOut.before_after_url, types.ts, mocks, views) | builder (fresh fix builder) | 18:56 | contract files + scripts/gen_mock_api.py + punchwalk/api/views.py | briefed; Track A writes the field |
 | Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
 | 5.8 + 8.4 + UI fix rounds verify (worktree .verify/wt-ui4 @ 63ceda3) | verifier | 18:49 | read-only | ui-builder idle until real-walk screenshots (after 3.4 + seed) |
 
@@ -38,6 +38,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - Live URL: https://punchwalk.fly.dev
 
 ## Key facts learned
+- Re-walk vs labels (verifier, pre-tuning): 10/12 closure decisions right; both false claims (L3 stovetop, L12 hallway pencil marks) caught; no wrong sign-offs; 2 false alarms (L4 switch screw, L8 window screen); walk1 13 items vs 12 labels (one duplicate).
 - Real footage results (Phase 1): walk1 14/16 turns got a pointing hold, hand conf 0.90; full run: 13 items (one duplicate from a missed continuation turn), 2 needs a look; re-walk: 6 signed off, 4 false-fix flags (#13 confirmed by eye), 2 re-sent, 1 not checked. Known issues for 3.4: hand still in the evidence frame on long holds; defect_box on the wrong object (#2 range hood); classify continuation duplicates.
 - Real footage (18:01): Ray-Ban Meta, HEVC, 120 fps, portrait, sizes vary per clip (1552×2064 … 1376×1840); walk1 = a–e (103 s), walk2 = a–e (77 s), walk3 = 15 s; 335 MB total (gitignored). Labels: template copies → Needs human.
 - **CHANGE REQUEST 17:01 ET (human): no blue tape.** The inspector points with an index finger (~2 s); SAM tracks the hand; fingertip = defect location. PLAN.md 0.6/1.2/1.3/1.5/1.6/2.x/3.2/4.3/5.5/7.x updated; contract renamed Mark→Point; evidence shows a red defect outline + a small blue dot; item numbers keep the tape-tab look.

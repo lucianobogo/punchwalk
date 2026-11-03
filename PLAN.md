@@ -66,7 +66,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - `meta.json`: duration, fps, sizes, orientation, frame counts, scale factors, clip offsets
 
   Handle iPhone HEVC. If HDR is detected, make a best-effort tonemap to SDR.
-- [ ] **0.6 `make record`.** Run ingest + transcribe + SAM hand tracking live once for every walk in `footage/`; store cache + fixtures. If a walk has parts, run SAM per part (ids reset per part) and offset frame indices by each part's start. Also compare the hand phrasings ("hand", "index finger", "pointing hand") on real pointing frames and keep whichever tracks best in config. **AC:** fixtures exist for walk1 and walk2 (and walk3 if present).
+- [x] **0.6 `make record`.** Run ingest + transcribe + SAM hand tracking live once for every walk in `footage/`; store cache + fixtures. If a walk has parts, run SAM per part (ids reset per part) and offset frame indices by each part's start. Also compare the hand phrasings ("hand", "index finger", "pointing hand") on real pointing frames and keep whichever tracks best in config. **AC:** fixtures exist for walk1 and walk2 (and walk3 if present).
 - [x] **0.7 Contracts.** These let Track B start right away:
   - SQLModel domain models (`punchwalk/core/models.py`) and API response schemas (`punchwalk/api/schemas.py`)
   - the same types in TypeScript (`web/src/api/types.ts`)
@@ -117,7 +117,7 @@ Track ownership and paths are in the orchestrator's instructions.
   Render the evidence JPEG: full frame, defect outline + 30% fill (red), a small blue dot where the finger pointed, no burned-in text (the UI draws the number tab and captions). Also save a 4:3 crop centered on marker + defect for cards.
 - [x] **2.3 Verify** (Spark Open, `reasoning_effort=medium`). Input: the rendered evidence + item JSON + the original quote. Check that the title, description and action match both what was said and what the frame shows. Output: `{consistent, issues[], suggested_fix?}`. If inconsistent → `needs_review` with the note. Never drop an item.
 - [x] **2.4 Voice-only grounding.** `GROUNDING_MODE=point+voice|voice_only`. Voice-only items (and every item in voice_only mode) go through the same 2.1–2.3 path using the sampled frame.
-- [ ] **2.5 Job runner.** Stages run with per-stage timing, 2 retries, resumable state (a re-run skips completed stages unless `force=true`), and progress events (stage, counts) for the UI.
+- [x] **2.5 Job runner.** Stages run with per-stage timing, 2 retries, resumable state (a re-run skips completed stages unless `force=true`), and progress events (stage, counts) for the UI.
 
 ## Phase 3: Evaluation (Track A)
 
@@ -198,11 +198,11 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 7: Re-walk loop (Track A, then B)
 
-- [ ] **7.1 Resolve status updates.** The re-walk runs stages 0–1.6. Then, for each `status_update` turn, Spark Open maps it to an open item, given the open items `[{id, title, room, description, location_detail}]`, the utterance, the current room and the pointed location. Output: `{item_id | null, claimed, confidence}`.
-- [ ] **7.2 Visual check.**
+- [x] **7.1 Resolve status updates.** The re-walk runs stages 0–1.6. Then, for each `status_update` turn, Spark Open maps it to an open item, given the open items `[{id, title, room, description, location_detail}]`, the utterance, the current room and the pointed location. Output: `{item_id | null, claimed, confidence}`.
+- [x] **7.2 Visual check.**
   - The re-walk runs the same pointing detection. For each matched item, use the evidence frame of its re-walk pointing event (else the sharpest frame in the turn window).
   - Spark Open compares [original evidence crop, new crop around the pointed spot] → `{defect_still_present: yes | no | unclear, note}`. There is no tape check.
-- [ ] **7.3 Decision table.**
+- [x] **7.3 Decision table.**
   - Claimed fixed + fixed on camera → **signed off**.
   - Said not fixed, or defect still visible → **open**, send again.
   - Claimed fixed + defect still visible → **needs a look: "Marked fixed on the re-walk, but the defect is still visible."** This is the headline demo moment.
