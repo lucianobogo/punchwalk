@@ -1,0 +1,3 @@
+walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+walk3,13,Laundry room,Mold in the detergent compartment,Cleaning,00:03,1,,,
+walk3,14,Laundry room,Spilled detergent on laundry machine,Cleaning,00:10,1,,,

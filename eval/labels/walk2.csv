@@ -1,0 +1,13 @@
+walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+walk2,1,Kitchen,Coffee stains on the right side of the counter,Cleaning,00:04,1,1,1,a
+walk2,2,Kitchen,Light bulb missing on the range hood,Electrical,00:09,1,1,1,a
+walk2,3,Kitchen,Stovetop damaged on the bottom-left,Appliances,00:16,1,0,1,a
+walk2,4,Kitchen,Light switch missing a screw,Electrical,00:22,1,1,1,a
+walk2,5,Bathroom,Toothpaste smudged on the mirror,Cleaning,00:02,1,1,1,b
+walk2,6,Bathroom,Knob missing on cabinet,Carpentry_millwork,00:07,1,1,1,b
+walk2,7,Living room,Fire alarm missing on roof,Electrical,00:02,1,1,1,c
+walk2,8,Living room,Window screen not placed correctly,Windows_glazing,00:07,1,1,1,c
+walk2,9,Living room,Wall has pencil marks and screws in it,Painting,00:14,1,0,0,c
+walk2,10,Bedroom,Wall has a nick on it,Painting,00:03,1,0,0,d
+walk2,11,Hallway,Outlet loose and crooked,Electrical,00:02,1,1,1,e
+walk2,12,Hallway,Pencil marks on the wall,Painting,00:07,1,0,1,e
