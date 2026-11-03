@@ -68,7 +68,14 @@ async function capture(browser: Browser, base: string, screen: Screen, file: str
   const context = await browser.newContext(screen.viewport === 'desktop' ? DESKTOP : PHONE);
   const page = await context.newPage();
   page.on('console', (m) => {
-    if (m.type() === 'error') notes.push(`console: ${m.text()}`);
+    // Failed requests are reported below with their URL; WebKit's console line has none.
+    if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) notes.push(`console: ${m.text()}`);
+  });
+  page.on('response', (r) => {
+    if (r.status() >= 400) notes.push(`HTTP ${r.status()} ${new URL(r.url()).pathname}`);
+  });
+  page.on('requestfailed', (r) => {
+    if (!r.url().startsWith('blob:')) notes.push(`request failed: ${new URL(r.url()).pathname} (${r.failure()?.errorText ?? 'unknown'})`);
   });
   page.on('pageerror', (e) => notes.push(`page error: ${e.message}`));
   let ok = true;

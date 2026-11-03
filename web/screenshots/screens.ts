@@ -1,6 +1,11 @@
 // Every screen in DESIGN.md's "Screenshot checklist", in order. `make screenshots` writes each one to
 // .verify/screens/<nn>-<name>.png. See README.md in this folder for how to add or extend a screen.
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
+
+const FIXTURE_MEDIA = resolve(dirname(fileURLToPath(import.meta.url)), '../../fixtures/mock_api/media');
 
 export type Viewport = 'phone' | 'desktop';
 
@@ -65,11 +70,14 @@ export async function seekVideo(page: Page, t: number, play = false) {
   await page.waitForTimeout(300);
 }
 
-/** Attaches fake clip files to the first file input (the Record screen). */
-export async function addClips(page: Page, names: string[]) {
+/**
+ * Attaches clips to the first file input (the Record screen). Each clip is a real mock video
+ * (fixtures/mock_api/media/<path>) under the given file name, so thumbnails and lengths load.
+ */
+export async function addClips(page: Page, clips: { name: string; media: string }[]) {
   const input = page.locator('input[type=file]').first();
   await input.setInputFiles(
-    names.map((name) => ({ name, mimeType: 'video/mp4', buffer: Buffer.from('mock clip') })),
+    clips.map((c) => ({ name: c.name, mimeType: 'video/mp4', buffer: readFileSync(resolve(FIXTURE_MEDIA, c.media)) })),
     { timeout: 3000 },
   );
 }
@@ -178,7 +186,9 @@ export const SCREENS: Screen[] = [
     path: '/walks/wlk_2b_first',
     render: '04-walk-detail.png',
     setup: async (page) => {
-      await seekVideo(page, 92);
+      // Item 6 "Door doesn't latch" is called out at 92.0 s; the finger holds still 91.6-93.6 s.
+      await seekVideo(page, 92.8);
+      await page.getByText('New', { exact: true }).waitFor({ timeout: 3000 });
       await page.waitForTimeout(400);
     },
   },
@@ -187,7 +197,9 @@ export const SCREENS: Screen[] = [
     checklist: '6. Walk detail scrolled, with the mini-player',
     path: '/walks/wlk_2b_first',
     setup: async (page) => {
-      await scrollBy(page, 700);
+      await seekVideo(page, 112.5);
+      await scrollBy(page, 420);
+      await page.waitForTimeout(400);
     },
   },
   // 7. Record
@@ -196,12 +208,18 @@ export const SCREENS: Screen[] = [
     checklist: '7. Record: clips added',
     path: '/record',
     setup: async (page) => {
-      await addClips(page, ['walk1_a.mp4', 'walk1_b.mp4']);
+      await addClips(page, [
+        { name: 'walk1_a.mp4', media: 'walks/wlk_2b_first/display.mp4' },
+        { name: 'walk1_b.mp4', media: 'walks/wlk_2b_rewalk/display.mp4' },
+      ]);
+      await page.getByText(/^\d+:\d\d, /).nth(1).waitFor({ timeout: 8000 });
+      await page.waitForTimeout(300);
     },
   },
   {
     name: 'record-processing',
     checklist: '7. Record: processing checklist mid-run',
+    // Snapshot 5: "Writing items, 2 of 4 written" with two items so far (closest to the render).
     path: '/record?walk=wlk_3a_first&mock_progress=5',
     render: '05-record-processing.png',
   },
@@ -241,8 +259,20 @@ export const SCREENS: Screen[] = [
     name: 'how-processed',
     checklist: '10. How this walk was processed',
     path: '/walks/wlk_2b_first/processing',
-    fullPage: true,
     render: '08-how-processed.png',
+  },
+  {
+    name: 'how-processed-calls',
+    checklist: '10. How this walk was processed: eval numbers and every model call',
+    path: '/walks/wlk_2b_first/processing',
+    setup: async (page) => {
+      await tapButton(page, 'Show all');
+      await page.evaluate(() => {
+        const h = document.getElementById('eval-h') ?? document.getElementById('calls-h');
+        if (h) window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - 70);
+      });
+      await page.waitForTimeout(300);
+    },
   },
   // 11. Landing page
   {
