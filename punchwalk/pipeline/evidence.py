@@ -12,10 +12,13 @@ similarity fit on the region around it, else by phase correlation (translation; 
 walls), with hand pixels masked out. When both fail the camera is assumed still (`aligned: false`
 in the stage output).
 
-Voice-only items: 5 frames sampled across the item's clip window, the sharpest wins, pointer null.
+Voice-only items: 5 frames sampled across the turn window (inside its clip part), the sharpest wins,
+pointer null. Context frames never cross a clip boundary.
+With GROUNDING_MODE=voice_only every item takes this path (PLAN 2.4).
 
 Files per item (DATA_DIR/walks/<walk>/items/<item>/): raw.jpg (evidence frame, full display
-resolution, no outlines), pointing.jpg (the pointing frame; pointed items only), context_a.jpg /
+resolution, no outlines), pointing_raw.jpg (the pointing frame; pointed items only; ground_defects
+renders pointing.jpg from it with the hand outlined), context_a.jpg /
 context_b.jpg (-/+ 0.7 s), crop.jpg (4:3 card crop centered on the pointer, no outlines).
 `Item.evidence` gets t, image (= raw until Phase 2 draws outlines), raw, crop, pointing_frame,
 hand_box, pointer, width, height, crop_box, grounding (`pointed_only` | `none`).
@@ -32,6 +35,7 @@ import cv2
 import numpy as np
 from sqlmodel import select
 
+from punchwalk.config import get_settings
 from punchwalk.core import models
 from punchwalk.core.enums import Stage
 from punchwalk.core.models import Item
@@ -172,10 +176,10 @@ def choose_sharpest(frames: dict[int, np.ndarray]) -> Choice:
                   hand_clear=True, aligned=True, candidates=len(frames))
 
 
-def sample_frames(start_s: float, end_s: float, fps: float, frame_count: int, n: int) -> list[int]:
-    """n SAM frame indices spread evenly over [start_s, end_s]."""
-    lo = max(0, min(frame_count - 1, int(round(start_s * fps))))
-    hi = max(lo, min(frame_count - 1, int(round(end_s * fps))))
+def sample_frames(start_s: float, end_s: float, fps: float, first: int, last: int, n: int) -> list[int]:
+    """n SAM frame indices spread evenly over [start_s, end_s], kept inside [first, last] (the clip part)."""
+    lo = max(first, min(last, int(round(start_s * fps))))
+    hi = max(lo, min(last, int(round(end_s * fps))))
     return sorted({int(round(v)) for v in np.linspace(lo, hi, n)})
 
 
@@ -211,24 +215,25 @@ def _part_range(ctx: StageContext, frame: int) -> tuple[int, int]:
 
 
 def run(ctx: StageContext) -> StageOutcome:
+    voice_only = get_settings().GROUNDING_MODE == "voice_only"
     meta = ctx.meta
     drafts = ctx.output(Stage.fuse)["drafts"]
     events = {e["id"]: e for e in ctx.output(Stage.find_points)["events"]}
     track = ctx.output(Stage.track_hands)
     w, h, fps = track["sam"]["width"], track["sam"]["height"], float(track["sam"]["fps"])
-    n_frames = meta.sam.frame_count
     sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
     dw, dh = meta.display.width, meta.display.height
     radius = int(round(P.EVIDENCE_SEARCH_S * fps))
 
     plans: dict[str, list[int]] = {}
     for d in drafts:
-        ev = events.get(d["point_id"]) if d["point_id"] else None
+        ev = events.get(d["point_id"]) if d["point_id"] and not voice_only else None
         if ev:
             lo, hi = _part_range(ctx, ev["frame"])
             plans[d["item_id"]] = list(range(max(lo, ev["frame"] - radius), min(hi, ev["frame"] + radius) + 1))
-        else:
-            plans[d["item_id"]] = sample_frames(d["video_start_s"], d["video_end_s"], fps, n_frames,
+        else:  # the turn window (PLAN 1.6), never across a clip boundary
+            lo, hi = _part_range(ctx, int(round(d["quote_start_s"] * fps)))
+            plans[d["item_id"]] = sample_frames(d["quote_start_s"], d["quote_end_s"], fps, lo, hi,
                                                 P.VOICE_ONLY_SAMPLES)
     needed = {f for fs in plans.values() for f in fs}
     frames = read_frames(ctx.walk_dir / meta.sam.path, needed)
@@ -243,7 +248,7 @@ def run(ctx: StageContext) -> StageOutcome:
         if not got:
             log.warning("pick_evidence: no frames decoded for %s", item_id)
             continue
-        ev = events.get(d["point_id"]) if d["point_id"] else None
+        ev = events.get(d["point_id"]) if d["point_id"] and not voice_only else None
         if ev and ev["frame"] in got:
             choice = choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
                                           fingertip=tuple(ev["fingertip"]), hold_last=ev["hold_frames"][1])
@@ -274,14 +279,16 @@ def _write_item_files(
     out = ctx.item_dir(d["item_id"])
     out.mkdir(parents=True, exist_ok=True)
     t = round(choice.frame / fps, 3)
-    last_t = max(0.0, ctx.meta.duration_s - 1.0 / ctx.meta.display.fps)
+    clip = ctx.meta.clip_at(t)  # context frames stay inside this clip part (no camera cut)
+    first_t = clip.offset_s
+    last_t = max(first_t, clip.offset_s + clip.duration_s - 1.0 / ctx.meta.display.fps)
     q = P.EVIDENCE_JPEG_QUALITY
     raw = media.extract_frame(display, t, out / "raw.jpg", quality=q)
-    media.extract_frame(display, max(0.0, t - P.CONTEXT_FRAME_OFFSET_S), out / "context_a.jpg", quality=q)
+    media.extract_frame(display, max(first_t, t - P.CONTEXT_FRAME_OFFSET_S), out / "context_a.jpg", quality=q)
     media.extract_frame(display, min(last_t, t + P.CONTEXT_FRAME_OFFSET_S), out / "context_b.jpg", quality=q)
     pointing_rel = None
     if ev:
-        pointing_rel = rel_to_data(media.extract_frame(display, ev["t"], out / "pointing.jpg", quality=q))
+        pointing_rel = rel_to_data(media.extract_frame(display, ev["t"], out / "pointing_raw.jpg", quality=q))
     pointer = None
     if choice.pointer is not None:
         pointer = {"x": round(choice.pointer[0] * sx, 1), "y": round(choice.pointer[1] * sy, 1)}
@@ -320,4 +327,5 @@ def _write_item_files(
         "candidates": choice.candidates,
         "context_a": rel_to_data(out / "context_a.jpg"),
         "context_b": rel_to_data(out / "context_b.jpg"),
+        "pointing_raw": pointing_rel,
     }
