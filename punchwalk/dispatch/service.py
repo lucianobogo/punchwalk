@@ -39,6 +39,7 @@ from punchwalk.dispatch.message import Message, build_message
 
 SENDABLE = (ItemStatus.open, ItemStatus.dispatched)
 CHANNEL_ORDER = (Channel.slack, Channel.email, Channel.outbox)
+SLACK_DEFAULT_DESTINATION = "Slack"  # the server-wide webhook, when the trade has no channel name
 
 
 class DispatchRefused(ValueError):
@@ -97,7 +98,7 @@ def channel_options(project: Project, trade: Trade) -> list[ChannelOption]:
     slack_opt = ChannelOption(
         Channel.slack,
         available=bool(webhook),
-        destination=((c.slack_channel if c else None) or "Slack") if webhook else None,
+        destination=((c.slack_channel if c else None) or SLACK_DEFAULT_DESTINATION) if webhook else None,
         reason=None if webhook else f"No Slack channel set up for {company}.",
         webhook=webhook,
     )
@@ -117,12 +118,14 @@ def suggested(options: Sequence[ChannelOption]) -> ChannelOption:
 
 
 def why(option: ChannelOption, company: str) -> str:
-    """One plain sentence on the chosen channel (for logs, history and auto-send notes)."""
+    """One plain sentence on the chosen channel (DispatchPreviewOut.channel_reason)."""
     if option.channel == Channel.slack:
-        return f"{company} has a Slack channel ({option.destination})."
+        if option.destination and option.destination != SLACK_DEFAULT_DESTINATION:
+            return f"{company} has a Slack channel ({option.destination})."
+        return f"{company} gets the team's Slack channel."
     if option.channel == Channel.email:
         return f"{company} gets email at {option.destination}."
-    return "No Slack channel or email set up, so this goes to the Outbox."
+    return f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
 
 
 # --------------------------------------------------------------------------- items
@@ -175,6 +178,7 @@ def preview(session: Session, project: Project, trade: Trade, channel: Channel |
         trade=trade,
         contact=trade_contact_out(contact_for(project, trade)),
         channel=chosen.channel,
+        channel_reason=why(chosen, company_for(project, trade)),
         channels=[o.out() for o in options],
         heading=msg.heading,
         lines=[
@@ -210,12 +214,14 @@ def _pick_items(session: Session, project: Project, trade: Trade, item_ids: Sequ
     return items
 
 
-def _via(option: ChannelOption) -> str:
-    return {
-        Channel.slack: f"in Slack ({option.destination})",
-        Channel.email: f"by email ({option.destination})",
-        Channel.outbox: "from the outbox",
-    }[option.channel]
+def via(option: ChannelOption) -> str:
+    """'in Slack (#punch-electrical)', 'in Slack', 'by email (x@example.com)', 'from the outbox'."""
+    if option.channel == Channel.slack:
+        named = option.destination and option.destination != SLACK_DEFAULT_DESTINATION
+        return f"in Slack ({option.destination})" if named else "in Slack"
+    if option.channel == Channel.email:
+        return f"by email ({option.destination})"
+    return "from the outbox"
 
 
 def send_items(
@@ -274,7 +280,12 @@ def send_items(
     session.add(dispatch)
     for item in items:
         again = item.status == ItemStatus.dispatched
-        text = note or f"Sent {'again ' if again else ''}to {company} {_via(option)}."
+        if note:
+            text = note
+        elif option.channel == Channel.outbox:  # nothing left the app yet: the PM shares the link
+            text = f"{'Put in the Outbox again' if again else 'Put in the Outbox'} for {company}, ready to share."
+        else:
+            text = f"Sent {'again ' if again else ''}to {company} {via(option)}."
         entry = HistoryEvent(
             at=now,
             actor=actor,
@@ -306,24 +317,37 @@ def _deliver(msg: Message, option: ChannelOption) -> SendResult:
 
 
 def approve_and_send(session: Session, item: Item, channel: Channel | None = None) -> Dispatch:
-    """"Approve and send to Ace Electric": a needs-a-look item becomes open (logged), then goes out."""
-    if item.status == ItemStatus.needs_review:
-        now = utcnow()
-        entry = HistoryEvent(
-            at=now,
-            actor=HistoryActor.human,
-            action=HistoryAction.status_changed,
-            field="status",
-            from_=ItemStatus.needs_review.value,
-            to=ItemStatus.open.value,
-            note="Approved by the project manager.",
-        ).model_dump(mode="json", by_alias=True)
-        item.history = [*(item.history or []), entry]
-        item.status = ItemStatus.open
-        item.review_reason = None
-        item.updated_at = now
-        session.add(item)
-        session.commit()
+    """"Approve and send to Ace Electric": a needs-a-look item becomes open (logged), then goes out.
+
+    The approval only sticks if the send succeeds: when the channel refuses or fails, the item goes
+    back to needs-a-look with its reason and history unchanged, and the error is re-raised.
+    """
     project = session.get(Project, item.project_id)
     assert project is not None
-    return send_items(session, project, item.trade, [item.id], channel)
+    if item.status != ItemStatus.needs_review:
+        return send_items(session, project, item.trade, [item.id], channel)
+    before = (item.status, item.review_reason, list(item.history or []), item.updated_at)
+    now = utcnow()
+    entry = HistoryEvent(
+        at=now,
+        actor=HistoryActor.human,
+        action=HistoryAction.status_changed,
+        field="status",
+        from_=ItemStatus.needs_review.value,
+        to=ItemStatus.open.value,
+        note="Approved by the project manager.",
+    ).model_dump(mode="json", by_alias=True)
+    item.history = [*before[2], entry]
+    item.status = ItemStatus.open
+    item.review_reason = None
+    item.updated_at = now
+    session.add(item)
+    session.commit()
+    try:
+        return send_items(session, project, item.trade, [item.id], channel)
+    except (DispatchRefused, DispatchFailed):
+        session.refresh(item)
+        item.status, item.review_reason, item.history, item.updated_at = before
+        session.add(item)
+        session.commit()
+        raise

@@ -11,19 +11,27 @@ worker calls it; the pipeline's persist stage may call it too, which is safe: it
   noted twice.
 A channel failure never breaks the walk: the item stays open with a note saying it wasn't sent.
 
-Turned off with `AUTO_SEND=0` (env; default on).
+Turned off with `AUTO_SEND=false` (Settings; default on).
 """
 
 from __future__ import annotations
 
 import logging
-import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 
 from sqlmodel import Session, col, select
 
-from punchwalk.core.enums import ClosureDecision, HistoryAction, HistoryActor, ItemStatus, Trade, WalkKind
+from punchwalk.config import get_settings
+from punchwalk.core.enums import (
+    Channel,
+    ClosureDecision,
+    HistoryAction,
+    HistoryActor,
+    ItemStatus,
+    Trade,
+    WalkKind,
+)
 from punchwalk.core.models import HistoryEvent, Item, Project, Walk, utcnow
 from punchwalk.dispatch import service
 
@@ -35,7 +43,7 @@ NOT_SENT_PREFIX = "Not sent automatically: "
 
 
 def auto_send_enabled() -> bool:
-    return os.environ.get("AUTO_SEND", "1").strip().lower() not in ("0", "false", "no", "off")
+    return get_settings().AUTO_SEND
 
 
 @dataclass
@@ -95,10 +103,10 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
     for trade, group in by_trade.items():
         option = service.suggested(service.channel_options(project, trade))
         company = service.company_for(project, trade)
-        via = {"slack": f"in Slack ({option.destination})", "email": f"by email ({option.destination})"}.get(
-            option.channel.value, "to the outbox"
-        )
-        note = f"Sent automatically to {company} {via}: {AUTO_NOTE}"
+        if option.channel == Channel.outbox:
+            note = f"Put in the Outbox for {company} automatically: {AUTO_NOTE}"
+        else:
+            note = f"Sent automatically to {company} {service.via(option)}: {AUTO_NOTE}"
         try:
             dispatch = service.send_items(
                 session, project, trade, [i.id for i in group], option.channel, actor=HistoryActor.system, note=note

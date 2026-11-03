@@ -1,6 +1,13 @@
-"""Slack incoming webhook: POST {"text", "blocks"} to the trade's webhook URL. Slack answers 200 "ok"."""
+"""Slack incoming webhook: POST {"text", "blocks"} to the trade's webhook URL. Slack answers 200 "ok".
+
+Webhooks on reserved example domains (RFC 2606: example.com/.net/.org and their subdomains, e.g. the
+demo directory's https://hooks.slack.example.com/...) are never contacted: the send is recorded as
+delivered, so the seeded demo shows the Slack path without network calls.
+"""
 
 from __future__ import annotations
+
+from urllib.parse import urlparse
 
 import httpx
 
@@ -12,8 +19,19 @@ def payload_for(message: Message) -> dict:
     return {"text": message.slack_text, "blocks": message.slack_blocks()}
 
 
+EXAMPLE_DOMAINS = ("example.com", "example.net", "example.org")
+
+
+def is_example_webhook(url: str) -> bool:
+    host = (urlparse(url).hostname or "").lower()
+    return any(host == d or host.endswith("." + d) for d in EXAMPLE_DOMAINS)
+
+
 def send(message: Message, *, webhook_url: str, destination: str) -> SendResult:
     body = payload_for(message)
+    if is_example_webhook(webhook_url):
+        return SendResult(destination=destination, payload={**body, "links": message.share_links()},
+                          extra={"demo": True})
     try:
         with http_client() as client:
             res = client.post(webhook_url, json=body)

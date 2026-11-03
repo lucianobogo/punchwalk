@@ -21,7 +21,7 @@ endif
 
 dev:
 	$(call require,punchwalk/api/app.py)
-	uv run uvicorn punchwalk.api.app:app --reload --port 8000
+	uv run uvicorn punchwalk.api.app:app --reload --port 8000 --no-proxy-headers
 
 test:
 	PUNCHWALK_CACHE=readonly uv run pytest -q

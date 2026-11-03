@@ -95,4 +95,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4).status == 200 else 1)"
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 # ONE process: the job cap (2 concurrent walks) and the DEMO_MODE upload limiter are per process.
-CMD ["uvicorn", "punchwalk.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "75"]
+# --no-proxy-headers: uvicorn would otherwise rewrite the client IP from X-Forwarded-For for loopback
+# peers before guards.client_ip() runs (spoofable); Fly-Client-IP / TRUST_PROXY are handled there.
+CMD ["uvicorn", "punchwalk.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--timeout-keep-alive", "75", "--no-proxy-headers"]
