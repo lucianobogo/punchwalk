@@ -98,15 +98,6 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
     return clone((await p) as T);
   }
 
-  async function exists(file: string): Promise<boolean> {
-    try {
-      await load(file);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   async function answer<T>(fn: () => Promise<T>): Promise<T> {
     if (settings.latencyMs > 0) await sleep(settings.latencyMs);
     return fn();
@@ -208,16 +199,19 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
         const next: ItemOut = { ...item, history: [...item.history], updated_at: nowIso() };
         const rec = next as unknown as Record<string, unknown>;
         for (const [key, value] of Object.entries(patch)) {
-          if (key === 'note' || value === undefined || value === null) continue;
+          if (key === 'note' || value === undefined) continue;
+          // null means "unchanged", except review_reason, where null clears it (approve).
+          if (value === null && key !== 'review_reason') continue;
           const from = rec[key];
           if (from === value) continue;
           rec[key] = value;
+          if (key === 'review_reason') continue; // follows the status change; not its own history line
           next.history.push(
             historyEntry({
               action: key === 'status' ? 'status_changed' : 'edited',
               field: key,
               from: from == null ? null : String(from),
-              to: String(value),
+              to: value == null ? null : String(value),
               note: patch.note ?? null,
             }),
           );
@@ -334,23 +328,23 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
 
     dispatch: (id, trade, body) =>
       answer(async () => {
-        const file = `projects/${id}/trades/${trade}/dispatch.post.json`;
+        // Built from the trade's preview (no probing for optional dispatch.post.json files, which
+        // would log 404s in the console).
         const company = await companyFor(id, trade);
-        const base: DispatchOut = (await exists(file))
-          ? await load<DispatchOut>(file)
-          : {
-              id: '',
-              project_id: id,
-              trade,
-              company,
-              channel: body.channel,
-              destination: null,
-              item_ids: [],
-              sent_at: '',
-              ok: true,
-              error: null,
-              payload: {},
-            };
+        const preview = await load<DispatchPreviewOut>(`projects/${id}/trades/${trade}/preview.json`);
+        const base: DispatchOut = {
+          id: '',
+          project_id: id,
+          trade,
+          company,
+          channel: body.channel,
+          destination: preview.channels.find((c) => c.channel === body.channel)?.destination ?? null,
+          item_ids: [],
+          sent_at: '',
+          ok: true,
+          error: null,
+          payload: { text: body.channel === 'slack' ? preview.slack_text : preview.message_text },
+        };
         const key = `${id}/${trade}`;
         const out: DispatchOut = {
           ...base,
