@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:04 ET
+Updated: 2026-11-03 18:19 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 5.x fixes + 5.5–5.7 (9c443eb..741585a; verify after CHANGE-2 lands). Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 4.1–4.4, 5.1–5.4, 6.1-backend, 6.2, 6.3, 9.1-image
 
@@ -13,10 +13,11 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| 3.1–3.3 eval harness (built on the synthetic walk until footage lands) | builder (eval) | 17:48 | eval/run_eval.py, eval/report.md, eval/README?, scripts/build_mock_api.py, tests/test_eval*.py, fixtures/eval/** | reads Item rows via runner.run_walk on a temp DB; never overwrites fixtures/mock_api without --out |
+| 3.1–3.3 committed untagged; verify after Track A re-records synth_walk | orchestrator | 18:16 | eval/**, scripts/build_mock_api.py | 5 e2e tests skip until the synthetic cache is re-recorded |
+| eval follow-ups: eval/project.json, label DRAFTS for the human from real outputs, processing-summary eval block, test order fix | builder (eval, same agent) | 18:16 | eval/**, punchwalk/api/views.py (eval block only), tests/test_eval*, tests/test_api_walks.py (eval block test) | briefed by message |
 | Track A: make record (walk1/2/3) + full runs (walk1, walk3) → 2.5 fixes → 7.1–7.4 → full run walk2 | builder (Track A, same agent) | 18:04 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
-| CHANGE-2 (small contract: channel_reason, approve-and-send doc, StageState.message, Settings AUTO_SEND/TRUST_PROXY/PUNCHWALK_WORKER) + 8.1 seed (on synthetic data, ready for real walks) | builder (Track C, same agent) | 17:53 | punchwalk/core/models.py, punchwalk/api/schemas.py, web/src/api/types.ts, scripts/gen_mock_api.py, fixtures/mock_api, punchwalk/config.py, .env.example, punchwalk/api/media.py, scripts/seed.py, tests/test_seed.py | briefed by message |
-| 5.5–5.7 + 5.x fixes verify (worktree, after the CHANGE-2 commit lands) | orchestrator → verifier | 18:02 | read-only | committed untagged; waiting for types.ts commit |
+| CHANGE-2 + 8.1 + 6.x/9.1 fixes verify | verifier | 18:13 | read-only (Python paths) | committed untagged pending PASS |
+| 5.5–5.7 + 5.x fixes verify (worktree .verify/wt-ui2 @ 7dc84f3) | verifier | 18:13 | read-only | committed untagged pending PASS |
 | 6.1 UI (Trades screens, share page, sent toast) + 7.4 UI (re-walk summary) + 8.2 landing page | ui-builder (same agent) | 18:02 | web/** except types.ts | briefed by message |
 
 ## Needs human
@@ -29,6 +30,8 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
   curl -s https://punchwalk.fly.dev/healthz
   ```
   After 8.1 lands, seed the demo project: `fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py'"`. Or restart the orchestrator with permission to run Fly commands and it will do all of this.
+- **License:** the repo goes public before submission and has no LICENSE file. Pick one (MIT suggested) and drop it in as `LICENSE`; README has a `<!-- LICENSE -->` placeholder.
+- **Slack on camera (optional):** the seeded Ace Electric webhook is an example-domain placeholder (never contacted). To make the Slack beat real, put your webhook in `.env` as SLACK_WEBHOOK_URL (global) or follow the pre-flight swap in docs/DEMO_SCRIPT.md.
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
 - **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
 - Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
@@ -38,7 +41,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 
 ## Health
 - make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
-- make eval: not run yet (targets in PLAN.md 3.4)
+- make eval: harness built; on real labels: blocked (labels are the template). Synthetic walk: recall 1.0, precision 1.0, trade 0.67, room 1.0
 - make screenshots: 30/30 written at 5.4 (14/14 strict for 5.2–5.4); 5.5–5.7 screens pending
 - Live API spend: $0.22 of $25 (probe $0.046; synthetic record + Phase 2 fixtures $0.175)
 - Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md
@@ -56,4 +59,4 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - Agreed Make entry points (used by later briefs): dev=`uvicorn punchwalk.api.app:app`, probe=`scripts/probe.py`, record=`scripts/record.py`, seed=`scripts/seed.py`, eval=`eval/run_eval.py`, build=`pnpm -C web build` → `punchwalk/static/`, screenshots=`pnpm -C web screenshots` → `.verify/screens/`.
 
 ## Final handoff
-- not written yet
+- not written yet. README placeholders to fill at the end: VIDEO_URL, live URL "(deploying)", SCREENS_REAL, EVAL_TABLE, COST_REAL, NOV4_FEATURES, LICENSE; DEMO_SCRIPT item-number table after seeding.
