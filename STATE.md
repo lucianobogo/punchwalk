@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:49 ET
+Updated: 2026-11-03 18:55 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 8.1 (7dc84f3 + fixes; verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
 
@@ -19,15 +19,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | 5.8 + 8.4 + UI fix rounds verify (worktree .verify/wt-ui4 @ 63ceda3) | verifier | 18:49 | read-only | ui-builder idle until real-walk screenshots (after 3.4 + seed) |
 
 ## Needs human
-- **Deploy needs you (the permission classifier blocks me from running Fly deploys).** The image is built and tested (`docs/DEPLOY.md` has the full runbook). From the repo root:
-  ```
-  fly apps create punchwalk            # if the name is taken: pick one, edit `app` + APP_BASE_URL in fly.toml
-  fly volumes create punchwalk_data --region ewr --size 3 -a punchwalk -y
-  grep -E '^(MODEL_API_KEY|BASETEN_API_KEY|SLACK_WEBHOOK_URL|RESEND_API_KEY|EMAIL_FROM)=.+' .env | fly secrets import -a punchwalk
-  fly deploy --remote-only             # later redeploys: make deploy
-  curl -s https://punchwalk.fly.dev/healthz
-  ```
-  After 8.1 lands, seed the demo project: `fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py'"`. Or restart the orchestrator with permission to run Fly commands and it will do all of this.
+- Deploy: DONE by the human (18:55 ET) — https://punchwalk.fly.dev is live (healthz ok, demo_mode true, PWA served, /mock-api 404). Remaining on the live app: the demo data. After Track A's 3.4 tuning, the orchestrator builds the seed snapshot on this Mac (`scripts/seed.py --reset --export demo/seed_snapshot.tar.gz`); then it must reach Fly — the orchestrator will try `fly ssh sftp` / `fly ssh console` itself; if the permission classifier blocks that, the exact commands appear here (they're also in docs/DEPLOY.md → "Seed").
 - **License:** the repo goes public before submission and has no LICENSE file. Pick one (MIT suggested) and drop it in as `LICENSE`; README has a `<!-- LICENSE -->` placeholder.
 - **Slack on camera (optional):** the seeded Ace Electric webhook is an example-domain placeholder (never contacted). To make the Slack beat real, put your webhook in `.env` as SLACK_WEBHOOK_URL (global) or follow the pre-flight swap in docs/DEMO_SCRIPT.md.
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
@@ -42,8 +34,8 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - make eval: harness verified; real labels landed 18:42 → first real run on walk1/walk3 in progress; walk2 after Phase 7
 - make screenshots: 33/33 strict at 8.2 (ui-builder); verification of 6.1 UI/7.4 UI/8.2 running
 - Live API spend: $1.43 of $25 at 18:45 (real walks: record $0.44 + full runs $0.54; synthetic fixtures $0.45)
-- Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md
-- Live URL: none
+- Deploy: LIVE at https://punchwalk.fly.dev (human ran the runbook 18:55 ET); demo project not seeded yet (snapshot after 3.4)
+- Live URL: https://punchwalk.fly.dev
 
 ## Key facts learned
 - Real footage results (Phase 1): walk1 14/16 turns got a pointing hold, hand conf 0.90; full run: 13 items (one duplicate from a missed continuation turn), 2 needs a look; re-walk: 6 signed off, 4 false-fix flags (#13 confirmed by eye), 2 re-sent, 1 not checked. Known issues for 3.4: hand still in the evidence frame on long holds; defect_box on the wrong object (#2 range hood); classify continuation duplicates.
