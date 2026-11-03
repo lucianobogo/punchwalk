@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useProcessing, useProjects, useWalks } from '../api/hooks';
 import { useCurrentProject } from '../api/project';
-import { ButtonLink, TapeLogo } from '../components';
+import { ButtonLink, Pill, TapeLogo } from '../components';
 import { METRIC_PHRASE, appUrl, isWide, markDemo, markLandingSeen, qrDataUrl } from '../features/landing/landing';
 import { evalVisibility } from './ProcessedPage';
 
@@ -26,11 +26,12 @@ export default function LandingPage() {
       return;
     }
     // A phone goes straight into the demo project, with the banner.
-    if (!projects.data) return;
+    // Into the app either way: if the projects didn't load, the punch list shows the error with Try again.
+    if (!projects.data && !projects.isError) return;
     markDemo();
     if (demoId) setProjectId(demoId);
     navigate('/', { replace: true });
-  }, [wide, projects.data, demoId, setProjectId, navigate]);
+  }, [wide, projects.data, projects.isError, demoId, setProjectId, navigate]);
 
   if (!wide) return null;
   return <DesktopLanding demoProjectId={demoId} />;
@@ -143,13 +144,11 @@ function DesktopLanding({ demoProjectId }: { demoProjectId: string | undefined }
               ['Muse Voice Transcribe', 'Listens to the walk', 'Every sentence, with when it was said.'],
               ['SAM 3.1', 'Follows your hand', 'Finds each place you pointed and outlines the defect next to your fingertip.'],
               ['Muse Spark Open on Baseten', 'Writes and checks each item', 'Summary, action, trade, room and severity, then checks each item against its own photo and quote.'],
-            ].map(([model, title, body], i) => (
+            ].map(([model, title, body]) => (
               <li key={model} className="rounded-card border border-hairline p-5">
-                <p className="text-secondary font-medium text-pencil">
-                  {i + 1}. {model}
-                </p>
-                <p className="mt-1 text-card font-semibold text-graphite">{title}</p>
-                <p className="mt-1 text-body text-pencil">{body}</p>
+                <p className="text-card font-semibold text-graphite">{title}</p>
+                <Pill className="mt-2">{model}</Pill>
+                <p className="mt-2 text-body text-pencil">{body}</p>
               </li>
             ))}
           </ol>

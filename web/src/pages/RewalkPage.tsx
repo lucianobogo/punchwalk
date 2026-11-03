@@ -40,7 +40,7 @@ export default function RewalkPage() {
             <Skeleton className="mt-6 h-96 w-full rounded-card" />
           </div>
         ) : summary.isError || !s ? (
-          <ErrorState error={summary.error} onRetry={() => summary.refetch()} />
+          <ErrorState error={summary.error} onRetry={() => summary.refetch()} notFound="There’s no re-walk summary for this walk." />
         ) : (
           <Body s={s} />
         )}
@@ -59,11 +59,21 @@ function Body({ s }: { s: RewalkSummaryOut }) {
   const toast = useToast();
   const [busyAll, setBusyAll] = useState(false);
 
-  const sendOne = (it: RewalkItemOut) => sender.run(s.project_id, it.trade, pickChannel(contactFor(it.trade)), [it.item_id]);
+  // Track which item is sending, so only its button says "Sending…".
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendOne = async (it: RewalkItemOut) => {
+    setSendingId(it.item_id);
+    try {
+      await sender.run(s.project_id, it.trade, pickChannel(contactFor(it.trade)), [it.item_id]);
+    } finally {
+      setSendingId(null);
+    }
+  };
   /** Sent after this re-walk already? Then say so instead of offering Send again. */
   const resentAt = (it: RewalkItemOut): string | null => {
     const d = byId.get(it.item_id)?.dispatch?.sent_at;
-    return d && s.recorded_at && d > s.recorded_at ? d : null;
+    // Compare as times, not strings ("Z" vs "+00:00" must not matter).
+    return d && s.recorded_at && Date.parse(d) > Date.parse(s.recorded_at) ? d : null;
   };
 
   async function sendAllOpen() {
@@ -98,7 +108,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
       {rewalkSections(s).map((sec) => {
         if (sec.kind === 'needs_a_look') {
           return sec.items.map((it) => (
-            <FlaggedCard key={it.item_id} it={it} onSend={() => sendOne(it)} busy={sender.isPending} resentAt={resentAt(it)} />
+            <FlaggedCard key={it.item_id} it={it} onSend={() => sendOne(it)} busy={sendingId === it.item_id} resentAt={resentAt(it)} />
           ));
         }
         return (
@@ -122,7 +132,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
                   item={byId.get(it.item_id)}
                   resentAt={resentAt(it)}
                   onSend={() => sendOne(it)}
-                  busy={sender.isPending}
+                  busy={sendingId === it.item_id}
                 />
               ))}
             </Card>
@@ -208,7 +218,7 @@ function Row({
 }) {
   return (
     <div className="flex min-h-14 items-center gap-3 py-2 pr-2 pl-4">
-      <Link to={`/items/${it.item_id}`} className="flex min-w-0 flex-1 items-center gap-3 py-1.5">
+      <Link to={`/items/${it.item_id}`} className="-my-2 flex min-h-14 min-w-0 flex-1 items-center gap-3 self-stretch py-2">
         <TapeTab number={it.number} badge={kind === 'signed_off' ? 'signed' : null} decorative />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-card text-graphite">

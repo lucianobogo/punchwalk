@@ -33,7 +33,7 @@ import { copyText, useSendToTrade } from '../features/trades/useSend';
 import { formatDateTime, formatShortDate } from '../lib/format';
 import { TRADE_LABEL, plural } from '../lib/labels';
 import { cx } from '../lib/cx';
-import { ErrorState } from './common';
+import { ErrorState, ProjectGate } from './common';
 
 const CHANNEL_ICON: Record<Channel, typeof Hash> = { slack: Hash, email: Mail, outbox: Inbox };
 /** In the list, the Outbox is called the Outbox (the picker's "Copy link" is the action). */
@@ -63,7 +63,9 @@ export function TradesPage() {
     <>
       <LargeTitleBar title="Trades" />
       <div className="px-4 pt-4">
-        {trades.isLoading || !projectId ? (
+        {!projectId ? (
+          <ProjectGate loadingLabel="Loading trades">{null}</ProjectGate>
+        ) : trades.isLoading ? (
           <SkeletonRows label="Loading trades" count={4} />
         ) : trades.isError ? (
           <ErrorState error={trades.error} onRetry={() => trades.refetch()} />
@@ -145,13 +147,15 @@ export function TradePage() {
         subtitle={p ? `${TRADE_LABEL[trade]}. ${plural(openCount, 'open item')}.` : undefined}
       />
       <div className="px-4 pt-4">
-        {preview.isLoading || !projectId ? (
+        {!projectId ? (
+          <ProjectGate loadingLabel="Loading the message preview">{null}</ProjectGate>
+        ) : preview.isLoading ? (
           <div role="status" aria-label="Loading the message preview">
             <Skeleton className="h-11 w-full rounded-button" />
             <Skeleton className="mt-4 h-64 w-full rounded-card" />
           </div>
         ) : preview.isError || !p || !chosen ? (
-          <ErrorState error={preview.error} onRetry={() => preview.refetch()} />
+          <ErrorState error={preview.error} onRetry={() => preview.refetch()} notFound="This trade isn’t on the project." />
         ) : (
           <>
             <SegmentedControl<Channel>
@@ -183,7 +187,7 @@ export function TradePage() {
                           <div className="min-w-0 flex-1">
                             <p className="text-card text-graphite">{l.title}</p>
                             <p className="text-body text-pencil">{l.line}</p>
-                            <Link to={l.url} className="text-body text-tape-ink underline">
+                            <Link to={l.url} className="-my-2.5 inline-flex min-h-11 items-center text-body text-tape-ink underline">
                               View item and video
                             </Link>
                           </div>
