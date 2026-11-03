@@ -19,6 +19,8 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
 from sqlmodel import Session, col, select
 
@@ -124,10 +126,46 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
     return report
 
 
+RESEND_NOTE_PREFIX = "Sent again to "
+RESEND_NOTE_SUFFIX = " after the re-walk: still open."
+
+
+def _as_utc(value: Any) -> datetime | None:
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+    if not isinstance(value, datetime):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
+def _resent_for_closure(item: Item, closure: dict[str, Any]) -> bool:
+    """True when this item was already re-sent after its current re-walk closure was written.
+
+    The anchor is `closure.decided_at` (the re-walk stage always sets it); without one, any earlier
+    re-walk re-send counts. A re-walk that is processed again writes a new closure, so it re-sends.
+    """
+    decided = _as_utc(closure.get("decided_at"))
+    for event in item.history or []:
+        if not isinstance(event, dict) or event.get("action") != HistoryAction.dispatched.value:
+            continue
+        note = event.get("note") or ""
+        if not (note.startswith(RESEND_NOTE_PREFIX) and note.endswith(RESEND_NOTE_SUFFIX)):
+            continue
+        at = _as_utc(event.get("at"))
+        if decided is None or (at is not None and at >= decided):
+            return True
+    return False
+
+
 def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> AutoSendReport:
     """PLAN 7.4: after a re-walk, send each trade its items that are still open, again.
 
     Picks items whose closure from this re-walk decided `still_open` and that are open or dispatched.
+    Idempotent per re-walk: an item already re-sent after that closure was written is skipped, so
+    calling this again (a resumed job, a second persist) sends nothing twice.
     """
     report = AutoSendReport()
     project = session.get(Project, project_id)
@@ -141,6 +179,7 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
             cl.get("rewalk_id") == rewalk_id
             and cl.get("decision") == ClosureDecision.still_open.value
             and item.status in service.SENDABLE
+            and not _resent_for_closure(item, cl)
         ):
             by_trade[item.trade].append(item)
     for trade, group in by_trade.items():
@@ -153,7 +192,7 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
                 [i.id for i in group],
                 None,
                 actor=HistoryActor.system,
-                note=f"Sent again to {company} after the re-walk: still open.",
+                note=f"{RESEND_NOTE_PREFIX}{company}{RESEND_NOTE_SUFFIX}",
             )
         except (service.DispatchFailed, service.DispatchRefused) as exc:
             report.failed[trade.value] = str(exc)

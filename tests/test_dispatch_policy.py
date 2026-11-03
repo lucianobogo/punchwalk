@@ -159,3 +159,39 @@ def test_resend_open_items_after_a_rewalk(api: TestClient) -> None:
         report = resend_open_items(s, pid, rewalk_id)
     assert report.sent_items == [ids[1]]
     assert notes(ids[1])[-1] == "Sent again to Ace Electric after the re-walk: still open."
+
+
+def test_resend_after_a_rewalk_sends_once_per_closure(api: TestClient) -> None:
+    from punchwalk.core.models import utcnow
+
+    pid = make_project(api, webhook=None)["id"]
+    walk_id, ids = seed_walk(pid)
+    run_policy(walk_id)
+    rewalk_id, _ = seed_walk_rewalk(pid)
+
+    def close_still_open(decided_at) -> None:
+        with session_factory() as s:
+            item = s.get(Item, ids[1])
+            item.closure = Closure(
+                rewalk_id=rewalk_id, decision=ClosureDecision.still_open, decided_at=decided_at
+            ).model_dump(mode="json")
+            s.add(item)
+            s.commit()
+
+    def resend() -> list[str]:
+        with session_factory() as s:
+            return resend_open_items(s, pid, rewalk_id).sent_items
+
+    def dispatch_count() -> int:
+        with session_factory() as s:
+            return len(s.exec(select(Dispatch)).all())
+
+    close_still_open(utcnow())
+    assert resend() == [ids[1]]
+    sent = dispatch_count()
+    assert resend() == [] and dispatch_count() == sent  # a second call sends nothing
+    assert sum(n.startswith("Sent again to") for n in notes(ids[1])) == 1
+    # the re-walk processed again writes a new closure: that one is re-sent (once)
+    close_still_open(utcnow())
+    assert resend() == [ids[1]] and resend() == []
+
