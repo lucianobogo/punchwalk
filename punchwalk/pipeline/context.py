@@ -108,7 +108,13 @@ class StageContext:
     trades: list[dict[str, Any]] = field(default_factory=list)
     rewalk_of: str | None = None
     force: bool = False
+    on_progress: Callable[[dict[str, int]], None] | None = field(default=None, repr=False)
     _meta: IngestMeta | None = field(default=None, repr=False)
+
+    def report(self, counts: dict[str, int]) -> None:
+        """Running counts for the checklist, e.g. {"written": 3, "total": 12}."""
+        if self.on_progress is not None:
+            self.on_progress(dict(counts))
 
     @property
     def meta(self) -> IngestMeta:
