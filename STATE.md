@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:19 ET
+Updated: 2026-11-03 18:27 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 5.x fixes + 5.5–5.7 (9c443eb..741585a; verify after CHANGE-2 lands). Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 4.1–4.4, 5.1–5.4, 6.1-backend, 6.2, 6.3, 9.1-image
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 3.1–3.3 (71c7a54..e75329f; verify after synth re-record), 8.1 (7dc84f3; verified on synth; tag after real walks seed), 9.2/9.3 drafts. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -16,8 +16,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | 3.1–3.3 committed untagged; verify after Track A re-records synth_walk | orchestrator | 18:16 | eval/**, scripts/build_mock_api.py | 5 e2e tests skip until the synthetic cache is re-recorded |
 | eval follow-ups: eval/project.json, label DRAFTS for the human from real outputs, processing-summary eval block, test order fix | builder (eval, same agent) | 18:16 | eval/**, punchwalk/api/views.py (eval block only), tests/test_eval*, tests/test_api_walks.py (eval block test) | briefed by message |
 | Track A: make record (walk1/2/3) + full runs (walk1, walk3) → 2.5 fixes → 7.1–7.4 → full run walk2 | builder (Track A, same agent) | 18:04 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
-| CHANGE-2 + 8.1 + 6.x/9.1 fixes verify | verifier | 18:13 | read-only (Python paths) | committed untagged pending PASS |
-| 5.5–5.7 + 5.x fixes verify (worktree .verify/wt-ui2 @ 7dc84f3) | verifier | 18:13 | read-only | committed untagged pending PASS |
+| 8.1/CHANGE-2 small fixes (seed interrupt safety, channel_reason email case, --force ModelCall rows, hints, validators) | builder (fresh) | 18:25 | scripts/seed.py, punchwalk/dispatch/service.py, scripts/gen_mock_api.py (+ regen), punchwalk/config.py, punchwalk/api/schemas.py comment, docs/DEPLOY.md, tests | briefed |
 | 6.1 UI (Trades screens, share page, sent toast) + 7.4 UI (re-walk summary) + 8.2 landing page | ui-builder (same agent) | 18:02 | web/** except types.ts | briefed by message |
 
 ## Needs human
@@ -42,8 +41,8 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 ## Health
 - make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
 - make eval: harness built; on real labels: blocked (labels are the template). Synthetic walk: recall 1.0, precision 1.0, trade 0.67, room 1.0
-- make screenshots: 30/30 written at 5.4 (14/14 strict for 5.2–5.4); 5.5–5.7 screens pending
-- Live API spend: $0.22 of $25 (probe $0.046; synthetic record + Phase 2 fixtures $0.175)
+- make screenshots: 31/31 written at 5.7 (23/23 strict for 5.2–5.7); 6.1 UI / 7.4 UI / 8.2 screens pending
+- Live API spend: $1.07 of $25 at 18:25 (probe + synthetic fixtures + real-walk recording in progress: data/record/walk1|walk2|walk3 exist)
 - Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md
 - Live URL: none
 

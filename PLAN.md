@@ -177,14 +177,14 @@ Track ownership and paths are in the orchestrator's instructions.
   - quote card with Play this moment; details list; checked and history
   - one status-dependent primary action plus a More sheet; edits logged as human overrides
 - [x] **5.4 Play this moment** sheet per DESIGN.md: starts at `video_start_s`, caption of the quote, pauses at `video_end_s`, "Keep watching".
-- [ ] **5.5 Walks** list + walk detail (the demo's hero screen) per DESIGN.md and `docs/design/04-walk-detail.png`:
+- [x] **5.5 Walks** list + walk detail (the demo's hero screen) per DESIGN.md and `docs/design/04-walk-detail.png`:
   - portrait video with hand outlines and numbered tabs at the fingertip while pointing
   - the new-item card slides up over the video at its moment, then settles into the list
   - timeline with item markers
   - Items so far / Transcript tabs, tap to seek
   - the video collapses to a mini-player on scroll
-- [ ] **5.6 Record** per DESIGN.md: project → first walk / re-walk → add clips (reorderable) → upload with progress → live processing checklist naming each model → done.
-- [ ] **5.7 How this walk was processed** per DESIGN.md: model-call timeline, time and cost per walk, eval numbers.
+- [x] **5.6 Record** per DESIGN.md: project → first walk / re-walk → add clips (reorderable) → upload with progress → live processing checklist naming each model → done.
+- [x] **5.7 How this walk was processed** per DESIGN.md: model-call timeline, time and cost per walk, eval numbers.
 - [ ] **5.8 Live data.** Once Phase 4 passes, switch the app to the API (`VITE_DATA=live` by default); mocks stay for tests and screenshots.
 
 ## Phase 6: Dispatch & report (Tracks B + C)
