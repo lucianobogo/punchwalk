@@ -234,8 +234,10 @@ export const SCREENS: Screen[] = [
     name: 'trade-preview',
     checklist: '8. Trade screen with message preview',
     path: '/trades/electrical',
-    fullPage: true,
     render: '06-send-to-trade.png',
+    setup: async (page) => {
+      await page.getByText(/^Message to /).waitFor({ timeout: 3000 });
+    },
   },
   {
     name: 'trade-sent-toast',
@@ -246,13 +248,35 @@ export const SCREENS: Screen[] = [
       await page.getByRole('status').filter({ hasText: /^Sent/ }).first().waitFor({ timeout: 3000 });
     },
   },
+  {
+    name: 'trade-outbox',
+    checklist: '8. Trade with no channel: goes to the Outbox, ready to share',
+    path: '/trades/windows_glazing',
+    setup: async (page) => {
+      await page.getByText(/goes to the Outbox/).waitFor({ timeout: 3000 });
+    },
+  },
   // 9. Re-walk summary
   {
     name: 'rewalk-summary',
     checklist: '9. Re-walk summary',
     path: '/walks/wlk_2b_rewalk/rewalk',
-    fullPage: true,
     render: '07-rewalk-summary.png',
+    setup: async (page) => {
+      await page.getByText('Marked fixed on the re-walk, but the defect is still visible.').waitFor({ timeout: 3000 });
+    },
+  },
+  {
+    name: 'rewalk-summary-lists',
+    checklist: '9. Re-walk summary: signed off, still open with Send again, not checked',
+    path: '/walks/wlk_2b_rewalk/rewalk',
+    setup: async (page) => {
+      await page.evaluate(() => {
+        const el = document.querySelector('section[aria-label="Still open"]');
+        if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 360);
+      });
+      await page.waitForTimeout(300);
+    },
   },
   // 10. How this walk was processed
   {
@@ -281,8 +305,22 @@ export const SCREENS: Screen[] = [
     path: '/landing',
     viewport: 'desktop',
     render: '09-landing-desktop.png',
+    setup: async (page) => {
+      // The phone frame runs the real app; wait until it has drawn the punch list.
+      await page.frameLocator('iframe').getByRole('heading', { name: 'Unit 2B final punch' }).waitFor({ timeout: 8000 });
+      await page.getByRole('img', { name: /^QR code for/ }).waitFor({ timeout: 3000 });
+      await page.waitForTimeout(500);
+    },
   },
-  { name: 'landing-phone', checklist: '11. Landing page at 393 x 852', path: '/landing' },
+  {
+    name: 'landing-phone',
+    checklist: '11. Landing page at 393 x 852: straight into the demo project, with the banner',
+    path: '/landing',
+    setup: async (page) => {
+      await page.waitForURL((u) => u.pathname === '/', { timeout: 3000 });
+      await page.getByText('This is a demo project.').waitFor({ timeout: 3000 });
+    },
+  },
   // Design-system check (PLAN 5.1 AC) and extras
   { name: 'dev-components', checklist: 'Component gallery (5.1)', path: '/dev/components', fullPage: true },
   {
@@ -300,5 +338,12 @@ export const SCREENS: Screen[] = [
     path: '/dev/components',
     viewport: 'desktop',
   },
-  { name: 'share-item', checklist: 'Public share page (6.1)', path: '/share/item/shr_e33ec5bd7e' },
+  {
+    name: 'share-item',
+    checklist: 'Public share page (6.1): item 11 as a trade sees it',
+    path: '/share/item/shr_33dfa14b0c',
+    setup: async (page) => {
+      await page.getByRole('button', { name: /Play this moment/ }).waitFor({ timeout: 3000 });
+    },
+  },
 ];

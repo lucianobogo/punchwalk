@@ -91,7 +91,12 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
   async function load<T>(file: string): Promise<T> {
     let p = cache.get(file);
     if (!p) {
-      p = loader(file).then((text) => JSON.parse(text.replaceAll('"/media/', `"${MOCK_BASE}media/`)));
+      p = loader(file).then(
+        (text) => JSON.parse(text.replaceAll('"/media/', `"${MOCK_BASE}media/`)),
+        (e) => {
+          throw e instanceof ApiError ? e : new ApiError(404, `No mock for ${file}`);
+        },
+      );
       p.catch(() => cache.delete(file));
       cache.set(file, p);
     }

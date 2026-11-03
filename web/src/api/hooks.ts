@@ -7,7 +7,7 @@ import {
   useQueryClient,
   type UseQueryOptions,
 } from '@tanstack/react-query';
-import type { UploadProgress, UploadRequest } from './api';
+import { ApiError, type UploadProgress, type UploadRequest } from './api';
 import { api } from './client';
 import { filtersKey, type ItemFilters } from './filters';
 import type { Channel, DispatchCreate, ItemOut, ItemPatch, JobProgressOut, Trade } from './types';
@@ -35,7 +35,8 @@ export const qk = {
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
+      // One retry for flaky networks, none for "not found": that answer won't change.
+      queries: { staleTime: 30_000, retry: (n, e) => n < 1 && !(e instanceof ApiError && e.status === 404), refetchOnWindowFocus: false },
       mutations: { retry: 0 },
     },
   });
