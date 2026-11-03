@@ -127,6 +127,8 @@ promotes them. For recordings made with other rooms, put `{"rooms": [...], "keyw
 
 Locally: `make seed` (= `uv run python scripts/seed.py`), or `uv run python scripts/seed.py --walks synth_walk`.
 
+With `DEMO_MODE=true` (`/healthz` reports `demo_mode`), the app shows the banner "This is a demo project. Upload your own walk to try it live."
+
 ## Operations
 
 ```bash

@@ -118,6 +118,8 @@ def test_seed_cache_miss_is_reported_with_the_stage(seed, api: TestClient, tmp_p
         seed.run(["--walks", "synth_walk", "--rooms", "Kitchen", "Hallway", "Bedroom"])
     text = str(err.value)
     assert "failed at stage transcribe" in text and "Re-record" in text
+    # the hint names the rooms this seed used, not the default demo rooms
+    assert "--walk synth_walk --full --rooms Kitchen Hallway Bedroom" in text and "Bathroom" not in text
     assert Path(get_settings().DATA_DIR, "walks", "wlk_demo_synth_walk", "audio.wav").is_file()
 
 
@@ -141,3 +143,59 @@ def test_snapshot_export_and_import(seed, api: TestClient, tmp_path: Path) -> No
     assert api.get(after["items"][0]["evidence"]["crop_url"]).status_code == 200
     assert api.get("/api/walks/wlk_demo_synth_walk/overlay").status_code == 200
     assert api.get("/api/walks/wlk_demo_synth_walk/progress").json()["status"] == "done"
+
+
+def test_interrupted_seed_closes_its_job_so_a_restart_never_replays_it(seed, api: TestClient) -> None:
+    from punchwalk.core.models import Job, Walk
+    from punchwalk.db import session_factory
+
+    def interrupted(walk_id, *, session_factory, progress, force):  # Ctrl-C in the middle of a stage
+        progress({"stage": "transcribe", "status": "running", "message": "Transcribing"})
+        raise KeyboardInterrupt
+
+    jobs.set_runner(interrupted)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            seed.run(["--walks", "synth_walk"])
+    finally:
+        jobs.set_runner(None)
+    with session_factory() as s:
+        (job,) = s.exec(Job.__table__.select()).all()  # type: ignore[attr-defined]
+        walk = s.get(Walk, "wlk_demo_synth_walk")
+    assert job.status == "failed" and job.finished_at is not None and "interrupted" in job.error
+    assert job.progress.get("seed") is True
+    assert walk.status == "failed" and "interrupted" in walk.error
+    assert jobs.recover_interrupted_jobs() == 0  # nothing left running for the next boot to re-queue
+    with session_factory() as s:
+        assert s.get(Job, job.id).status == "failed"
+
+
+def test_force_rerun_does_not_double_count_model_calls(seed, api: TestClient) -> None:
+    first = seed.run(["--walks", "synth_walk"])["walks"][0]["model_calls"]
+    assert first > 0
+    again = seed.run(["--walks", "synth_walk", "--force"])["walks"][0]
+    assert again["status"] == "ready" and again["model_calls"] == first
+
+
+def test_bad_snapshot_leaves_the_demo_project_alone(seed, api: TestClient, tmp_path: Path) -> None:
+    import io
+    import json
+    import tarfile
+
+    snap = tmp_path / "snap.tar.gz"
+    seed.run(["--walks", "synth_walk", "--export", str(snap)])
+    before = api.get("/api/projects/prj_demo/items").json()
+
+    with tarfile.open(snap) as tar:
+        manifest = json.loads(tar.extractfile("manifest.json").read())  # type: ignore[union-attr]
+    manifest["rows"]["items"][-1]["severity"] = "catastrophic"  # not a Severity
+    bad = tmp_path / "bad.tar.gz"
+    with tarfile.open(bad, "w:gz") as tar:
+        blob = json.dumps(manifest).encode()
+        info = tarfile.TarInfo("manifest.json")
+        info.size = len(blob)
+        tar.addfile(info, io.BytesIO(blob))
+    with pytest.raises(seed.SeedError, match="bad items row"):
+        seed.run(["--import", str(bad)])
+    assert api.get("/api/projects/prj_demo/items").json() == before
+    assert Path(get_settings().DATA_DIR, "walks", "wlk_demo_synth_walk", "display.mp4").is_file()

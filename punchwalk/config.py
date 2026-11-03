@@ -73,6 +73,15 @@ class Settings(BaseSettings):
         """A `.env` copied before the pointing change says `tape+voice`; it means `point+voice` now."""
         return "point+voice" if isinstance(v, str) and v.strip() == "tape+voice" else v
 
+    @field_validator("PUNCHWALK_WORKER", mode="before")
+    @classmethod
+    def _worker_flag(cls, v):
+        """`PUNCHWALK_WORKER=false` (or no/off) means 0 and true/yes/on means 1; numbers pass through."""
+        if isinstance(v, str):
+            flag = {"true": 1, "yes": 1, "on": 1, "false": 0, "no": 0, "off": 0}.get(v.strip().lower())
+            return v if flag is None else flag
+        return v
+
     @field_validator("PUNCHWALK_CACHE_DIR", mode="before")
     @classmethod
     def _empty_is_none(cls, v):

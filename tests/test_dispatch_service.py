@@ -79,9 +79,16 @@ def test_channel_policy(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> Non
     seed_walk(pid)
     p = preview(api, pid, "electrical")
     assert p.channel == "outbox" and p.channels[0].reason == "No Slack channel set up for Ace Electric."
-    assert p.channel_reason == "No Slack channel or email set up for Ace Electric, so this goes to the Outbox, ready to share."
+    # Ace Electric has an email address, but this server can't send email yet: say that, not "no email"
+    assert p.channels[1].destination == "maria.chen@example.com" and not p.channels[1].available
+    assert p.channel_reason == (
+        "Email isn't set up on this server yet, so this goes to the Outbox for Ace Electric, ready to share."
+    )
     glass = preview(api, pid, "windows_glazing")
     assert glass.channels[1].reason == "No email on file for Clearview Glass." and glass.channel == "outbox"
+    assert glass.channel_reason == (
+        "No Slack channel or email set up for Clearview Glass, so this goes to the Outbox, ready to share."
+    )
     # the server-wide webhook is the fallback for every trade
     monkeypatch.setenv("SLACK_WEBHOOK_URL", WEBHOOK)
     reset_settings()
@@ -96,7 +103,9 @@ def test_channel_policy(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> Non
     carp = preview(api, pid, "carpentry_millwork")
     assert carp.channel == "email" and carp.channels[1].available
     # ?channel= picks another available channel, and ignores an unavailable one
-    assert preview(api, pid, "carpentry_millwork", "?channel=outbox").channel == "outbox"
+    picked = preview(api, pid, "carpentry_millwork", "?channel=outbox")
+    assert picked.channel == "outbox"
+    assert picked.channel_reason == "This goes to the Outbox for Oakline Millwork, ready to share."
     assert preview(api, pid, "carpentry_millwork", "?channel=slack").channel == "email"
     # a trade with nothing open has an empty preview
     empty = preview(api, pid, "plumbing")

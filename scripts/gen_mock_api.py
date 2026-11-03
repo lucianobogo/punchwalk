@@ -2958,6 +2958,10 @@ class Gen:
             )
         elif default == Channel.email:
             channel_reason = f"{company} gets email at {c.email}." if c else None
+        elif channels[1].destination:  # an address on file, but email isn't available
+            channel_reason = (
+                f"Email isn't set up on this server yet, so this goes to the Outbox for {company}, ready to share."
+            )
         else:
             channel_reason = f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
         base = f"projects/{project_id}/trades/{trade.value}"

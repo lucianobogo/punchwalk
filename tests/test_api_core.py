@@ -33,6 +33,28 @@ def test_healthz(api: TestClient) -> None:
     assert res.json()["time"].endswith("Z")
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("false", 0), ("False", 0), ("no", 0), ("off", 0), ("0", 0), ("true", 1), ("YES", 1), ("on", 1), ("1", 1), ("2", 2)],
+)
+def test_worker_setting_accepts_booleans(monkeypatch: pytest.MonkeyPatch, raw: str, expected: int) -> None:
+    from punchwalk.config import Settings
+
+    monkeypatch.setenv("PUNCHWALK_WORKER", raw)
+    worker = Settings().PUNCHWALK_WORKER
+    assert worker == expected
+
+
+def test_worker_setting_rejects_nonsense(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pydantic import ValidationError
+
+    from punchwalk.config import Settings
+
+    monkeypatch.setenv("PUNCHWALK_WORKER", "sometimes")
+    with pytest.raises(ValidationError):
+        Settings()
+
+
 def test_database_is_sqlite_wal_under_data_dir(api: TestClient) -> None:
     from sqlalchemy import text
 

@@ -189,12 +189,17 @@ def upsert_project(rooms: list[str], keywords: list[str]) -> None:
         s.commit()
 
 
-def seed_walk(source: Source, *, kind: str, rewalk_of: str | None, force: bool) -> str:
+SEED_INTERRUPTED = "The seed was interrupted before this walk finished; run scripts/seed.py again."
+
+
+def seed_walk(source: Source, *, kind: str, rewalk_of: str | None, force: bool, rooms: list[str]) -> str:
     """Copy media, create Walk + Job, run the job. Returns the walk id."""
+    from sqlmodel import select
+
     from punchwalk.api import jobs
     from punchwalk.config import get_settings
     from punchwalk.core.enums import Device, JobKind, JobStatus, WalkKind, WalkStatus
-    from punchwalk.core.models import Job, Walk, utcnow
+    from punchwalk.core.models import Job, ModelCall, Walk, utcnow
     from punchwalk.db import session_factory
 
     walk_id = f"wlk_demo_{source.walk}"
@@ -214,6 +219,7 @@ def seed_walk(source: Source, *, kind: str, rewalk_of: str | None, force: bool) 
         shutil.copytree(source.cache_dir, get_settings().cache_dir, dirs_exist_ok=True)
 
     with session_factory() as s:
+        earlier_calls = set(s.exec(select(ModelCall.id).where(ModelCall.walk_id == walk_id)).all())
         walk = s.get(Walk, walk_id) or Walk(id=walk_id, project_id=PROJECT_ID)
         walk.kind = WalkKind(kind)
         walk.rewalk_of = rewalk_of
@@ -224,29 +230,81 @@ def seed_walk(source: Source, *, kind: str, rewalk_of: str | None, force: bool) 
         s.add(walk)
         now = utcnow()
         # Created `running`, so a live app's worker (which only claims `queued` jobs) never picks it up.
+        # `progress.seed` marks it as a seed job (the runner's progress events replace it while it runs;
+        # close_seed_job() writes it back).
         job = Job(kind=JobKind.process_walk, walk_id=walk_id, status=JobStatus.running, attempts=1,
-                  started_at=now, force=force)  # fmt: skip
+                  started_at=now, force=force, progress={"seed": True})  # fmt: skip
         s.add(job)
         s.commit()
         job_id = job.id
-    status = jobs.run_job(job_id)
+    # Never leave the job queued or running: a live app's worker (or its boot-time recovery, which
+    # re-queues `running` jobs) would replay it with its own readwrite cache and make live calls. So the
+    # job is closed as failed on every exit that isn't a clean finish, Ctrl-C and crashes included.
+    try:
+        status = jobs.run_job(job_id)
+    except BaseException:
+        close_seed_job(job_id, walk_id, SEED_INTERRUPTED)
+        raise
+    finally:
+        drop_replayed_calls(walk_id, earlier_calls)
     if status != JobStatus.done:
-        # Never leave the job queued for a retry: a live app's worker would replay it with its own
-        # (readwrite) cache and make live calls. Close it as failed, with the reason on the walk.
-        with session_factory() as s:
-            job, walk = s.get(Job, job_id), s.get(Walk, walk_id)
-            if job is not None and job.status != JobStatus.failed:
-                job.status, job.finished_at = JobStatus.failed, utcnow()
-                s.add(job)
-            if walk is not None and walk.status != WalkStatus.failed:
-                walk.status, walk.error = WalkStatus.failed, (job.error if job else None) or walk.error
-                s.add(walk)
-            s.commit()
-        raise SeedError(_failure(walk_id, source))
+        close_seed_job(job_id, walk_id, None)
+        raise SeedError(_failure(walk_id, source, rooms))
     return walk_id
 
 
-def _failure(walk_id: str, source: Source) -> str:
+def drop_replayed_calls(walk_id: str, earlier: set[str]) -> int:
+    """After a re-run (--force, or resuming a failed walk), drop the older ModelCall rows it repeated.
+
+    A call is repeated when the new run logged the same cache key (or, without a key, the same stage,
+    model and item). Older rows the re-run didn't repeat stay: the pipeline keeps some finished work
+    (an item that was already sent, say), and its calls still belong on the processing screen.
+    Returns how many rows were dropped.
+    """
+    from sqlmodel import col, delete, select
+
+    from punchwalk.core.models import ModelCall
+    from punchwalk.db import session_factory
+
+    if not earlier:
+        return 0
+    with session_factory() as s:
+        calls = s.exec(select(ModelCall).where(ModelCall.walk_id == walk_id)).all()
+        new = [c for c in calls if c.id not in earlier]
+        keys = {c.cache_key for c in new if c.cache_key}
+        sigs = {(c.stage, c.model, c.item_id) for c in new if not c.cache_key}
+        stale = [
+            c.id for c in calls
+            if c.id in earlier and (c.cache_key in keys if c.cache_key else (c.stage, c.model, c.item_id) in sigs)
+        ]  # fmt: skip
+        if stale:
+            s.exec(delete(ModelCall).where(col(ModelCall.id).in_(stale)))
+            s.commit()
+        return len(stale)
+
+
+def close_seed_job(job_id: str, walk_id: str, error: str | None) -> None:
+    """Mark a seed job (and its walk) failed. `error` overrides the reason the job recorded."""
+    from punchwalk.core.enums import JobStatus, WalkStatus
+    from punchwalk.core.models import Job, Walk, utcnow
+    from punchwalk.db import session_factory
+
+    with session_factory() as s:
+        job, walk = s.get(Job, job_id), s.get(Walk, walk_id)
+        reason = error or (job.error if job else None) or (walk.error if walk else None)
+        if job is not None:
+            if job.status != JobStatus.failed:
+                job.status, job.finished_at = JobStatus.failed, utcnow()
+            job.error = reason
+            job.progress = {**(job.progress or {}), "seed": True}
+            s.add(job)
+        if walk is not None and (walk.status != WalkStatus.failed or error):
+            walk.status, walk.error = WalkStatus.failed, reason
+            s.add(walk)
+        s.commit()
+
+
+def _failure(walk_id: str, source: Source, rooms: list[str]) -> str:
     from punchwalk.api.progress import stage_states
     from punchwalk.core.enums import StageStatus
     from punchwalk.core.models import Walk
@@ -258,7 +316,7 @@ def _failure(walk_id: str, source: Source) -> str:
         error = walk.error if walk else "unknown error"
     hint = (
         "Re-record it (live, small cost): uv run python scripts/record.py "
-        f"--walk {source.walk} --full --rooms {' '.join(repr(r) if ' ' in r else r for r in DEMO_ROOMS)}"
+        f"--walk {source.walk} --full --rooms {' '.join(repr(r) if ' ' in r else r for r in rooms)}"
         if source.origin != "fixtures"
         else f"Re-record the synthetic walk with the commands in fixtures/pipeline/README.md ({source.walk})."
     )
@@ -387,21 +445,43 @@ def import_snapshot(path: Path) -> list[str]:
         manifest = json.loads(tar.extractfile("manifest.json").read())  # type: ignore[union-attr]
         if manifest.get("version") != SNAPSHOT_VERSION or manifest.get("project_id") != PROJECT_ID:
             raise SeedError(f"{path} isn't a demo snapshot this version can read.")
-        reset_project()
+        # Check everything before touching the demo project, so a bad snapshot leaves it as it was.
+        rows = _validate_rows(path, manifest.get("rows") or {})
         members = [m for m in tar.getmembers() if m.isfile() and m.name.startswith("walks/")]
         for m in members:
             parts = Path(m.name).parts
             if ".." in parts or Path(m.name).is_absolute():
                 raise SeedError(f"Unsafe path in snapshot: {m.name}")
+        reset_project()
         tar.extractall(data, members=members, filter="data")
-    tables = _tables()
     with session_factory() as s:
-        for name in ("projects", "walks", "turns", "points", "items", "dispatches", "model_calls", "jobs"):
-            for raw in manifest["rows"].get(name, []):
-                s.add(tables[name].model_validate(raw))
+        for name in SNAPSHOT_TABLES:
+            for row in rows[name]:
+                s.add(row)
             s.flush()
         s.commit()
-    return [w["id"] for w in manifest["rows"].get("walks", [])]
+    return [w.id for w in rows["walks"]]
+
+
+SNAPSHOT_TABLES = ("projects", "walks", "turns", "points", "items", "dispatches", "model_calls", "jobs")
+
+
+def _validate_rows(path: Path, raw_rows: dict[str, Any]) -> dict[str, list[Any]]:
+    """Every manifest row as a model instance; a SeedError naming the first bad row otherwise."""
+    from pydantic import ValidationError
+
+    tables = _tables()
+    out: dict[str, list[Any]] = {}
+    for name in SNAPSHOT_TABLES:
+        out[name] = []
+        for n, raw in enumerate(raw_rows.get(name) or []):
+            try:
+                out[name].append(tables[name].model_validate(raw))
+            except (ValidationError, TypeError, ValueError) as exc:
+                raise SeedError(
+                    f"{path} has a bad {name} row (#{n + 1}): {exc}. Nothing was changed; export a new snapshot."
+                ) from exc
+    return out
 
 
 # --------------------------------------------------------------------------- main
@@ -471,7 +551,8 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
     first_initial: str | None = None
     for src in sources:
         kind = "rewalk" if src.walk in REWALK_NAMES and first_initial else "initial"
-        wid = seed_walk(src, kind=kind, rewalk_of=first_initial if kind == "rewalk" else None, force=args.force)
+        wid = seed_walk(src, kind=kind, rewalk_of=first_initial if kind == "rewalk" else None, force=args.force,
+                        rooms=rooms)
         first_initial = first_initial or (wid if kind == "initial" else None)
         walk_ids.append(wid)
         print(f"seeded {src.walk} from {src.origin}: {src.media_dir}", file=sys.stderr)

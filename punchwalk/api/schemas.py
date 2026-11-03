@@ -87,7 +87,7 @@ class ItemCountsOut(Schema):
 class HealthOut(Schema):
     ok: bool
     version: str
-    demo_mode: bool
+    demo_mode: bool  # true → the app shows "This is a demo project. Upload your own walk to try it live."
     reasoning_provider: ReasoningProvider
     time: datetime
 

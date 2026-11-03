@@ -117,14 +117,23 @@ def suggested(options: Sequence[ChannelOption]) -> ChannelOption:
     return next(o for o in options if o.available)  # the outbox is always available
 
 
-def why(option: ChannelOption, company: str) -> str:
-    """One plain sentence on the chosen channel (DispatchPreviewOut.channel_reason)."""
+def why(option: ChannelOption, company: str, options: Sequence[ChannelOption] = ()) -> str:
+    """One plain sentence on the chosen channel (DispatchPreviewOut.channel_reason).
+
+    `options` (all of the trade's channels) explains an Outbox pick: an email address on file that
+    can't be used yet is named as the reason, not reported as missing.
+    """
     if option.channel == Channel.slack:
         if option.destination and option.destination != SLACK_DEFAULT_DESTINATION:
             return f"{company} has a Slack channel ({option.destination})."
         return f"{company} gets the team's Slack channel."
     if option.channel == Channel.email:
         return f"{company} gets email at {option.destination}."
+    others = [o for o in options if o.channel != Channel.outbox]
+    if any(o.available for o in others):  # the Outbox was picked on purpose (?channel=outbox)
+        return f"This goes to the Outbox for {company}, ready to share."
+    if any(o.channel == Channel.email and o.destination for o in others):
+        return f"Email isn't set up on this server yet, so this goes to the Outbox for {company}, ready to share."
     return f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
 
 
@@ -178,7 +187,7 @@ def preview(session: Session, project: Project, trade: Trade, channel: Channel |
         trade=trade,
         contact=trade_contact_out(contact_for(project, trade)),
         channel=chosen.channel,
-        channel_reason=why(chosen, company_for(project, trade)),
+        channel_reason=why(chosen, company_for(project, trade), options),
         channels=[o.out() for o in options],
         heading=msg.heading,
         lines=[
