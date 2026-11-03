@@ -6,8 +6,8 @@
   "total_cost_usd": 0.1713,
   "models_used": [
     "Muse Voice Transcribe",
-    "SAM 3.1",
-    "Muse Spark Open on Baseten"
+    "Muse Spark Open on Baseten",
+    "SAM 3.1"
   ],
   "steps": [
     {
@@ -78,24 +78,6 @@
       "id": "mc_3a1_002",
       "walk_id": "wlk_3a_first",
       "item_id": null,
-      "stage": "track_hands",
-      "model": "sam-3.1",
-      "model_label": "SAM 3.1",
-      "provider": "meta",
-      "latency_ms": 29200,
-      "tokens_in": null,
-      "tokens_out": null,
-      "frames": 780,
-      "est_cost_usd": 0.156,
-      "cached": false,
-      "ok": true,
-      "error": null,
-      "started_at": "2026-11-04T14:52:18.500000Z"
-    },
-    {
-      "id": "mc_3a1_003",
-      "walk_id": "wlk_3a_first",
-      "item_id": null,
       "stage": "classify_turns",
       "model": "meta-models/muse-spark-open-1026",
       "model_label": "Muse Spark Open on Baseten",
@@ -108,7 +90,25 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T14:52:48.400000Z"
+      "started_at": "2026-11-04T14:52:18.400000Z"
+    },
+    {
+      "id": "mc_3a1_003",
+      "walk_id": "wlk_3a_first",
+      "item_id": null,
+      "stage": "track_hands",
+      "model": "sam-3.1",
+      "model_label": "SAM 3.1",
+      "provider": "meta",
+      "latency_ms": 29200,
+      "tokens_in": null,
+      "tokens_out": null,
+      "frames": 780,
+      "est_cost_usd": 0.156,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-04T14:52:22.400000Z"
     },
     {
       "id": "mc_3a1_004",

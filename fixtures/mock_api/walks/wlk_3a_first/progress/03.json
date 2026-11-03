@@ -5,7 +5,7 @@
   "status": "running",
   "walk_status": "processing",
   "attempts": 1,
-  "stage": "track_hands",
+  "stage": "classify_turns",
   "stages": [
     {
       "stage": "ingest",
@@ -36,15 +36,27 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
-      "stage": "track_hands",
-      "label": "Following your hand (SAM 3.1)",
+      "stage": "classify_turns",
+      "label": "Sorting what was said",
       "status": "running",
       "started_at": "2026-11-04T14:52:18.300000Z",
       "finished_at": null,
       "duration_ms": null,
       "counts": {},
-      "progress": 0.09,
-      "detail": "SAM 3.1, 71 of 780 frames",
+      "progress": 0.69,
+      "detail": "Muse Spark Open on Baseten, working",
+      "model_label": "Muse Spark Open on Baseten"
+    },
+    {
+      "stage": "track_hands",
+      "label": "Following your hand (SAM 3.1)",
+      "status": "pending",
+      "started_at": null,
+      "finished_at": null,
+      "duration_ms": null,
+      "counts": {},
+      "progress": null,
+      "detail": "SAM 3.1, waiting",
       "model_label": "SAM 3.1"
     },
     {
@@ -58,18 +70,6 @@
       "progress": null,
       "detail": null,
       "model_label": null
-    },
-    {
-      "stage": "classify_turns",
-      "label": "Sorting what was said",
-      "status": "pending",
-      "started_at": null,
-      "finished_at": null,
-      "duration_ms": null,
-      "counts": {},
-      "progress": null,
-      "detail": "Muse Spark Open on Baseten, waiting",
-      "model_label": "Muse Spark Open on Baseten"
     },
     {
       "stage": "fuse",

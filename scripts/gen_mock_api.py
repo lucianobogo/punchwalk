@@ -1724,7 +1724,7 @@ def encode_video(walk: WalkSpec, url: str) -> None:
         "-pix_fmt",
         "yuv420p",
         "-threads",
-        "4",
+        "1",  # multi-threaded x264 with VBV isn't byte-repeatable; one thread keeps the output deterministic
         "-g",
         str(VIDEO_FPS * 4),  # a keyframe every 4 s keeps seeking quick and the file small
         "-c:a",

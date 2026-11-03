@@ -4,8 +4,8 @@ Realistic responses for every GET route in `punchwalk/api/schemas.py`, plus exam
 request bodies. The web app runs on these alone (`VITE_DATA=mock`), and `tests/test_contracts.py`
 round-trips every file through its schema.
 
-**Don't edit by hand.** Regenerate with `uv run python scripts/gen_mock_api.py` (about 25 s;
-`--no-video` keeps the existing videos). Output is deterministic, so running it twice leaves no diff.
+**Don't edit by hand.** Regenerate with `uv run python scripts/gen_mock_api.py` (about 45 s;
+`--no-video` keeps the existing videos). Output is deterministic, byte for byte (videos are encoded single-threaded for that), so running it twice leaves no diff.
 Phase 3 (`scripts/build_mock_api.py`) replaces the synthetic media with real pipeline outputs under the
 same file names.
 

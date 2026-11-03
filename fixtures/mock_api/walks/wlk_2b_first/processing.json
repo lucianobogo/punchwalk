@@ -6,8 +6,8 @@
   "total_cost_usd": 0.4377,
   "models_used": [
     "Muse Voice Transcribe",
-    "SAM 3.1",
-    "Muse Spark Open on Baseten"
+    "Muse Spark Open on Baseten",
+    "SAM 3.1"
   ],
   "steps": [
     {
@@ -100,6 +100,24 @@
       "id": "mc_2b1_002",
       "walk_id": "wlk_2b_first",
       "item_id": null,
+      "stage": "classify_turns",
+      "model": "meta-models/muse-spark-open-1026",
+      "model_label": "Muse Spark Open on Baseten",
+      "provider": "baseten",
+      "latency_ms": 4600,
+      "tokens_in": 3100,
+      "tokens_out": 1450,
+      "frames": null,
+      "est_cost_usd": 0.00356,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:40:21.400000Z"
+    },
+    {
+      "id": "mc_2b1_003",
+      "walk_id": "wlk_2b_first",
+      "item_id": null,
       "stage": "track_hands",
       "model": "sam-3.1",
       "model_label": "SAM 3.1",
@@ -112,10 +130,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:40:21.600000Z"
+      "started_at": "2026-11-03T15:40:26.400000Z"
     },
     {
-      "id": "mc_2b1_003",
+      "id": "mc_2b1_004",
       "walk_id": "wlk_2b_first",
       "item_id": null,
       "stage": "track_hands",
@@ -130,25 +148,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:40:21.750000Z"
-    },
-    {
-      "id": "mc_2b1_004",
-      "walk_id": "wlk_2b_first",
-      "item_id": null,
-      "stage": "classify_turns",
-      "model": "meta-models/muse-spark-open-1026",
-      "model_label": "Muse Spark Open on Baseten",
-      "provider": "baseten",
-      "latency_ms": 4600,
-      "tokens_in": 3100,
-      "tokens_out": 1450,
-      "frames": null,
-      "est_cost_usd": 0.00356,
-      "cached": false,
-      "ok": true,
-      "error": null,
-      "started_at": "2026-11-03T15:41:06.900000Z"
+      "started_at": "2026-11-03T15:40:26.550000Z"
     },
     {
       "id": "mc_2b1_005",

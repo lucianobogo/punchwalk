@@ -67,7 +67,8 @@ class Grounding(StrEnum):
 
     `sam_concept` / `sam_box`: SAM 3.1 outlined the defect (concept prompt, else box prompt).
     `pointed_only`: no defect outline, only the "pointed here" marker from the fingertip.
-    `none`: a voice-only item (nobody pointed), so no outline and no marker.
+    `none`: no outline and no marker (a voice-only item that SAM couldn't ground). Voice-only items still
+    go through PLAN 2.1-2.3 on a sampled frame and may get `sam_concept` / `sam_box`.
     """
 
     sam_concept = "sam_concept"
@@ -202,9 +203,9 @@ class ClosureDecision(StrEnum):
 STAGES_INITIAL: tuple[Stage, ...] = (
     Stage.ingest,
     Stage.transcribe,
+    Stage.classify_turns,  # before find_points: pointing is searched in the defect turns' windows
     Stage.track_hands,
     Stage.find_points,
-    Stage.classify_turns,
     Stage.fuse,
     Stage.pick_evidence,
     Stage.write_items,
@@ -215,9 +216,9 @@ STAGES_INITIAL: tuple[Stage, ...] = (
 STAGES_REWALK: tuple[Stage, ...] = (
     Stage.ingest,
     Stage.transcribe,
+    Stage.classify_turns,  # before find_points: pointing is searched in the defect turns' windows
     Stage.track_hands,
     Stage.find_points,
-    Stage.classify_turns,
     Stage.fuse,
     Stage.pick_evidence,
     Stage.resolve_closures,

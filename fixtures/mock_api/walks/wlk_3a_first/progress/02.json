@@ -32,6 +32,18 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
+      "stage": "classify_turns",
+      "label": "Sorting what was said",
+      "status": "pending",
+      "started_at": null,
+      "finished_at": null,
+      "duration_ms": null,
+      "counts": {},
+      "progress": null,
+      "detail": "Muse Spark Open on Baseten, waiting",
+      "model_label": "Muse Spark Open on Baseten"
+    },
+    {
       "stage": "track_hands",
       "label": "Following your hand (SAM 3.1)",
       "status": "pending",
@@ -54,18 +66,6 @@
       "progress": null,
       "detail": null,
       "model_label": null
-    },
-    {
-      "stage": "classify_turns",
-      "label": "Sorting what was said",
-      "status": "pending",
-      "started_at": null,
-      "finished_at": null,
-      "duration_ms": null,
-      "counts": {},
-      "progress": null,
-      "detail": "Muse Spark Open on Baseten, waiting",
-      "model_label": "Muse Spark Open on Baseten"
     },
     {
       "stage": "fuse",

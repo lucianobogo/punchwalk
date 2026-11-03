@@ -49,11 +49,25 @@
           "model_label": "Muse Voice Transcribe"
         },
         {
+          "stage": "classify_turns",
+          "label": "Sorting what was said",
+          "status": "done",
+          "started_at": "2026-11-04T14:52:18.300000Z",
+          "finished_at": "2026-11-04T14:52:22.200000Z",
+          "duration_ms": 3900,
+          "counts": {
+            "lines": 10
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten sorted 10 lines",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
           "stage": "track_hands",
           "label": "Following your hand (SAM 3.1)",
           "status": "done",
-          "started_at": "2026-11-04T14:52:18.300000Z",
-          "finished_at": "2026-11-04T14:52:47.900000Z",
+          "started_at": "2026-11-04T14:52:22.200000Z",
+          "finished_at": "2026-11-04T14:52:51.800000Z",
           "duration_ms": 29600,
           "counts": {
             "frames": 780,
@@ -67,8 +81,8 @@
           "stage": "find_points",
           "label": "Finding where you pointed",
           "status": "done",
-          "started_at": "2026-11-04T14:52:47.900000Z",
-          "finished_at": "2026-11-04T14:52:48.300000Z",
+          "started_at": "2026-11-04T14:52:51.800000Z",
+          "finished_at": "2026-11-04T14:52:52.200000Z",
           "duration_ms": 400,
           "counts": {
             "points": 4,
@@ -78,20 +92,6 @@
           "progress": null,
           "detail": "4 places you pointed",
           "model_label": null
-        },
-        {
-          "stage": "classify_turns",
-          "label": "Sorting what was said",
-          "status": "done",
-          "started_at": "2026-11-04T14:52:48.300000Z",
-          "finished_at": "2026-11-04T14:52:52.200000Z",
-          "duration_ms": 3900,
-          "counts": {
-            "lines": 10
-          },
-          "progress": null,
-          "detail": "Muse Spark Open on Baseten sorted 10 lines",
-          "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "fuse",
@@ -245,11 +245,25 @@
           "model_label": "Muse Voice Transcribe"
         },
         {
+          "stage": "classify_turns",
+          "label": "Sorting what was said",
+          "status": "done",
+          "started_at": "2026-11-04T13:20:16.300000Z",
+          "finished_at": "2026-11-04T13:20:20.400000Z",
+          "duration_ms": 4100,
+          "counts": {
+            "lines": 17
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten sorted 17 lines",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
           "stage": "track_hands",
           "label": "Following your hand (SAM 3.1)",
           "status": "done",
-          "started_at": "2026-11-04T13:20:16.300000Z",
-          "finished_at": "2026-11-04T13:20:48.100000Z",
+          "started_at": "2026-11-04T13:20:20.400000Z",
+          "finished_at": "2026-11-04T13:20:52.200000Z",
           "duration_ms": 31800,
           "counts": {
             "frames": 1040,
@@ -263,8 +277,8 @@
           "stage": "find_points",
           "label": "Finding where you pointed",
           "status": "done",
-          "started_at": "2026-11-04T13:20:48.100000Z",
-          "finished_at": "2026-11-04T13:20:48.800000Z",
+          "started_at": "2026-11-04T13:20:52.200000Z",
+          "finished_at": "2026-11-04T13:20:52.900000Z",
           "duration_ms": 700,
           "counts": {
             "points": 10,
@@ -274,20 +288,6 @@
           "progress": null,
           "detail": "10 places you pointed",
           "model_label": null
-        },
-        {
-          "stage": "classify_turns",
-          "label": "Sorting what was said",
-          "status": "done",
-          "started_at": "2026-11-04T13:20:48.800000Z",
-          "finished_at": "2026-11-04T13:20:52.900000Z",
-          "duration_ms": 4100,
-          "counts": {
-            "lines": 17
-          },
-          "progress": null,
-          "detail": "Muse Spark Open on Baseten sorted 17 lines",
-          "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "fuse",
@@ -422,11 +422,25 @@
           "model_label": "Muse Voice Transcribe"
         },
         {
+          "stage": "classify_turns",
+          "label": "Sorting what was said",
+          "status": "done",
+          "started_at": "2026-11-03T15:40:21.300000Z",
+          "finished_at": "2026-11-03T15:40:26.100000Z",
+          "duration_ms": 4800,
+          "counts": {
+            "lines": 21
+          },
+          "progress": null,
+          "detail": "Muse Spark Open on Baseten sorted 21 lines",
+          "model_label": "Muse Spark Open on Baseten"
+        },
+        {
           "stage": "track_hands",
           "label": "Following your hand (SAM 3.1)",
           "status": "done",
-          "started_at": "2026-11-03T15:40:21.300000Z",
-          "finished_at": "2026-11-03T15:41:05.700000Z",
+          "started_at": "2026-11-03T15:40:26.100000Z",
+          "finished_at": "2026-11-03T15:41:10.500000Z",
           "duration_ms": 44400,
           "counts": {
             "frames": 1535,
@@ -440,8 +454,8 @@
           "stage": "find_points",
           "label": "Finding where you pointed",
           "status": "done",
-          "started_at": "2026-11-03T15:41:05.700000Z",
-          "finished_at": "2026-11-03T15:41:06.800000Z",
+          "started_at": "2026-11-03T15:41:10.500000Z",
+          "finished_at": "2026-11-03T15:41:11.600000Z",
           "duration_ms": 1100,
           "counts": {
             "points": 11,
@@ -451,20 +465,6 @@
           "progress": null,
           "detail": "11 places you pointed, 1 described without pointing",
           "model_label": null
-        },
-        {
-          "stage": "classify_turns",
-          "label": "Sorting what was said",
-          "status": "done",
-          "started_at": "2026-11-03T15:41:06.800000Z",
-          "finished_at": "2026-11-03T15:41:11.600000Z",
-          "duration_ms": 4800,
-          "counts": {
-            "lines": 21
-          },
-          "progress": null,
-          "detail": "Muse Spark Open on Baseten sorted 21 lines",
-          "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "fuse",
