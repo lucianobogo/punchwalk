@@ -1,0 +1,215 @@
+/* Punchwalk design tokens. Source of truth: DESIGN.md ("Color", "Type", "Shape, depth, spacing").
+   The default Tailwind palette, radii and shadows are cleared so only these tokens exist:
+   a one-off color in a component fails to compile into anything. */
+@import '@fontsource-variable/archivo/wdth.css';
+@import 'tailwindcss';
+
+/* static: emit every token as a CSS variable, used or not (SVG overlays read var(--color-redline) etc.). */
+@theme static {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Surfaces and text */
+  --color-primer: #f2f4f5; /* app background */
+  --color-sheet: #ffffff; /* cards, rows, sheets, bars */
+  --color-graphite: #1b2430; /* primary text, icons, tape-tab numbers */
+  --color-pencil: #5b6673; /* secondary text */
+  --color-hairline: #dce1e5; /* borders, dividers */
+  --color-track: #e5e9ec; /* segmented-control track and grey icon buttons (derived: between Primer and Hairline, keeps Pencil text at AA) */
+
+  /* Tape */
+  --color-tape-tab: #5aa2ea; /* tape-tab fill */
+  --color-tape: #2f86e0; /* hand outline and pointer dot, Record button, progress */
+  --color-tape-ink: #1d63b5; /* blue text, links, primary buttons */
+  --color-tape-tint: #e8f1fb; /* play buttons, selected rows, active chips */
+
+  /* Findings and statuses */
+  --color-redline: #d93b30; /* defect outlines */
+  --color-safety-bg: #fbe9e7;
+  --color-safety: #a3241b;
+  --color-signed: #2f9e6b; /* signed-off fills */
+  --color-signed-ink: #1f7a50; /* signed-off text */
+  --color-hold: #c9861a; /* needs-a-look dot */
+  --color-hold-ink: #8a5a0b; /* needs-a-look text */
+  --color-hold-card: #fffbf3;
+  --color-hold-border: #ebd3a6;
+
+  /* Always-dark surfaces (Play this moment sheet, video chrome) */
+  --color-night: #0f151c;
+  --color-night-raised: #18202a;
+  --color-night-line: #2a3440;
+  --color-night-text: #e8ecef;
+  --color-night-pencil: #9aa5b1;
+
+  /* Type: Archivo variable, self-hosted. Width axis does the work (see font-expanded utilities). */
+  --font-*: initial;
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --text-*: initial;
+  --text-hero: 56px;
+  --text-hero--line-height: 60px;
+  --text-display: 28px; /* top-level screen title */
+  --text-display--line-height: 32px;
+  --text-title: 22px; /* pushed screen title */
+  --text-title--line-height: 28px;
+  --text-card: 17px; /* card title */
+  --text-card--line-height: 22px;
+  --text-row: 15px; /* row title */
+  --text-row--line-height: 20px;
+  --text-body: 15px;
+  --text-body--line-height: 21px;
+  --text-secondary: 13px;
+  --text-secondary--line-height: 18px;
+  --text-section: 13px; /* section header */
+  --text-section--line-height: 16px;
+  --text-tab: 11px; /* tab bar label */
+  --text-tab--line-height: 13px;
+  --text-tape-lg: 15px; /* number on a 40 x 24 tab */
+  --text-tape-lg--line-height: 1;
+  --text-tape-sm: 13px; /* number on a 32 x 20 tab */
+  --text-tape-sm--line-height: 1;
+
+  /* Radii by role */
+  --radius-*: initial;
+  --radius-sheet: 20px;
+  --radius-card: 14px;
+  --radius-image: 12px;
+  --radius-thumb: 10px;
+  --radius-button: 12px;
+  --radius-control: 10px; /* selected segment inside a track */
+
+  /* Depth: one soft shadow, for sheets and the new-item card over video */
+  --shadow-*: initial;
+  --shadow-lift: 0 12px 32px -8px rgb(15 21 28 / 0.24), 0 2px 8px rgb(15 21 28 / 0.08);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-press-on: press-on 180ms var(--ease-out);
+  --animate-slide-up: slide-up 220ms var(--ease-out);
+  --animate-fade-in: fade-in 180ms var(--ease-out);
+  --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
+
+  @keyframes press-on {
+    from { transform: scale(1.06); }
+    to { transform: scale(1); }
+  }
+  @keyframes slide-up {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pulse-soft {
+    50% { opacity: 0.55; }
+  }
+}
+
+/* Dark mode is opt-in for now (DESIGN.md marks it "nice"; PLAN 8.4). Tape colors stay the same. */
+:root[data-theme='dark'] {
+  --color-primer: #0f151c;
+  --color-sheet: #18202a;
+  --color-graphite: #e8ecef;
+  --color-pencil: #9aa5b1;
+  --color-hairline: #2a3440;
+  --color-track: #222b36;
+}
+
+:root {
+  --app-width: 440px; /* DESIGN.md "Navigation": desktop renders the app in a centered 440 px column */
+  --tabbar-h: 64px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Archivo Expanded: 125% for top-level titles, tape numbers and the landing headline; 112% for 22 px titles. */
+@utility font-expanded {
+  font-stretch: 125%;
+}
+@utility font-expanded-title {
+  font-stretch: 112%;
+}
+
+/* Safe areas (never draw a fake status bar) */
+@utility pt-safe {
+  padding-top: var(--sat);
+}
+@utility pb-safe {
+  padding-bottom: var(--sab);
+}
+@utility pb-safe-3 {
+  padding-bottom: calc(var(--sab) + 12px);
+}
+
+/* A 44 x 44 hit area around a smaller visual element (e.g. a 34 px play circle or a 36 px chip). */
+@utility hit-44 {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Translucency is only for the tab bar and the bottom action bar (white at 94%). */
+@utility bar-translucent {
+  background-color: color-mix(in srgb, var(--color-sheet) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+
+@layer base {
+  html {
+    background: var(--color-primer);
+    color: var(--color-graphite);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-primer);
+    overscroll-behavior-y: none;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-tape-ink);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .on-night :focus-visible {
+    outline-color: var(--color-tape-tab);
+  }
+  button {
+    cursor: pointer;
+  }
+  img,
+  video {
+    max-width: 100%;
+  }
+}
+
+/* With reduced motion: fades only. Transforms snap; opacity still eases. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-name: fade-in !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-property: opacity, color, background-color, border-color !important;
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "punchwalk-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:live": "VITE_DATA=live vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "icons": "node scripts/gen-icons.ts",
+    "screenshots": "playwright install webkit && node screenshots/run.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.2.8",
+    "@tanstack/react-query": "^5.90.0",
+    "lucide-react": "^0.545.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router": "^7.9.0",
+    "vaul": "^1.1.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.5.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^4.1.13",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^3.2.4"
+  }
+}
