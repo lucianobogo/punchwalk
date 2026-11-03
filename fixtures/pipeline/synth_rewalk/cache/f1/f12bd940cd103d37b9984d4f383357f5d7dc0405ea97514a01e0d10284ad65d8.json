@@ -1,0 +1,54 @@
+{
+ "key": "f12bd940cd103d37b9984d4f383357f5d7dc0405ea97514a01e0d10284ad65d8",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:12:06+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b67a6f7ff4dc4422b661fa2129b0d687",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Photo 1 has dark brown fill inside outline with blue dot next to it. Photo 2 has light beige/pink fill inside outline and no blue dot.\", \"rationale\": \"Inside the outline is no longer the dark missing-knob mark from photo 1. Under the outline in photo 2 it looks filled/clean like repaired.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793747520,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1027,
+   "prompt_tokens": 738,
+   "total_tokens": 1765,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 707,
+    "audio_tokens": 0,
+    "reasoning_tokens": 933,
+    "rejected_prediction_tokens": 1533,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

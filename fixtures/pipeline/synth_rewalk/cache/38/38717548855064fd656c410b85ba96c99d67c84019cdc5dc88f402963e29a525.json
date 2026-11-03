@@ -1,0 +1,54 @@
+{
+ "key": "38717548855064fd656c410b85ba96c99d67c84019cdc5dc88f402963e29a525",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:10:21+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ddcb11b3f72c4da4b16c2c4f635d3c9b",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"unclear\", \"note\": \"Both photos are tiny/zoomed-out, switch plate detail not visible\", \"rationale\": \"Inside the outline in photo 1 and photo 2 looks the same brown square, but images are too small/blurry to tell if the plate is still crooked or now straight.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793747416,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 636,
+   "prompt_tokens": 735,
+   "total_tokens": 1371,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 431,
+    "audio_tokens": 0,
+    "reasoning_tokens": 552,
+    "rejected_prediction_tokens": 1004,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

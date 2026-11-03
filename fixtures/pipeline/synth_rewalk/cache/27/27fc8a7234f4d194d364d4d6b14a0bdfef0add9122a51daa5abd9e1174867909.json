@@ -1,0 +1,54 @@
+{
+ "key": "27fc8a7234f4d194d364d4d6b14a0bdfef0add9122a51daa5abd9e1174867909",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:10:24+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-62955f53a4ab47e8b1081d5bd9f09e30",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"No scuff marks near blue dot - wall is plain beige and clean in both views.\", \"rationale\": \"Close-up and full frame show uniform wall around dot with no marks, stains or damage within a finger's length.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793747421,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 490,
+   "prompt_tokens": 1709,
+   "total_tokens": 2199,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 343,
+    "audio_tokens": 0,
+    "reasoning_tokens": 419,
+    "rejected_prediction_tokens": 686,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

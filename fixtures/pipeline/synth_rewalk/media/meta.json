@@ -1,0 +1,124 @@
+{
+  "version": 3,
+  "duration_s": 21.0,
+  "display": {
+    "path": "display.mp4",
+    "width": 720,
+    "height": 1280,
+    "fps": 30,
+    "frame_count": 630
+  },
+  "sam": {
+    "path": "sam.mp4",
+    "width": 720,
+    "height": 1280,
+    "fps": 10,
+    "frame_count": 210
+  },
+  "audio": {
+    "path": "audio.wav",
+    "sample_rate": 16000,
+    "channels": 1,
+    "codec": "pcm_s16le"
+  },
+  "orientation": "portrait",
+  "scale": {
+    "sam_to_display_x": 1.0,
+    "sam_to_display_y": 1.0
+  },
+  "clips": [
+    {
+      "order": 0,
+      "filename": "walk2_a.mp4",
+      "duration_s": 7.0,
+      "offset_s": 0.0,
+      "sam_frame_offset": 0,
+      "sam_frame_count": 70,
+      "sam_part_path": "sam_part_0.mp4",
+      "display_frame_offset": 0,
+      "display_frame_count": 210,
+      "padded": false,
+      "source": {
+        "codec": "h264",
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "hdr": false,
+        "has_audio": true,
+        "fps": 30.0,
+        "color_transfer": null,
+        "color_primaries": null,
+        "size_bytes": 51609
+      }
+    },
+    {
+      "order": 1,
+      "filename": "walk2_b.mp4",
+      "duration_s": 7.0,
+      "offset_s": 7.0,
+      "sam_frame_offset": 70,
+      "sam_frame_count": 70,
+      "sam_part_path": "sam_part_1.mp4",
+      "display_frame_offset": 210,
+      "display_frame_count": 210,
+      "padded": false,
+      "source": {
+        "codec": "h264",
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "hdr": false,
+        "has_audio": true,
+        "fps": 30.0,
+        "color_transfer": null,
+        "color_primaries": null,
+        "size_bytes": 50502
+      }
+    },
+    {
+      "order": 2,
+      "filename": "walk2_c.mp4",
+      "duration_s": 7.0,
+      "offset_s": 14.0,
+      "sam_frame_offset": 140,
+      "sam_frame_count": 70,
+      "sam_part_path": "sam_part_2.mp4",
+      "display_frame_offset": 420,
+      "display_frame_count": 210,
+      "padded": false,
+      "source": {
+        "codec": "h264",
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "hdr": false,
+        "has_audio": true,
+        "fps": 30.0,
+        "color_transfer": null,
+        "color_primaries": null,
+        "size_bytes": 50654
+      }
+    }
+  ],
+  "hdr_detected": false,
+  "hdr_tonemapped": false,
+  "hdr_method": null,
+  "canvas_policy": "portrait_if_any_fit_pad",
+  "warnings": [],
+  "input_fingerprint": "e67a329df10fc297fff8e22a24e5b08faaeb03e1dca7715a7a3f11addbb6db9d",
+  "tools": {
+    "ffmpeg": "ffmpeg version 9.0.2",
+    "ffprobe": "ffprobe version 9.0.2"
+  },
+  "timings_s": {
+    "normalize_0": 0.27,
+    "normalize_1": 0.29,
+    "normalize_2": 0.281,
+    "concat": 0.776,
+    "sam": 0.523,
+    "audio": 0.115,
+    "sam_parts": 0.986,
+    "total": 3.654
+  },
+  "created_at": "2026-11-03T23:09:33.889055Z"
+}

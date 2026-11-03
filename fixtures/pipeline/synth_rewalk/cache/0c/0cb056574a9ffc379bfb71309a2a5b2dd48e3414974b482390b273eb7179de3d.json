@@ -1,0 +1,54 @@
+{
+ "key": "0cb056574a9ffc379bfb71309a2a5b2dd48e3414974b482390b273eb7179de3d",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:10:06+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-0bc9071257b94421b94ebdcee4a07347",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 2, \"claimed\": \"fixed\", \"confidence\": 1.0, \"rationale\": \"Words 'hallway switch plate fixed' match item 2's title/room and blue dot points at switch plate location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793747404,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 258,
+   "prompt_tokens": 1727,
+   "total_tokens": 1985,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 184,
+    "audio_tokens": 0,
+    "reasoning_tokens": 196,
+    "rejected_prediction_tokens": 334,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

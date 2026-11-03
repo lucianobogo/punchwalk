@@ -1,0 +1,40 @@
+{
+ "key": "515c4f1c297224689fcc3dd0c706d6da591cfe9caf46ecdaadb00c2739ddebce",
+ "provider": "meta",
+ "endpoint": "/asr/transcribe",
+ "model": "muse-voice-transcribe-1.0",
+ "description": "ASR audio.wav @ 0 ms (672078 bytes)",
+ "created_at": "2026-11-03T23:03:14+00:00",
+ "meta": {},
+ "response": {
+  "sessionId": "voyager/transcribe/13F3E72F42274CD6AC6217C1E2F53036",
+  "transcript": "kitchen cabinet knob fixed hallway switch plate fixed bedroom scuff marks still there there",
+  "audioDurationMs": 21040,
+  "turns": [
+   {
+    "turnId": 0,
+    "startMs": 60,
+    "endMs": 2380,
+    "transcript": "kitchen cabinet knob fixed"
+   },
+   {
+    "turnId": 1,
+    "startMs": 7020,
+    "endMs": 9420,
+    "transcript": "hallway switch plate fixed"
+   },
+   {
+    "turnId": 2,
+    "startMs": 13980,
+    "endMs": 16380,
+    "transcript": "bedroom scuff marks still there"
+   },
+   {
+    "turnId": 3,
+    "startMs": 16460,
+    "endMs": 16460,
+    "transcript": "there"
+   }
+  ]
+ }
+}
