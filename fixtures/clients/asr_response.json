@@ -1,0 +1,13 @@
+{
+ "sessionId": "voyager/transcribe/63DC2164F6574E499F465D6E06A438C5",
+ "transcript": "kitchen, upper upper cabinet left of the sink, knob missing.",
+ "audioDurationMs": 5040,
+ "turns": [
+  {
+   "turnId": 0,
+   "startMs": 0,
+   "endMs": 3180,
+   "transcript": "kitchen, upper upper cabinet left of the sink, knob missing."
+  }
+ ]
+}

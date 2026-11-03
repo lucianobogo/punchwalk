@@ -1,0 +1,45 @@
+{
+ "id": "chatcmpl-e20e481cfa6b413e88603fc1c56ce003",
+ "choices": [
+  {
+   "finish_reason": "stop",
+   "index": 0,
+   "logprobs": null,
+   "message": {
+    "content": "{\n  \"object_seen\": \"Yes - a small rectangular strip on the beige/tan wall to the right of the white door near the bottom of the image\",\n  \"color\": \"solid medium blue\",\n  \"confidence\": 0.98\n  ,\n  \"rationale\": \"Directly visible on the flat beige wall surface, angled slightly, distinct from the white door with dark doorknob on the left.\"\n}",
+    "refusal": null,
+    "role": "assistant",
+    "annotations": null,
+    "audio": null,
+    "function_call": null,
+    "tool_calls": null
+   }
+  }
+ ],
+ "created": 1793741219,
+ "model": "meta-models/muse-spark-open",
+ "object": "chat.completion",
+ "metadata": null,
+ "moderation": null,
+ "service_tier": null,
+ "system_fingerprint": null,
+ "usage": {
+  "completion_tokens": 236,
+  "prompt_tokens": 1382,
+  "total_tokens": 1618,
+  "completion_tokens_details": {
+   "accepted_prediction_tokens": 148,
+   "audio_tokens": 0,
+   "reasoning_tokens": 138,
+   "rejected_prediction_tokens": 468,
+   "text_tokens": null
+  },
+  "prompt_tokens_details": {
+   "audio_tokens": 0,
+   "cache_write_tokens": null,
+   "cached_tokens": 0,
+   "image_tokens": null,
+   "text_tokens": null
+  }
+ }
+}
