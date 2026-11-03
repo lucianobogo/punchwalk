@@ -1,0 +1,63 @@
+# Fly.io config for Punchwalk: one machine, one process, one volume at /data. Runbook: docs/DEPLOY.md.
+# If the app name "punchwalk" is taken, change `app` and APP_BASE_URL below (and the -a flags in the runbook).
+
+app = "punchwalk"
+primary_region = "ewr"
+kill_signal = "SIGTERM"
+kill_timeout = "30s"  # jobs interrupted by a restart are re-queued and resume on boot
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # One machine with one volume: replace it in place (a rolling deploy can't attach the volume twice).
+  strategy = "immediate"
+
+[env]
+  DATA_DIR = "/data"
+  DEMO_MODE = "true"
+  APP_BASE_URL = "https://punchwalk.fly.dev"
+  PUNCHWALK_CACHE = "readwrite"
+  FIXTURE_CACHE_DIR = "/app/fixtures/cache"
+  AUTO_SEND = "true"
+  PUNCHWALK_WORKER = "1"
+  REASONING_PROVIDER = "baseten"
+  # Secrets (MODEL_API_KEY, BASETEN_API_KEY, SLACK_WEBHOOK_URL, RESEND_API_KEY, EMAIL_FROM) are set
+  # with `fly secrets import`, never here.
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = false  # the job worker runs in this process; a stopped machine drops uploads
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 50
+    hard_limit = 100
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "15s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[mounts]]
+  source = "punchwalk_data"
+  destination = "/data"
+
+[checks]
+  [checks.healthz]
+    type = "http"
+    port = 8000
+    method = "get"
+    path = "/healthz"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2048mb"

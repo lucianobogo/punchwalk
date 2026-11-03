@@ -1,0 +1,25 @@
+# Keep the build context small and secret-free. The image gets code, the web build, and the
+# fixtures/eval data that `make seed` and the cache need; never footage, local data or keys.
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+footage/
+data/
+.verify/
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+node_modules/
+web/node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+punchwalk/static/
+.claude/
+.DS_Store
+*.log

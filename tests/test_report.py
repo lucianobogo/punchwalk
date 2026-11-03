@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+from punchwalk.config import get_settings
 from punchwalk.core.models import Project
 from punchwalk.db import session_factory
 from punchwalk.report import render
@@ -94,6 +95,11 @@ def test_pdf_is_valid_with_at_least_two_pages(api: TestClient) -> None:
     seed_walk(pid, with_files=True)
     with session_factory() as s:
         pdf = render.project_report_pdf(s, s.get(Project, pid))
-    assert pdf.startswith(b"%PDF-") and pdf.rstrip().endswith(b"%%EOF")
-    pages = re.findall(rb"/Type\s*/Page(?!s)", pdf)
-    assert len(pages) >= 2, len(pages)
+    assert pdf.startswith(b"%PDF-") and pdf.rstrip().endswith(b"%%EOF") and len(pdf) > 5000
+    # WeasyPrint compresses its objects, so count pages from the laid-out document, not the bytes
+    from weasyprint import HTML
+
+    with session_factory() as s:
+        html = render.render_html(render.build_context(s, s.get(Project, pid)))
+    doc = HTML(string=html, base_url=str(Path(get_settings().DATA_DIR))).render()
+    assert len(doc.pages) >= 2, len(doc.pages)
