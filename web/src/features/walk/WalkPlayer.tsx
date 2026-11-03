@@ -11,7 +11,7 @@ import { formatClock } from '../../lib/format';
 import { TRADE_LABEL } from '../../lib/labels';
 import { cx } from '../../lib/cx';
 import { useVideoClock } from '../../lib/video';
-import { seekTargetFor, type MomentState } from './moments';
+import { nearestMarker, seekTargetFor, type MomentState } from './moments';
 
 export const HERO_HEIGHT = 500;
 
@@ -169,6 +169,13 @@ function Controls({
     onSeek(((clientX - r.left) / r.width) * duration);
   };
   const down = (e: RPointerEvent<HTMLDivElement>) => {
+    const r = track.current?.getBoundingClientRect();
+    // A tap near a marker (within half a 44 px target) jumps to that item; the closest marker wins.
+    const hit = r ? nearestMarker(events, e.clientX - r.left, r.width, duration) : null;
+    if (hit) {
+      onSeek(seekTargetFor(hit));
+      return;
+    }
     dragging.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
     seekAt(e.clientX);
@@ -219,9 +226,10 @@ function Controls({
               key={e.item_id}
               type="button"
               aria-label={`Item ${e.number}${item ? `, ${item.title}` : ''}, ${formatClock(e.t)}`}
-              onPointerDown={(ev) => ev.stopPropagation()}
+              // Taps are resolved by the track (closest marker wins); the button keeps keyboard and
+              // screen-reader access with a full 44 x 44 target.
               onClick={() => onSeek(seekTargetFor(e))}
-              className="absolute top-1/2 flex h-11 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+              className="pointer-events-none absolute top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
               style={{ left: pct(e.t) }}
             >
               <span className="h-4 w-1 rounded-full bg-tape-tab ring-1 ring-tape/60" />

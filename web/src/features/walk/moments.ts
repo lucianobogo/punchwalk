@@ -39,6 +39,30 @@ export function seekTargetFor(e: Pick<OverlayEventOut, 't'>, lead = 1.5): number
   return Math.max(0, e.t - lead);
 }
 
+/**
+ * The marker a tap at x (px from the track's left edge) means: the closest one within `tolPx`
+ * (half a 44 px target), so neighbouring markers never steal each other's taps. Null = a plain seek.
+ */
+export function nearestMarker<E extends Pick<OverlayEventOut, 't'>>(
+  events: E[],
+  x: number,
+  widthPx: number,
+  durationS: number,
+  tolPx = 22,
+): E | null {
+  if (!durationS || !widthPx) return null;
+  let best: E | null = null;
+  let bestD = Infinity;
+  for (const e of events) {
+    const d = Math.abs((e.t / durationS) * widthPx - x);
+    if (d <= tolPx && d < bestD) {
+      best = e;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
 /** The transcript line being spoken at t, if any. */
 export function activeTurnIndex(turns: { start_ms: number; end_ms: number }[], t: number): number {
   const ms = t * 1000;

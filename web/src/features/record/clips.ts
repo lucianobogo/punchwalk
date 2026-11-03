@@ -41,7 +41,7 @@ export function validateClips(clips: ClipInfo[]): string[] {
     errors.push(
       clips.length > 1
         ? `These clips add up to ${minutes(total)}. A walk can be up to 10 minutes, so upload the rest as a second walk.`
-        : 'This walk is longer than 10 minutes. Split it into parts and upload them together.',
+        : 'This walk is longer than 10 minutes. Record it as two separate walks.',
     );
   }
   const bytes = clips.reduce((n, c) => n + c.size, 0);

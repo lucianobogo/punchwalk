@@ -73,9 +73,12 @@ function WalkRow({ walk: w }: { walk: WalkOut }) {
         <span className="block truncate text-secondary text-pencil">{w.project_name}</span>
         <span className="block text-secondary tabular-nums text-pencil">
           {facts.map((f, i) => (
-            <span key={i} className="whitespace-nowrap">
-              {f}
-              {i < facts.length - 1 ? ', ' : '.'}
+            <span key={i}>
+              <span className="whitespace-nowrap">
+                {f}
+                {i === facts.length - 1 ? '.' : ','}
+              </span>
+              {i < facts.length - 1 ? ' ' : ''}
             </span>
           ))}
         </span>

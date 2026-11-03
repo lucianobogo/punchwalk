@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { frameAt } from '../../components/HandOverlay';
 import { diskMock } from '../../test/fixtures';
-import { CARD_HOLD_S, activeTurnIndex, cardAt, momentState, seekTargetFor } from './moments';
+import { CARD_HOLD_S, activeTurnIndex, cardAt, momentState, nearestMarker, seekTargetFor } from './moments';
 
 const ev = (t: number, n: number) => ({ t, item_id: `itm_${n}`, number: n });
 const events = [ev(14, 1), ev(27, 2), ev(92, 6)];
@@ -37,6 +37,14 @@ describe('new-item card scheduling', () => {
   it('seeks a moment before the call-out, never below zero', () => {
     expect(seekTargetFor({ t: 92 })).toBe(90.5);
     expect(seekTargetFor({ t: 0.5 })).toBe(0);
+  });
+
+  it('resolves a timeline tap to the closest marker within 22 px, else a plain seek', () => {
+    // 300 px track, 150 s: 2 px per second. Markers at 14 s (28 px), 27 s (54 px), 92 s (184 px).
+    expect(nearestMarker(events, 30, 300, 150)?.number).toBe(1);
+    expect(nearestMarker(events, 45, 300, 150)?.number).toBe(2); // 17 px from #1, 9 px from #2
+    expect(nearestMarker(events, 120, 300, 150)).toBeNull();
+    expect(nearestMarker(events, 30, 0, 150)).toBeNull();
   });
 
   it('finds the transcript line being spoken', () => {
