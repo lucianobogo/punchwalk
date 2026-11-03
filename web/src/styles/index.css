@@ -202,6 +202,41 @@
   }
 }
 
+/* Play this moment scrubber: a 4 px track in a 44 px tall hit area, Tape fill up to --fill. */
+.moment-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.moment-scrubber::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-tape) var(--fill, 0%), var(--color-night-line) var(--fill, 0%));
+}
+.moment-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -11px;
+  border-radius: 9999px;
+  background: var(--color-white);
+  border: 0;
+}
+.moment-scrubber::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-tape) var(--fill, 0%), var(--color-night-line) var(--fill, 0%));
+}
+.moment-scrubber::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: var(--color-white);
+  border: 0;
+}
+
 /* With reduced motion: fades only. Transforms snap; opacity still eases. */
 @media (prefers-reduced-motion: reduce) {
   *,

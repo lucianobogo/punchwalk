@@ -9,3 +9,4 @@ export { Sheet, SheetAction } from './Sheet';
 export { LargeTitleBar, PushedBar, BackLink, TabBar, ActionBar } from './Bars';
 export { ToastProvider, ToastView, useToast } from './Toast';
 export { VideoFrame, type VideoAspect } from './VideoFrame';
+export { HandOverlay, frameAt } from './HandOverlay';

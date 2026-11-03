@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { cx } from '../lib/cx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'night' | 'night-quiet';
+export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'night' | 'night-quiet' | 'night-link';
 export type ButtonSize = 'md' | 'lg';
 
 const VARIANT: Record<ButtonVariant, string> = {
@@ -12,6 +12,7 @@ const VARIANT: Record<ButtonVariant, string> = {
   quiet: 'text-tape-ink active:opacity-70 disabled:text-pencil',
   night: 'bg-sheet text-graphite active:brightness-90',
   'night-quiet': 'text-night-text active:opacity-70',
+  'night-link': 'text-tape-tab active:opacity-70 disabled:text-night-pencil',
 };
 
 const SIZE: Record<ButtonSize, string> = {
@@ -25,7 +26,7 @@ export function buttonClass(variant: ButtonVariant = 'primary', size: ButtonSize
     'transition-[filter,background-color,opacity] duration-150 ease-out disabled:cursor-not-allowed',
     VARIANT[variant],
     SIZE[size],
-    variant.includes('quiet') && 'px-2',
+    (variant.includes('quiet') || variant === 'night-link') && 'px-2',
     block && 'w-full',
   );
 }

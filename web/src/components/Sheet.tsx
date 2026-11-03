@@ -47,7 +47,8 @@ export function Sheet({
         <Drawer.Content
           aria-describedby={undefined}
           className={cx(
-            'fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-[var(--app-width)] flex-col',
+            'fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[var(--app-width)] flex-col',
+            night ? 'max-h-[96dvh]' : 'max-h-[92dvh]',
             'rounded-t-sheet shadow-lift outline-none',
             night ? 'on-night bg-night text-night-text' : 'bg-sheet text-graphite',
             className,
