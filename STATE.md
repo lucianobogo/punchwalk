@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 17:54 ET
+Updated: 2026-11-03 18:01 ET
 Current phase: 1 (A) / 4 (C) / 5 (B) in parallel; 0.6 pending footage — targets Tue 8:30 PM / 10:00 PM / Wed 3:00 AM
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script + 1.1–1.7 (0228dab..dfa8cc7) + 1.x fixes + 2.1–2.5 (3cbca8a..94626ef, verifying), 6.3 (2a9fe64, PDF check in the image pending), 9.1 (6dc5330, verifying). Tagged: 6.1-backend, 6.2
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script + 1.1–1.7 (0228dab..dfa8cc7) + 1.x fixes + 2.1–2.5 (3cbca8a..94626ef, verifying). Tagged so far: 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4, 6.1-backend, 6.2, 6.3, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -16,7 +16,6 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | 3.1–3.3 eval harness (built on the synthetic walk until footage lands) | builder (eval) | 17:48 | eval/run_eval.py, eval/report.md, eval/README?, scripts/build_mock_api.py, tests/test_eval*.py, fixtures/eval/** | reads Item rows via runner.run_walk on a temp DB; never overwrites fixtures/mock_api without --out |
 | 1.x fixes + 2.1–2.5 verify (worktree .verify/wt-phase2 @ 94626ef) | verifier | 17:50 | read-only | commits untagged pending PASS |
 | Track A: 7.1–7.4 re-walk loop (+ make record / full runs when footage lands) | builder (Track A, same agent) | 17:50 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
-| 9.1 verify (docker build + in-image tests + container smoke) | verifier | 17:53 | read-only | committed untagged pending PASS |
 | CHANGE-2 (small contract: channel_reason, approve-and-send doc, StageState.message, Settings AUTO_SEND/TRUST_PROXY/PUNCHWALK_WORKER) + 8.1 seed (on synthetic data, ready for real walks) | builder (Track C, same agent) | 17:53 | punchwalk/core/models.py, punchwalk/api/schemas.py, web/src/api/types.ts, scripts/gen_mock_api.py, fixtures/mock_api, punchwalk/config.py, .env.example, punchwalk/api/media.py, scripts/seed.py, tests/test_seed.py | briefed by message |
 | 5.5–5.7 walks + walk detail, record, how processed | ui-builder (same agent) | 17:38 | web/** except types.ts | briefed by message |
 
@@ -42,7 +41,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - make eval: not run yet (targets in PLAN.md 3.4)
 - make screenshots: 30/30 written at 5.4 (14/14 strict for 5.2–5.4); 5.5–5.7 screens pending
 - Live API spend: $0.22 of $25 (probe $0.046; synthetic record + Phase 2 fixtures $0.175)
-- Deploy: image built + tested locally (1.08 GB, trixie, ffmpeg 7.1); fly.toml valid; NOT deployed (human runbook in Needs human / docs/DEPLOY.md)
+- Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md
 - Live URL: none
 
 ## Key facts learned

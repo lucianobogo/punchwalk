@@ -194,7 +194,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Trades screens per DESIGN.md.
   - Public read-only share page `/share/item/:token`, styled like the item detail, with "Play this moment".
 - [x] **6.2 Auto-send policy.** After verification, `consistent=true` items are sent automatically; `needs_review` items wait for a human tap. Every automatic decision is recorded in the item's history.
-- [ ] **6.3 PDF punch report** *(nice)*. Cover page (project, date, totals by trade/status), items grouped by room with evidence, sign-off block.
+- [x] **6.3 PDF punch report** *(nice)*. Cover page (project, date, totals by trade/status), items grouped by room with evidence, sign-off block.
 
 ## Phase 7: Re-walk loop (Track A, then B)
 
@@ -222,7 +222,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 9: Ship (Track C)
 
-- [ ] **9.1 Docker + deploy.**
+- [~] **9.1 Docker + deploy.** *(image + fly.toml + runbook verified; the deploy itself is reserved for the human — see STATE.md → Needs human)*
   - Multi-stage Dockerfile, `fly.toml`, volume at `/data`, health check.
   - Make sure the demo media and cached results that `make seed` needs reach the deployed app (baked into the image or copied to the volume).
   - If `fly auth whoami` works or `FLY_API_TOKEN` is set: deploy, seed, and smoke-test the live URL with the iPhone profile.
