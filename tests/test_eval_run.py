@@ -2,8 +2,9 @@
 
 The synthetic walk (fixtures/pipeline/synth_walk, see tests/test_pipeline_integration.py) replays offline;
 its labels are fixtures/eval/labels_synth/synth_walk.csv: knob (Kitchen, part a, pointed), switch plate
-(Hallway, part b, pointed), scuff marks (Bedroom, part c, voice-only). The pipeline calls the knob
-doors_hardware where the label says carpentry_millwork, so trade accuracy is 2/3 (a real miss).
+(Hallway, part b, pointed), scuff marks (Bedroom, part c, voice-only). Assertions stick to what a re-record
+can't change (all three found, rooms right, both pointed items outlined); model-dependent numbers such as the
+trade are checked for consistency between the table, report.md and report.json, not for a value.
 
 The pipeline runs once per session into a template DATA_DIR; each test works on its own copy (resumed,
 so nothing re-runs). The re-walk is faked at the `run_walk` seam (no recorded re-walk exists yet).
@@ -11,6 +12,7 @@ so nothing re-runs). The re-walk is faked at the `run_walk` seam (no recorded re
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import shutil
@@ -105,18 +107,20 @@ def test_synthetic_walk_scores_and_writes_the_report(data_dir, tmp_path, capsys)
     out = capsys.readouterr().out
     assert code == 0
     assert "synth_walk  Recall                    1.00 (3/3)  >= 0.90  pass" in out
-    assert "synth_walk  Trade accuracy            0.67 (2/3)  >= 0.85  FAIL" in out
+    doc = json.loads(report.with_suffix(".json").read_text())
+    trade_row = next(r for r in doc["summary"] if r["key"] == "trade")
+    assert f"synth_walk  Trade accuracy            {trade_row['value']}  >= 0.85  {trade_row['result']}" in out
     md = report.read_text()
     assert "| synth_walk | Room accuracy | 1.00 (3/3) | >= 0.90 | pass |" in md
     assert "Clip parts: a at 00:00.0, b at 00:07.0, c at 00:14.0." in md
-    assert "Carpentry & millwork / Doors & hardware (wrong)" in md
+    assert "| 1 | 00:00.0 | #001 |" in md and "Carpentry & millwork / " in md  # label 1 vs its item
     assert "The frame doesn't show the defect described." in md  # review_reason of the contradictory item
     assert "## Timing and cost" in md and "| synth_walk |" in md.split("## Timing and cost")[1]
-    doc = json.loads(report.with_suffix(".json").read_text())
     m = doc["walks"][0]["metrics"]
-    assert (m["recall"]["num"], m["precision"]["num"], m["trade"]["num"], m["room"]["num"]) == (3, 3, 2, 3)
+    assert (m["recall"]["num"], m["precision"]["num"], m["room"]["num"]) == (3, 3, 3)
+    assert m["trade"]["den"] == 3 and f"| synth_walk | Trade accuracy | {trade_row['value']} |" in md
     assert m["grounding"] == {"num": 2, "den": 2, "value": 1.0}  # both pointed items outlined by SAM
-    assert m["needs_review"]["num"] == 2
+    assert m["needs_review"]["den"] == 3
     assert doc["app_summary"]["metrics"][0] == {"key": "defects_found", "label": "Defects found", "value": 3, "total": 3}
 
     # the same DATA_DIR gives the same report, byte for byte (nothing re-runs, no "now")
@@ -124,8 +128,13 @@ def test_synthetic_walk_scores_and_writes_the_report(data_dir, tmp_path, capsys)
     run_eval.main(["--labels", str(LABELS), "--walks", "synth_walk", "--data-dir", str(data_dir), "--report", str(again)])
     assert again.read_text() == md
     assert again.with_suffix(".json").read_text() == report.with_suffix(".json").read_text()
-    # --strict fails on the trade miss
-    assert run_eval.main(["--labels", str(LABELS), "--data-dir", str(data_dir), "--report", str(again), "--strict"]) == 1
+    # --strict fails when a target is missed: add a label nothing was said about (recall 3/4)
+    strict = tmp_path / "strict_labels"
+    shutil.copytree(LABELS, strict)
+    with (strict / "synth_walk.csv").open("a") as f:
+        f.write("synth_walk,4,Bedroom,Door does not latch,doors_hardware,00:07,1,,,c\n")
+    assert run_eval.main(["--labels", str(strict), "--data-dir", str(data_dir), "--report", str(again), "--strict"]) == 1
+    assert run_eval.main(["--labels", str(strict), "--data-dir", str(data_dir), "--report", str(again)]) == 0
 
     with Session(engine_for(data_dir)) as s:  # eval rows look like a real upload: walk + finished job
         walk = s.get(Walk, "wlk_eval_synth_walk")
@@ -172,7 +181,8 @@ def _rewalk_setup(tmp_path: Path, *, done: bool, monkeypatch) -> tuple[Path, Pat
                         it.history = [*it.history, {"at": now.isoformat(), "actor": "system", "action": "rewalk_checked",
                                                     "field": "status", "from": it.status.value, "to": status}]
                     it.status = ItemStatus(status)
-                    it.closure = {"rewalk_id": walk_id, "decision": decision, "decided_at": now.isoformat()}
+                    it.closure = {"rewalk_id": walk_id, "decision": decision, "decided_at": now.isoformat(),
+                                  "after_t": 1.2 + 7.0 * (it.number - 1)}  # 00:01 into part a / b / c
                     s.add(it)
             s.commit()
 
@@ -189,7 +199,9 @@ def test_rewalk_metrics_when_closures_ran(data_dir, tmp_path, monkeypatch, capsy
     assert code == 0
     assert "synth_walk2  Closure accuracy          1.00 (3/3)  >= 0.90  pass" in out
     assert "synth_walk2  False-claim catch         1.00 (1/1)  = 1.00   pass" in out
-    assert "synth_walk   Needs-review rate         0.67 (2/3)" in out  # status before the re-walk, from history
+    first = json.loads(_template["report"].with_suffix(".json").read_text())
+    before = next(r for r in first["summary"] if r["key"] == "needs_review")["value"]
+    assert f"synth_walk   Needs-review rate         {before}" in out  # status before the re-walk, from history
     md = report.read_text()
     assert "## synth_walk2 (re-walk of synth_walk)" in md
     assert "| 2 | 00:08.0 | yes | no | #002 | needs_review | needs_review | no | yes | yes |" in md
@@ -205,7 +217,10 @@ def test_rewalk_metrics_are_na_until_phase7(data_dir, tmp_path, monkeypatch, cap
                           "--report", str(tmp_path / "r.md"), "--strict"])
     out = capsys.readouterr().out
     assert "Closure accuracy          n/a (Phase 7 pending)" in out
-    assert code == 1  # strict still fails on synth_walk's trade miss, not on the pending closure rows
+    doc = json.loads((tmp_path / "r.json").read_text())
+    assert [r["result"] for r in doc["summary"] if r["walk"] == "synth_walk2"] == ["n/a", "n/a"]
+    failing = any(r["result"] in ("FAIL", "error") for r in doc["summary"])
+    assert code == (1 if failing else 0)  # pending closure rows never fail --strict
     assert "Closure metrics: n/a" in (tmp_path / "r.md").read_text()
 
 
@@ -218,7 +233,10 @@ def test_missing_media_is_an_error_row_not_a_crash(tmp_path, capsys):
     code = run_eval.main(["--labels", str(labels), "--report", str(tmp_path / "r.md"), "--media-root", str(tmp_path)])
     out = capsys.readouterr().out
     assert code == 0 and "error: no media for walk9" in out
-    assert "The pipeline failed: no media for walk9" in (tmp_path / "r.md").read_text()
+    md = (tmp_path / "r.md").read_text()
+    assert "The pipeline failed: no media for walk9" in md
+    # no project.json next to these labels: eval/project.json, the rooms `make record` uses
+    assert "Project rooms: Kitchen, Bathroom, Bedroom, Hallway, Living room (" in md and "eval/project.json" in md
 
 
 def test_live_mode_shares_the_real_ledger(tmp_path):
@@ -274,7 +292,7 @@ def test_build_mock_api_from_the_synthetic_run(data_dir, tmp_path):
     tok = json.loads((out / f"items/{first['id']}/share.post.json").read_text())["token"]
     assert tok == bm.share_token_for(first["id"]) and (out / f"share/{tok}.json").is_file()
     proc = json.loads((out / "walks/wlk_eval_synth_walk/processing.json").read_text())
-    assert proc["eval"]["source"] == "eval/report.md" and proc["eval"]["metrics"][0]["value"] == 3
+    assert proc["eval"] is None  # like the live API: a report scored on synthetic labels is not shown
     walks = {w["id"]: w["status"] for w in json.loads((out / "walks.json").read_text())["walks"]}
     assert walks["wlk_eval_synth_walk"] == "ready" and walks["wlk_3a_first"] == "processing"  # example kept
     assert (out / "projects/prj_unit3a/walks.post.json").is_file()  # the upload the web mock replays
@@ -287,6 +305,15 @@ def test_build_mock_api_from_the_synthetic_run(data_dir, tmp_path):
     assert files == sorted(p.relative_to(out2) for p in out2.rglob("*") if p.is_file())
     for f in files:
         assert (out / f).read_bytes() == (out2 / f).read_bytes(), f
+    # a report scored on eval/labels/ fills the block, as GET .../processing does
+    real = tmp_path / "report.json"
+    doc = json.loads(_template["report"].with_suffix(".json").read_text())
+    real.write_text(json.dumps({**doc, "labels_dir": "eval/labels"}))
+    out3 = tmp_path / "mock_real_report"
+    bm.build(data_dir, out3, eval_summary=real, processing_from=None)
+    proc = json.loads((out3 / "walks/wlk_eval_synth_walk/processing.json").read_text())
+    assert proc["eval"]["source"] == "eval/report.md" and proc["eval"]["metrics"][0]["value"] == 3
+
     # rebuilding into an existing mock dir replaces it
     bm.build(data_dir, out, eval_summary=None, processing_from=None)
     assert not (out / "walks/wlk_3a_first.json").exists() and bm.validate_mock_dir(out) == []
@@ -310,3 +337,32 @@ def test_build_mock_api_refuses_the_committed_mocks_and_foreign_dirs(data_dir, t
     assert (foreign / "todo.txt").read_text() == "keep me"
     assert bm.main(["--data-dir", str(tmp_path / "nowhere"), "--out", str(tmp_path / "o")]) == 2
     assert "no database" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------------- draft_labels
+
+
+def test_label_drafts_from_the_pipeline(data_dir, tmp_path, monkeypatch):
+    from eval import draft_labels as dl
+    from eval.labels import discover_labels, read_labels_file
+
+    out = tmp_path / "drafts"
+    assert dl.main(["--data-dir", str(data_dir), "--walks", "synth_walk", "--out", str(out)]) == 0
+    rows = read_labels_file(out / "synth_walk.csv")  # the exact labels format
+    hand = read_labels_file(LABELS / "synth_walk.csv")
+    assert [(r.item_no, r.room, r.time_mmss, r.clip, r.pointed) for r in rows] == \
+        [(r.item_no, r.room, r.time_mmss, r.clip, r.pointed) for r in hand]  # times within the part, like a person
+    assert all(r.trade and r.description and r.fixed_in_rewalk is None for r in rows)
+    assert "DRAFT" in (out / "README.md").read_text() and "not ground\ntruth" in (out / "README.md").read_text()
+    assert list(discover_labels(out)) == ["synth_walk"]  # parseable, and not mistaken for the template
+    assert dl.main(["--data-dir", str(data_dir), "--walks", "synth_walk", "--out", str(dl.LABELS_DIR)]) == 2
+    assert dl.main(["--data-dir", str(data_dir), "--walks", "walk7", "--out", str(out)]) == 2
+
+    # re-walk draft: the first walk's item numbers, the re-walk moment from the closure, truth columns blank
+    labels, media_root = _rewalk_setup(tmp_path, done=True, monkeypatch=monkeypatch)
+    run_eval.main(["--labels", str(labels), "--data-dir", str(data_dir), "--media-root", str(media_root),
+                   "--report", str(tmp_path / "r.md")])
+    assert dl.main(["--data-dir", str(data_dir), "--walks", "synth_walk2", "--out", str(out)]) == 0
+    rows2 = list(csv.reader((out / "synth_walk2.csv").read_text().splitlines()))[1:]
+    assert [r[1] for r in rows2] == ["1", "2", "3"]
+    assert [r[5:] for r in rows2] == [["00:01", "", "", "", "a"], ["00:01", "", "", "", "b"], ["00:01", "", "", "", "c"]]

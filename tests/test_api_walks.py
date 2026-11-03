@@ -376,7 +376,10 @@ def test_overlay_payload_stays_under_3mb_for_a_3_minute_walk(api: TestClient, cl
     assert size < O.MAX_PAYLOAD_BYTES, size
 
 
-def test_model_calls_and_processing_summary(api: TestClient, clip_path: Path) -> None:
+def test_model_calls_and_processing_summary(
+    api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PUNCHWALK_EVAL_REPORT", str(tmp_path / "no_report.json"))  # eval block: tests/test_api_eval_block.py
     _, up = ready_walk(api, clip_path)
     wid = up["walk_id"]
     calls = check(S.ModelCallListOut, api.get(f"/api/walks/{wid}/model-calls").json())

@@ -1,0 +1,3 @@
+walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+walk3,1,,Mold in washing machine detergent compartment,cleaning,00:00,1,,,
+walk3,2,Living room,Detergent residue on front of washing machine,cleaning,00:10,1,,,

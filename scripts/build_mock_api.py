@@ -21,8 +21,9 @@
 - Processing example: if no selected walk is still processing, the processing project/walk from
   --processing-from (default fixtures/mock_api: prj_unit3a / wlk_3a_first, with its progress replay and the
   upload response the web mock plays) is carried over unchanged, with its media.
-- The "How this walk was processed" eval block is filled from eval/report.json (--eval-summary) for the
-  walks that report scored; the live API leaves it null until it reads the report.
+- The "How this walk was processed" eval block comes from the views, which read eval/report.json
+  (--eval-summary sets PUNCHWALK_EVAL_REPORT for the build): shown only for a report scored on eval/labels/,
+  exactly as the live API does.
 - Deterministic: the same DATA_DIR gives byte-identical output (no "now" anywhere; healthz.time is the
   newest walk's created_at).
 - Refuses to write into fixtures/mock_api without --force, and refuses any non-empty --out that doesn't
@@ -96,9 +97,11 @@ def share_token_for(item_id: str) -> str:
 
 
 @contextmanager
-def source_environment(data_dir: Path, base_url: str) -> Iterator[None]:
-    """Views read meta.json / stage files under DATA_DIR; messages use APP_BASE_URL."""
-    env = {"DATA_DIR": str(data_dir), "APP_BASE_URL": base_url, "PUNCHWALK_CACHE": "off"}
+def source_environment(data_dir: Path, base_url: str, eval_report: Path | None) -> Iterator[None]:
+    """Views read meta.json / stage files under DATA_DIR and the eval report; messages use APP_BASE_URL."""
+    env = {"DATA_DIR": str(data_dir), "APP_BASE_URL": base_url, "PUNCHWALK_CACHE": "off",
+           # no report -> a path that can't exist, so the block is null rather than the repo's report
+           "PUNCHWALK_EVAL_REPORT": str(eval_report or data_dir / ".no-eval-report.json")}
     saved = {k: os.environ.get(k) for k in env}
     os.environ.update(env)
     reset_settings()
@@ -135,7 +138,7 @@ def assign_share_tokens(db: Path) -> None:
 # --------------------------------------------------------------------------- real responses
 
 
-def build_real(session: Session, project_ids: list[str] | None, eval_summary: dict[str, Any] | None) -> Bundle:
+def build_real(session: Session, project_ids: list[str] | None) -> Bundle:
     from punchwalk.api.errors import ApiError
     from punchwalk.api.overlay import build_overlay
     from punchwalk.api.routes import items as r_items
@@ -182,17 +185,12 @@ def build_real(session: Session, project_ids: list[str] | None, eval_summary: di
     wlist.walks = [w for w in wlist.walks if w.project_id in chosen]
     docs["walks.json"] = dump(wlist)
 
-    scored = set((eval_summary or {}).get("walk_ids") or [])
-    block = (eval_summary or {}).get("app_summary")
     for w in sorted(walks, key=lambda w: w.id):
         docs[f"walks/{w.id}.json"] = dump(r_walks.read_walk(w.id, session=session))
         with contextlib.suppress(ApiError):  # no job row (run outside the queue): only processing walks poll it
             docs[f"walks/{w.id}/progress.json"] = dump(r_walks.read_progress(w.id, session=session))
         docs[f"walks/{w.id}/model-calls.json"] = dump(r_walks.read_model_calls(w.id, session=session))
-        proc = r_walks.read_processing(w.id, session=session)
-        if block and w.id in scored:
-            proc.eval = S.EvalSummaryOut.model_validate(block)
-        docs[f"walks/{w.id}/processing.json"] = dump(proc)
+        docs[f"walks/{w.id}/processing.json"] = dump(r_walks.read_processing(w.id, session=session))
         if w.status == WalkStatus.ready:
             docs[f"walks/{w.id}/overlay.json"] = dump(build_overlay(session, w))  # = GET .../overlay, no cache write
         if w.kind == WalkKind.rewalk:
@@ -502,26 +500,18 @@ def validate_mock_dir(root: Path) -> list[str]:
 # --------------------------------------------------------------------------- main
 
 
-def load_eval_summary(path: Path | None) -> dict[str, Any] | None:
-    if path is None or not path.is_file():
-        return None
-    doc = json.loads(path.read_text())
-    return {"walk_ids": [w["walk_id"] for w in doc.get("walks", []) if not w.get("error")],
-            "app_summary": doc.get("app_summary")}
-
-
 def build(data_dir: Path, out: Path, *, projects: list[str] | None = None, force: bool = False,
           processing_from: Path | None = DEFAULT_OUT, eval_summary: Path | None = DEFAULT_EVAL,
           base_url: str = BASE_URL) -> tuple[Bundle, dict[str, str]]:
     data_dir = data_dir.resolve()
-    summary = load_eval_summary(eval_summary)
-    with tempfile.TemporaryDirectory(prefix="punchwalk-mockdb-") as tmp, source_environment(data_dir, base_url):
+    report = eval_summary.resolve() if eval_summary is not None and eval_summary.is_file() else None
+    with tempfile.TemporaryDirectory(prefix="punchwalk-mockdb-") as tmp, source_environment(data_dir, base_url, report):
         db = copy_database(data_dir, Path(tmp))
         assign_share_tokens(db)
         engine = create_engine(f"sqlite:///{db}")
         try:
             with Session(engine, expire_on_commit=False) as s:
-                bundle = build_real(s, projects, summary)
+                bundle = build_real(s, projects)
         finally:
             engine.dispose()
         rewrite_media(bundle, data_dir)

@@ -1,0 +1,14 @@
+walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip
+walk1,1,Kitchen,Coffee stains on right side of countertop,cleaning,00:05,1,,,a
+walk1,2,Kitchen,Range hood light bulb missing,electrical,00:13,1,,,a
+walk1,3,Kitchen,Stove top damaged at bottom left burner,appliances,00:19,1,,,a
+walk1,4,Kitchen,Stove top damaged on bottom left burner,appliances,00:19,1,,,a
+walk1,5,Kitchen,Light switch cover missing screw,electrical,00:29,0,,,a
+walk1,6,Bathroom,Toothpaste smudge on bathroom mirror,cleaning,00:00,1,,,b
+walk1,7,Bathroom,Cabinet knob missing on right door,carpentry_millwork,00:07,1,,,b
+walk1,8,Living room,Fire alarm missing on living room ceiling,electrical,00:00,1,,,c
+walk1,9,Living room,Window screen not attached properly,windows_glazing,00:10,1,,,c
+walk1,10,Living room,Wall pencil marks and screws above TV need repaint,painting,00:20,1,,,c
+walk1,11,Bedroom,Small wall nick in bedroom,painting,00:00,1,,,d
+walk1,12,Hallway,Hallway outlet cover loose and twisted,electrical,00:00,1,,,e
+walk1,13,Hallway,Pencil marks on hallway wall need removal,cleaning,00:08,1,,,e

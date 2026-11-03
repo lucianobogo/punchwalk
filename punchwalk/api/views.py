@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -803,8 +804,54 @@ def processing_summary_out(session: Session, walk: Walk) -> S.ProcessingSummaryO
         models_used=models,
         steps=steps,
         calls=calls,
-        eval=None,  # Phase 3 fills this from eval/report.md
+        eval=eval_summary(),
     )
+
+
+# =========================================================================== eval block (PLAN 3.3)
+
+# eval/run_eval.py writes report.json next to report.md; its `app_summary` is an EvalSummaryOut.
+# PUNCHWALK_EVAL_REPORT overrides the path. Only a scored run on the real labels counts: a report made
+# from other labels (fixtures/eval/labels_synth, a scratch folder) is not shown.
+EVAL_REPORT_JSON = Path(__file__).resolve().parents[2] / "eval" / "report.json"
+EVAL_LABELS_DIR = "eval/labels"
+_eval_cache: dict[tuple[str, int, int], S.EvalSummaryOut | None] = {}
+
+
+def eval_report_path() -> Path:
+    return Path(os.environ.get("PUNCHWALK_EVAL_REPORT") or EVAL_REPORT_JSON)
+
+
+def eval_summary() -> S.EvalSummaryOut | None:
+    """The eval block for "How this walk was processed", or None (hide the section). Re-read when the file changes."""
+    path = eval_report_path()
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    key = (str(path), st.st_mtime_ns, st.st_size)
+    if key not in _eval_cache:
+        _eval_cache.clear()
+        _eval_cache[key] = _read_eval_summary(path)
+    return _eval_cache[key]
+
+
+def _read_eval_summary(path: Path) -> S.EvalSummaryOut | None:
+    try:
+        doc = json.loads(path.read_text())
+    except (OSError, ValueError) as exc:
+        log.warning("unreadable eval report %s: %s", path, exc)
+        return None
+    if not isinstance(doc, dict) or doc.get("labels_dir") != EVAL_LABELS_DIR:
+        return None  # synthetic or scratch labels: not the product's numbers
+    block = doc.get("app_summary")
+    if not isinstance(block, dict) or not block.get("metrics"):
+        return None
+    try:
+        return S.EvalSummaryOut.model_validate(block)
+    except ValidationError as exc:
+        log.warning("eval report %s has an unusable app_summary: %s", path, exc.errors()[:2])
+        return None
 
 
 # =========================================================================== share & re-walk
