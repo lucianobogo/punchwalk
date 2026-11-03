@@ -98,6 +98,8 @@ export interface ListRowProps {
   onPlay?: () => void;
   playLabel?: string;
   selected?: boolean;
+  /** Router state for the row link (e.g. { from } so Back returns to this filtered view). */
+  linkState?: unknown;
   className?: string;
 }
 
@@ -112,6 +114,7 @@ export function ListRow({
   onPlay,
   playLabel = 'Play this moment',
   selected,
+  linkState,
   className,
 }: ListRowProps) {
   return (
@@ -126,6 +129,7 @@ export function ListRow({
       <div className="min-w-0 flex-1 py-0.5">
         <Link
           to={to}
+          state={linkState}
           className="block truncate text-row font-semibold text-graphite after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-tape-ink"
         >
           <span className="sr-only">{`Item ${number}: `}</span>

@@ -88,7 +88,7 @@ export const SCREENS: Screen[] = [
   {
     name: 'punch-list-no-results',
     checklist: '1. Punch list: no filter results',
-    path: '/?trade=hvac',
+    path: '/?q=chandelier',
   },
   {
     name: 'punch-list-first-run',
@@ -108,6 +108,7 @@ export const SCREENS: Screen[] = [
     setup: async (page) => {
       await tapButton(page, /^Trade/);
       await sheetOpen(page);
+      await page.getByRole('checkbox', { name: /Electrical/ }).check();
     },
   },
   // 3. Item detail
@@ -115,15 +116,22 @@ export const SCREENS: Screen[] = [
     name: 'item-open',
     checklist: '3. Item detail: open item (outlines on)',
     path: '/items/itm_2b_07',
-    fullPage: true,
     render: '02-item-detail.png',
+  },
+  {
+    name: 'item-open-details',
+    checklist: '3. Item detail: open item, scrolled to Details, Checked and History',
+    path: '/items/itm_2b_07',
+    setup: async (page) => {
+      await scrollBy(page, 5000);
+    },
   },
   {
     name: 'item-open-outlines-off',
     checklist: '3. Item detail: open item (outlines off: the plain frame, no outline, no dot)',
     path: '/items/itm_2b_07',
     setup: async (page) => {
-      await tapButton(page, /^Outlines/);
+      await tapButton(page, /^Outlines on/);
       await page.waitForTimeout(300);
     },
   },
@@ -133,20 +141,18 @@ export const SCREENS: Screen[] = [
     name: 'item-needs-look',
     checklist: '3. Item detail: needs-a-look item (photo doesn\'t show the defect)',
     path: '/items/itm_2b_12',
-    fullPage: true,
   },
   {
     name: 'item-signed-off',
     checklist: '3. Item detail: signed-off item with before/after',
     path: '/items/itm_2b_01',
-    fullPage: true,
   },
   {
     name: 'item-more-sheet',
     checklist: '3. Item detail: the More sheet',
     path: '/items/itm_2b_07',
     setup: async (page) => {
-      await tapButton(page, /^More/);
+      await tapButton(page, 'More actions');
       await sheetOpen(page);
     },
   },
@@ -157,9 +163,10 @@ export const SCREENS: Screen[] = [
     path: '/items/itm_2b_01',
     render: '03-play-this-moment.png',
     setup: async (page) => {
-      await tap(page, /Play this moment/);
+      await tapButton(page, /Play this moment/);
       await sheetOpen(page);
-      await seekVideo(page, 15);
+      // Mid-moment, paused, inside the quote: the caption is on screen and the frame is deterministic.
+      await seekVideo(page, 15.2);
     },
   },
   // 5. Walks list
