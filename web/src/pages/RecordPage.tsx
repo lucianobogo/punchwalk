@@ -256,14 +256,22 @@ function Processing({ walkId }: { walkId: string }) {
         ) : progress.isError || !p ? (
           <ErrorState error={progress.error} onRetry={() => progress.refetch()} />
         ) : (
-          <ProcessingBody progress={p} walkProjectId={w?.project_id} />
+          <ProcessingBody progress={p} walkProjectId={w?.project_id} walkKind={w?.kind} />
         )}
       </div>
     </>
   );
 }
 
-export function ProcessingBody({ progress: p, walkProjectId }: { progress: JobProgressOut; walkProjectId?: string }) {
+export function ProcessingBody({
+  progress: p,
+  walkProjectId,
+  walkKind,
+}: {
+  progress: JobProgressOut;
+  walkProjectId?: string;
+  walkKind?: WalkKind;
+}) {
   const { setProjectId } = useCurrentProject();
   const retry = useRetryWalk();
   const toast = useToast();
@@ -301,9 +309,15 @@ export function ProcessingBody({ progress: p, walkProjectId }: { progress: JobPr
       )}
       {done && (
         <div className="mb-4 flex flex-col gap-2">
-          <ButtonLink to="/" size="lg" block onClick={() => walkProjectId && setProjectId(walkProjectId)}>
-            Open punch list
-          </ButtonLink>
+          {walkKind === 'rewalk' ? (
+            <ButtonLink to={`/walks/${p.walk_id}/rewalk`} size="lg" block onClick={() => walkProjectId && setProjectId(walkProjectId)}>
+              See what was signed off
+            </ButtonLink>
+          ) : (
+            <ButtonLink to="/" size="lg" block onClick={() => walkProjectId && setProjectId(walkProjectId)}>
+              Open punch list
+            </ButtonLink>
+          )}
           <ButtonLink to={`/walks/${p.walk_id}/processing`} variant="secondary" size="lg" block>
             See how it was processed
           </ButtonLink>

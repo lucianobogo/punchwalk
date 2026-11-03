@@ -1,6 +1,7 @@
 // Every screen in DESIGN.md has a route here. Pages under TabLayout get the bottom tab bar;
 // item detail has its own bottom action bar; share and landing stand alone.
 import { Navigate, Outlet, ScrollRestoration, type RouteObject } from 'react-router';
+import { inFrame, isWide, landingSeen } from './features/landing/landing';
 import { TabBar } from './components';
 import GalleryPage from './pages/GalleryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
@@ -11,7 +12,7 @@ import SharePage from './pages/SharePage';
 import { TradePage, TradesPage } from './pages/TradesPage';
 import WalkDetailPage from './pages/WalkDetailPage';
 import ProcessedPage from './pages/ProcessedPage';
-import { RewalkPage } from './pages/WalkSubPages';
+import RewalkPage from './pages/RewalkPage';
 import WalksPage from './pages/WalksPage';
 import { EmptyState, ButtonLink } from './components';
 
@@ -23,6 +24,12 @@ function AppColumn() {
       <Outlet />
     </div>
   );
+}
+
+/** "/" is the punch list; a desktop visitor's first visit goes to the landing page instead (DESIGN.md). */
+function Home() {
+  if (isWide(1024) && !inFrame() && !landingSeen()) return <Navigate to="/landing" replace />;
+  return <PunchListPage />;
 }
 
 function TabLayout() {
@@ -55,7 +62,7 @@ export const routes: RouteObject[] = [
       {
         element: <TabLayout />,
         children: [
-          { path: '/', element: <PunchListPage /> },
+          { path: '/', element: <Home /> },
           { path: '/walks', element: <WalksPage /> },
           { path: '/walks/:id', element: <WalkDetailPage /> },
           { path: '/walks/:id/rewalk', element: <RewalkPage /> },

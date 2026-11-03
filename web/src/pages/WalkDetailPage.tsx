@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { useOverlay, useProgress, useWalk } from '../api/hooks';
-import type { ItemOut, TurnOut } from '../api/types';
+import type { ItemOut, TurnOut, WalkKind } from '../api/types';
 import { Card, EmptyState, MiniRow, PushedBar, SegmentedControl, Skeleton, TapeTab } from '../components';
 import { ProcessingBody } from './RecordPage';
 import { HERO_HEIGHT, WalkPlayer } from '../features/walk/WalkPlayer';
@@ -39,18 +39,18 @@ export default function WalkDetailPage() {
         <ReadyWalk detail={walk.data} startAt={params.has('t') ? Number(params.get('t')) || 0 : null} />
       ) : (
         <div className="px-4">
-          <NotReady walkId={w.id} projectId={w.project_id} />
+          <NotReady walkId={w.id} projectId={w.project_id} kind={w.kind} />
         </div>
       )}
     </>
   );
 }
 
-function NotReady({ walkId, projectId }: { walkId: string; projectId: string }) {
+function NotReady({ walkId, projectId, kind }: { walkId: string; projectId: string; kind: WalkKind }) {
   const progress = useProgress(walkId);
   if (progress.isLoading) return <Skeleton className="h-80 w-full rounded-card" />;
   if (!progress.data) return <ErrorState error={progress.error} onRetry={() => progress.refetch()} />;
-  return <ProcessingBody progress={progress.data} walkProjectId={projectId} />;
+  return <ProcessingBody progress={progress.data} walkProjectId={projectId} walkKind={kind} />;
 }
 
 type Tab = 'items' | 'transcript';

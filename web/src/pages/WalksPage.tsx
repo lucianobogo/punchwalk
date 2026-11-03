@@ -41,7 +41,7 @@ export default function WalksPage() {
 }
 
 function walkHref(w: WalkOut): string {
-  if (w.status === 'ready') return `/walks/${w.id}`;
+  if (w.status === 'ready') return w.kind === 'rewalk' ? `/walks/${w.id}/rewalk` : `/walks/${w.id}`;
   return `/record?walk=${w.id}`;
 }
 
@@ -49,7 +49,7 @@ function WalkRow({ walk: w }: { walk: WalkOut }) {
   const busy = w.status === 'processing' || w.status === 'uploaded';
   const when = w.recorded_at ?? w.created_at;
   const facts = [
-    formatDateTime(when),
+    w.status === 'ready' ? `Ready, ${formatDateTime(when)}` : formatDateTime(when),
     w.duration_s != null ? formatDuration(w.duration_s * 1000) : null,
     w.status === 'ready'
       ? w.kind === 'rewalk'
@@ -71,7 +71,14 @@ function WalkRow({ walk: w }: { walk: WalkOut }) {
           {w.status === 'failed' && <Pill tone="safety">Failed</Pill>}
         </span>
         <span className="block truncate text-secondary text-pencil">{w.project_name}</span>
-        <span className="block text-secondary tabular-nums text-pencil">{facts.join(', ')}.</span>
+        <span className="block text-secondary tabular-nums text-pencil">
+          {facts.map((f, i) => (
+            <span key={i} className="whitespace-nowrap">
+              {f}
+              {i < facts.length - 1 ? ', ' : '.'}
+            </span>
+          ))}
+        </span>
         {busy && <ProcessingLine walkId={w.id} />}
         {w.status === 'failed' && <span className="mt-0.5 block text-secondary text-safety">Failed. Tap to retry.</span>}
       </span>
