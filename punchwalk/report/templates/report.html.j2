@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ project.name }}: punch report</title>
+<style>
+  @page { size: letter portrait; margin: 0.6in 0.6in 0.7in;
+    @bottom-left { content: string(projectname); font: 8pt Archivo, "Helvetica Neue", Arial, sans-serif; color: #5B6673; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt Archivo, "Helvetica Neue", Arial, sans-serif; color: #5B6673; } }
+  * { box-sizing: border-box; }
+  body { font-family: Archivo, "Helvetica Neue", Arial, sans-serif; color: #1B2430; font-size: 10pt; line-height: 1.4; margin: 0; }
+  h1 { string-set: projectname content(); font-size: 26pt; line-height: 1.1; margin: 0 0 6pt; font-stretch: expanded; }
+  h2 { font-size: 15pt; margin: 0 0 8pt; padding-bottom: 4pt; border-bottom: 1.5pt solid #1B2430; }
+  .muted { color: #5B6673; }
+  .cover { page-break-after: always; }
+  .brand { font-weight: 700; letter-spacing: 0.02em; color: #1D63B5; margin-bottom: 36pt; }
+  .totals { display: flex; gap: 12pt; margin: 24pt 0; }
+  .total { flex: 1; border-top: 2pt solid #1B2430; padding-top: 6pt; }
+  .total .n { font-size: 22pt; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; }
+  th, td { text-align: left; padding: 5pt 4pt; border-bottom: 0.75pt solid #DCE1E5; }
+  th { font-size: 8.5pt; color: #5B6673; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .room { page-break-before: always; }
+  .room + .room { page-break-before: auto; margin-top: 18pt; }
+  .item { display: flex; gap: 12pt; padding: 10pt 0; border-bottom: 0.75pt solid #DCE1E5; page-break-inside: avoid; }
+  .item img { width: 2.1in; height: 1.575in; object-fit: cover; border-radius: 6pt; border: 0.75pt solid #DCE1E5; }
+  .noimg { width: 2.1in; height: 1.575in; border-radius: 6pt; background: #F2F4F5; color: #5B6673; font-size: 8pt;
+           display: flex; align-items: center; justify-content: center; }
+  .body { flex: 1; }
+  .tab { display: inline-block; background: #5AA2EA; color: #1B2430; font-weight: 700; border-radius: 3pt; padding: 0 5pt; margin-right: 4pt; }
+  .title { font-size: 12pt; font-weight: 600; }
+  .action { margin-top: 4pt; }
+  .meta { margin-top: 6pt; font-size: 8.5pt; }
+  .pill { display: inline-block; border-radius: 8pt; padding: 0 6pt; margin-right: 4pt; background: #F2F4F5; }
+  .pill.safety { background: #FBE9E7; color: #A3241B; font-weight: 600; }
+  .pill.signed_off { color: #1F7A50; }
+  .pill.needs_review { color: #8A5A0B; }
+  .quote { margin-top: 4pt; font-style: italic; color: #5B6673; font-size: 8.5pt; }
+  .signoff { page-break-inside: avoid; margin-top: 28pt; }
+  .lines { display: flex; gap: 24pt; margin-top: 30pt; }
+  .line { flex: 1; border-top: 0.75pt solid #1B2430; padding-top: 4pt; font-size: 8.5pt; color: #5B6673; }
+</style>
+</head>
+<body>
+<section class="cover">
+  <div class="brand">Punchwalk</div>
+  <h1>{{ project.name }}</h1>
+  {% if project.address %}<div class="muted">{{ project.address }}</div>{% endif %}
+  <div class="muted">Punch report, {{ generated }}.{% if last_walk %} Last walked {{ last_walk }}.{% endif %}</div>
+  <div class="totals">
+    <div class="total"><div class="n">{{ total }}</div>Items</div>
+    {% for label, n in by_status.items() %}<div class="total"><div class="n">{{ n }}</div>{{ label }}</div>{% endfor %}
+  </div>
+  {% if by_trade %}
+  <table>
+    <thead><tr><th>Trade</th><th class="num">Open</th><th class="num">Needs a look</th><th class="num">Signed off</th><th class="num">Total</th></tr></thead>
+    <tbody>
+    {% for row in by_trade %}
+      <tr><td>{{ row.trade }}</td><td class="num">{{ row.open }}</td><td class="num">{{ row.needs_review }}</td><td class="num">{{ row.signed_off }}</td><td class="num">{{ row.total }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No items yet.</p>
+  {% endif %}
+</section>
+
+{% for room, entries in rooms %}
+<section class="room">
+  <h2>{{ room }}</h2>
+  {% for it in entries %}
+  <div class="item">
+    {% if it.image_uri %}<img src="{{ it.image_uri }}" alt="Evidence for {{ it.number }}">{% else %}<div class="noimg">No photo</div>{% endif %}
+    <div class="body">
+      <div class="title"><span class="tab">{{ it.number }}</span>{{ it.title }}</div>
+      {% if it.description %}<div>{{ it.description }}</div>{% endif %}
+      {% if it.action %}<div class="action"><strong>Action:</strong> {{ it.action }}</div>{% endif %}
+      {% if it.location %}<div class="muted">{{ it.location }}</div>{% endif %}
+      <div class="meta">
+        <span class="pill">{{ it.trade }}</span>
+        <span class="pill{% if it.is_safety %} safety{% endif %}">{{ it.severity }}</span>
+        <span class="pill {{ it.status_key }}">{{ it.status }}</span>
+      </div>
+      {% if it.quote %}<div class="quote">“{{ it.quote }}”</div>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endfor %}
+
+<section class="signoff">
+  <h2>Sign-off</h2>
+  <p class="muted">The items above were walked, recorded and checked against their photos. Signed-off items were confirmed fixed on a re-walk.</p>
+  <div class="lines">
+    <div class="line">Project manager, name and signature</div>
+    <div class="line">Contractor, name and signature</div>
+    <div class="line">Date</div>
+  </div>
+</section>
+</body>
+</html>
