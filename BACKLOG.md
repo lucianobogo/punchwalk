@@ -17,3 +17,7 @@ Ideas and cut items. Nothing here gets built before every PLAN.md box is done.
 - DESIGN.md example copy for a > 10-min clip says "Split it into parts and upload them together", but the 10-min limit is on the walk total; UI copy now says to record it as separate walks (clips.ts). Update DESIGN.md's example text in a docs pass.
 - CHANGE-3 candidates (from 6.1 UI): TradeSummaryOut.channel (the list derives it from the contact and can't see the global Slack webhook); ShareItemOut.item_id ("Open in Punchwalk" → the item); preview filtered by item_ids (heading count is rewritten client-side); RewalkItemOut dispatch info ("Sent again" comes from the item list).
 - Deploy must allow same-origin framing (landing iframe of `/`): no X-Frame-Options: DENY / frame-ancestors 'none'.
+- Pipeline: remove the stages/resend.json marker guard around resend_open_items now that the policy is idempotent per closure (Track A, low).
+- Dark mode (PLAN 8.4 *(nice)*) skipped: tokens exist behind data-theme="dark" but light tints, Hold/Safety text and white-on-Tape-ink buttons need dark variants (> 30 min).
+- Safari/WebKit plain Tab skips links unless "Press Tab to highlight each item" is on (platform behavior); Option-Tab works.
+- API: StageState.message carries raw exception text on failure (UI filters it); Track A to map it to plain words (queued).

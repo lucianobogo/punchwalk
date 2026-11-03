@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:45 ET
+Updated: 2026-11-03 18:49 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 8.1 (7dc84f3 + fixes; verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
 
@@ -16,7 +16,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
 | 0.6 + 2.5 fixes + 7.1–7.4 + ingest fps verify (worktree .verify/wt-phase7 @ 0179d57) | verifier | 18:45 | read-only | commits untagged pending PASS |
 | Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
-| 5.y fixes + 6.1/7.4/8.2 fix round 1 (two 44 px targets + minors) → 5.8 live data + 8.4 polish | ui-builder (same agent) | 18:28 | web/** except types.ts | briefed by message |
+| 5.8 + 8.4 + UI fix rounds verify (worktree .verify/wt-ui4 @ 63ceda3) | verifier | 18:49 | read-only | ui-builder idle until real-walk screenshots (after 3.4 + seed) |
 
 ## Needs human
 - **Deploy needs you (the permission classifier blocks me from running Fly deploys).** The image is built and tested (`docs/DEPLOY.md` has the full runbook). From the repo root:
