@@ -1,32 +1,45 @@
 # STATE
 
-Status: NOT STARTED
-Updated: not yet (orchestrator updates this before and after every step)
-Current phase: 0
-Last checkpoint: none
+Status: RUNNING
+Updated: 2026-11-03 16:37 ET
+Current phase: 0 (Foundation, probes, contracts) — target Tue 5:30 PM
+Last checkpoint: ckpt-0.5 (ingest)
 
 ## Next actions
-1. 0.1 + 0.2: scaffold the repo and the model clients (builder)
-2. 0.3 to 0.6: live probes, mask check, ingest, record fixtures from footage/ (builder)
-3. 0.7: contracts and mock API fixtures, so Track B (web) can start (builder)
+1. Review reports from 0.1–0.4 (builder A), 0.7 (builder B), 0.5 (builder C); verify each; commit checkpoints.
+2. When the human adds MODEL_API_KEY + BASETEN_API_KEY to .env: run `make probe` (0.3) and the mask check (0.4) live.
+3. When footage/ and eval/labels/ land (~17:30 ET): 0.6 `make record`, then start Tracks A (Phase 1), B (Phase 5 on mocks), C (Phase 4).
 
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
+| 0.1+0.2+0.3+0.4 scaffold, clients, probe, mask check | verifier | 16:12 (builder done ~17:00) | pyproject.toml, uv.lock, Makefile, punchwalk/__init__.py, punchwalk/config.py, punchwalk/clients/**, punchwalk/render/masks.py, scripts/probe.py, fixtures/probe/**, fixtures/clients/**, tests/conftest.py, tests/test_clients_*.py, tests/test_masks.py, .env.example, .gitignore | builder: 9/9 probe calls ok, $0.046 spent; verifying |
+| 0.7 contracts | builder B | 16:12 | punchwalk/core/**, punchwalk/api/schemas.py, punchwalk/api/__init__.py, web/src/api/types.ts, fixtures/mock_api/**, scripts/gen_mock_api.py, tests/test_contracts.py | synthetic placeholder media until 3.3 |
 
 ## Needs human
-- none yet
+- none blocking. Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
+- **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
+- Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
+- Footage → `footage/` and labels → `eval/labels/` per FOOTAGE.md (expected ~17:30 ET).
+
+Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
 - make test: not run yet
 - make eval: not run yet (targets in PLAN.md 3.4)
 - make screenshots: not run yet
-- Live API spend: $0.00 of $25
+- Live API spend: $0.05 of $25 (probe, 11 ledger lines)
 - Deploy: not deployed
 - Live URL: none
 
 ## Key facts learned
-- none yet (one line each; details in DECISIONS.md)
+- SAM masks are box-local rasters (H×W stretches over [x1,x2+1)×[y1,y2+1)); helper `punchwalk/render/masks.py: mask_to_frame_svg()`; scale by frame/media size (verified on probe frame).
+- SAM image input works as a data URL; strict `json_schema` works on Baseten Spark Open (always send `reasoning_effort`; default is xhigh); ASR turnId is zero-based.
+- Best tape concept (provisional, synthetic frame): "strip of blue painter's tape" 0.953 > "blue painter's tape" 0.910 > "blue tape" 0.710 → `DEFAULT_TAPE_CONCEPT`. Re-check on real footage in 0.6.
+- Cache: reads data/cache then fixtures/cache; `make probe` replays at $0 in readonly mode. Ledger: data/cost_ledger.jsonl.
+- Tools present: uv 0.12, Python 3.12 system (project pins 3.11 via uv), node 24 + pnpm 9.15, ffmpeg 9, docker 29, flyctl (logged in).
+- .env was an unmodified copy of .env.example at session start (all keys empty).
+- Agreed Make entry points (used by later briefs): dev=`uvicorn punchwalk.api.app:app`, probe=`scripts/probe.py`, record=`scripts/record.py`, seed=`scripts/seed.py`, eval=`eval/run_eval.py`, build=`pnpm -C web build` → `punchwalk/static/`, screenshots=`pnpm -C web screenshots` → `.verify/screens/`.
 
 ## Final handoff
 - not written yet

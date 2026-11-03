@@ -59,7 +59,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
   Print latency and cost; save outputs to `fixtures/probe/`. Also try 2–3 phrasings for the tape concept (e.g. `blue tape`, `strip of blue painter's tape`) on the same frame and keep the best one in config. **AC:** all four calls succeed, or the exact error is logged under Needs human / Blocked and that client is mocked.
 - [ ] **0.4 Mask coordinate check.** Render a decoded SAM mask + box over its frame, confirm the mapping, write helper `mask_to_frame_svg()`, and record the finding in DECISIONS.md. **AC:** a PNG in `fixtures/probe/` where the outline sits on the tape (open it and look).
-- [ ] **0.5 Ingest.** A walk is 1..N clips in order (`walkN.*`, or parts `walkN_a.*`, `walkN_b.*`, …). Normalize each clip (apply rotation metadata; portrait stays portrait), then concatenate in order. Produce:
+- [x] **0.5 Ingest.** A walk is 1..N clips in order (`walkN.*`, or parts `walkN_a.*`, `walkN_b.*`, …). Normalize each clip (apply rotation metadata; portrait stays portrait), then concatenate in order. Produce:
   - `display.mp4`: H.264, ≤ 1080 px on the short side, yuv420p, AAC, `+faststart`
   - `sam.mp4`: H.264, 10 fps, 720 px on the short side, no audio
   - `audio.wav`: mono s16le 16 kHz
