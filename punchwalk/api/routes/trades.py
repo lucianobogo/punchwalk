@@ -1,8 +1,7 @@
-"""Trades screen: per-trade summary, dispatch preview/send, sent history.
+"""Trades screen: per-trade summary, dispatch preview and send, sent history (PLAN 6.1).
 
-Seam for PLAN 6.1/6.2: `preview` and `dispatch` return 501 until `punchwalk/dispatch/` exists.
-Plug it in here: build the DispatchPreviewOut from the trade's open + dispatched items, and on send
-write a `Dispatch` row, move items to `dispatched`, and append a `dispatched` history entry each.
+The logic lives in `punchwalk/dispatch/service.py`; these routes translate its errors:
+`DispatchRefused` -> 400/404/409 with its sentence, `DispatchFailed` (Slack or email refused) -> 502.
 """
 
 from __future__ import annotations
@@ -17,8 +16,15 @@ from punchwalk.api.routes.projects import get_project
 from punchwalk.core.enums import Channel, Trade
 from punchwalk.core.models import Dispatch
 from punchwalk.db import get_session
+from punchwalk.dispatch import service
 
 router = APIRouter(prefix="/api/projects/{project_id}/trades", tags=["trades"])
+
+
+def send_errors(exc: service.DispatchRefused | service.DispatchFailed) -> ApiError:
+    if isinstance(exc, service.DispatchRefused):
+        return ApiError(exc.status, str(exc))
+    return ApiError(502, str(exc), error="channel_failed")
 
 
 @router.get("", response_model=S.TradeListOut)
@@ -33,16 +39,20 @@ def dispatch_preview(
     channel: Channel | None = Query(None),
     session: Session = Depends(get_session),
 ) -> S.DispatchPreviewOut:
-    get_project(session, project_id)
-    raise ApiError(501, "Sending to trades is coming in 6.1.")
+    """Exactly what would be sent now: open + sent-but-still-open items (needs-a-look items wait)."""
+    return service.preview(session, get_project(session, project_id), trade, channel)
 
 
 @router.post("/{trade}/dispatch", response_model=S.DispatchOut, status_code=201)
 def dispatch_send(
     project_id: str, trade: Trade, body: S.DispatchCreate, session: Session = Depends(get_session)
 ) -> S.DispatchOut:
-    get_project(session, project_id)
-    raise ApiError(501, "Sending to trades is coming in 6.1.")
+    project = get_project(session, project_id)
+    try:
+        dispatch = service.send_items(session, project, trade, body.item_ids, body.channel)
+    except (service.DispatchRefused, service.DispatchFailed) as exc:
+        raise send_errors(exc) from exc
+    return views.dispatch_out(dispatch, project)
 
 
 @router.get("/{trade}/dispatches", response_model=S.DispatchListOut)

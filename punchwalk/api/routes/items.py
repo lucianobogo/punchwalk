@@ -4,20 +4,24 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlmodel import Session, select
+from starlette.concurrency import run_in_threadpool
 
 from punchwalk.api import schemas as S
 from punchwalk.api import views
 from punchwalk.api.errors import ApiError, not_found
 from punchwalk.core.enums import (
+    Channel,
     HistoryAction,
     HistoryActor,
     ItemStatus,
     format_item_number,
 )
-from punchwalk.core.models import HistoryEvent, Item, utcnow
+from punchwalk.core.models import HistoryEvent, Item, Project, utcnow
 from punchwalk.db import get_session
+from punchwalk.dispatch import service as dispatch_service
+from punchwalk.report import render as report
 
 router = APIRouter(prefix="/api", tags=["items"])
 
@@ -166,3 +170,43 @@ def read_share(token: str, session: Session = Depends(get_session)) -> S.ShareIt
     if item is None or item.dismissed_at is not None:
         raise ApiError(404, "This link doesn't work any more. Ask the project manager for a new one.")
     return views.share_item_out(item, views.ItemContext.load(session, [item.project_id]))
+
+
+# --------------------------------------------------------------------------- approve and send
+
+
+@router.post("/items/{item_id}/approve-and-send", response_model=S.DispatchOut, status_code=201)
+def approve_and_send(
+    item_id: str, channel: Channel | None = Query(None), session: Session = Depends(get_session)
+) -> S.DispatchOut:
+    """"Approve and send to Ace Electric": a needs-a-look item becomes open (logged) and goes to its trade."""
+    from punchwalk.api.routes.trades import send_errors
+
+    item = get_item(session, item_id)
+    try:
+        dispatch = dispatch_service.approve_and_send(session, item, channel)
+    except (dispatch_service.DispatchRefused, dispatch_service.DispatchFailed) as exc:
+        raise send_errors(exc) from exc
+    return views.dispatch_out(dispatch, session.get(Project, item.project_id))
+
+
+# --------------------------------------------------------------------------- PDF report
+
+
+@router.get("/projects/{project_id}/report.pdf", include_in_schema=False)
+async def report_pdf(project_id: str, session: Session = Depends(get_session)) -> Response:
+    """The punch report as a PDF (cover with totals, items by room with evidence, sign-off)."""
+    project = session.get(Project, project_id)
+    if project is None:
+        raise not_found("This project")
+    html = report.render_html(report.build_context(session, project))
+    try:
+        pdf = await run_in_threadpool(report.render_pdf, html)
+    except report.ReportUnavailable as exc:
+        raise ApiError(503, f"{exc} The Docker image has them; the report works on the deployed app.") from exc
+    filename = report.report_filename(project)
+    return Response(
+        pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "no-store"},
+    )
