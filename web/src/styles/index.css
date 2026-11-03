@@ -202,6 +202,12 @@
   }
 }
 
+/* A horizontally scrolling chip row fades out at its right edge instead of cutting a chip off. */
+.chip-row {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
 /* Play this moment scrubber: a 4 px track in a 44 px tall hit area, Tape fill up to --fill. */
 .moment-scrubber {
   -webkit-appearance: none;

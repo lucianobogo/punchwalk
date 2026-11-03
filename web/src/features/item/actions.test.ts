@@ -40,11 +40,14 @@ describe('More sheet', () => {
     expect(moreActions({ status: 'open', dispatch: null }, 'Ace Electric')[0].label).toBe('Send to Ace Electric');
   });
 
-  it('offers Dismiss and Edit for Needs a look, and no send', () => {
+  it('offers Dismiss item and Edit for Needs a look, and no send', () => {
     const kinds = moreActions({ status: 'needs_review', dispatch: null }, 'X').map((a) => a.kind);
-    expect(kinds).toContain('dismiss');
-    expect(kinds).toContain('edit');
-    expect(kinds).not.toContain('send');
+    expect(kinds).toEqual(['dismiss', 'edit', 'share']);
+  });
+
+  it("keeps to DESIGN.md's list plus the share link: no Dismiss for Open, only the link for Signed off", () => {
+    expect(moreActions({ status: 'open', dispatch: null }, 'X').map((a) => a.kind)).toEqual(['send', 'mark_needs_look', 'edit', 'share']);
+    expect(moreActions({ status: 'closed', dispatch: null }, 'X').map((a) => a.kind)).toEqual(['share']);
   });
 });
 

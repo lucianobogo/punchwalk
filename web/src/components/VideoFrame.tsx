@@ -1,4 +1,4 @@
-// A video box with a fixed aspect and a slot for overlays (tape outlines, captions, controls).
+// A video box with a fixed aspect and a slot for overlays (hand outline, captions, controls).
 // Portrait glasses video is never letterboxed into a landscape frame: the box takes the video's
 // own aspect, or crops (cover) into a smaller one. Always playsinline.
 import type { ReactNode, Ref } from 'react';

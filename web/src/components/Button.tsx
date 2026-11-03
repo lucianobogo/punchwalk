@@ -2,12 +2,14 @@ import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { cx } from '../lib/cx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'night' | 'night-quiet' | 'night-link';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'quiet' | 'night' | 'night-quiet' | 'night-link';
 export type ButtonSize = 'md' | 'lg';
 
 const VARIANT: Record<ButtonVariant, string> = {
   // Tape ink with white text passes AA (DESIGN.md "Color").
   primary: 'bg-tape-ink text-white active:brightness-90 disabled:opacity-50',
+  // Destructive confirmations only (white on Safety red: 7:1).
+  danger: 'bg-safety text-white active:brightness-90 disabled:opacity-50',
   secondary: 'bg-sheet text-graphite border border-hairline active:bg-primer disabled:text-pencil',
   quiet: 'text-tape-ink active:opacity-70 disabled:text-pencil',
   night: 'bg-sheet text-graphite active:brightness-90',

@@ -110,8 +110,8 @@ function PlayBody({ item }: { item: ItemOut }) {
           <span>{formatClock(clock.time)}</span>
           <span>{ctl.unlimited ? formatClock(range.end) : `Moment ends ${formatClock(item.video_end_s)}`}</span>
         </div>
-        <div className="mt-2 flex items-center justify-between">
-          <Button variant="night-quiet" className="min-w-24 justify-start text-card font-medium" onClick={() => ctl.replay()}>
+        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center">
+          <Button variant="night-quiet" className="justify-self-start text-card font-medium" onClick={() => ctl.replay()}>
             Replay
           </Button>
           <button
@@ -124,7 +124,7 @@ function PlayBody({ item }: { item: ItemOut }) {
           </button>
           <Button
             variant="night-link"
-            className="min-w-24 justify-end text-card font-medium whitespace-nowrap"
+            className="justify-self-end text-card font-medium whitespace-nowrap"
             onClick={() => {
               ctl.keepWatching();
               rerender();

@@ -39,19 +39,21 @@ export function primaryAction(status: ItemStatus, company: string): ActionSpec<P
   }
 }
 
-/** The More sheet: Open -> Send again, Mark as needs a look, Edit; Needs a look -> Dismiss, Edit. */
+/**
+ * The More sheet, as DESIGN.md lists it plus the share link:
+ * Open -> Send again, Mark as needs a look, Edit; Needs a look -> Dismiss item, Edit; Signed off -> (Reopen is primary).
+ */
 export function moreActions(item: Pick<ItemOut, 'status' | 'dispatch'>, company: string): ActionSpec<MoreKind>[] {
   const share: ActionSpec<MoreKind> = { kind: 'share', label: 'Copy link for the trade' };
   if (item.status === 'needs_review') {
-    return [{ kind: 'edit', label: 'Edit' }, share, { kind: 'dismiss', label: 'Dismiss item' }];
+    return [{ kind: 'dismiss', label: 'Dismiss item' }, { kind: 'edit', label: 'Edit' }, share];
   }
-  if (item.status === 'closed') return [{ kind: 'edit', label: 'Edit' }, share];
+  if (item.status === 'closed') return [share];
   return [
     { kind: 'send', label: item.dispatch ? 'Send again' : `Send to ${company}` },
     { kind: 'mark_needs_look', label: 'Mark as needs a look' },
     { kind: 'edit', label: 'Edit' },
     share,
-    { kind: 'dismiss', label: 'Dismiss item' },
   ];
 }
 

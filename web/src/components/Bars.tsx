@@ -69,7 +69,7 @@ export function LargeTitleBar({
               onClick={onTitleClick}
               aria-label={titleLabel}
               aria-haspopup="dialog"
-              className="flex min-w-0 items-center gap-2 text-left"
+              className="flex min-h-11 min-w-0 items-center gap-2 text-left"
             >
               {heading}
               <ChevronDown size={24} strokeWidth={2} className="mt-1 shrink-0 text-graphite" aria-hidden />

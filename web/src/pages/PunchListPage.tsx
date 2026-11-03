@@ -93,7 +93,7 @@ export default function PunchListPage() {
             ]}
           />
           <div className="mt-3 flex items-center gap-2">
-            <div className="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 [scrollbar-width:none]">
+            <div className="chip-row -my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 pr-6 [scrollbar-width:none]">
               {view.filters.q && (
                 <Chip
                   label={`“${view.filters.q}”`}

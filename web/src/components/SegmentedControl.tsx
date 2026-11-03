@@ -54,7 +54,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => onKey(e, i)}
             className={cx(
-              'flex flex-1 items-center justify-center gap-1 rounded-control px-2 text-body whitespace-nowrap',
+              'hit-44 flex flex-1 items-center justify-center gap-1 rounded-control px-2 text-body whitespace-nowrap',
               'transition-colors duration-150 ease-out disabled:opacity-50',
               selected ? 'bg-sheet font-medium text-graphite' : 'text-pencil',
             )}

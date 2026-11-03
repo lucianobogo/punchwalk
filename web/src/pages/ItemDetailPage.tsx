@@ -68,7 +68,7 @@ export default function ItemDetailPage() {
   );
 }
 
-type ItemSheet = 'more' | 'edit' | 'play' | null;
+type ItemSheet = 'more' | 'edit' | 'play' | 'dismiss' | null;
 
 function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; setSheet: (s: ItemSheet) => void }) {
   const project = useProject(item.project_id);
@@ -107,7 +107,7 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
 
   return (
     <div className="pb-[calc(96px+var(--sab))]">
-      <div className="pt-2">
+      <div className="pt-4">
         {showSlider ? (
           <BeforeAfter
             before={closure!.before_image_url!}
@@ -243,6 +243,7 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
             key={a.kind}
             tone={a.kind === 'dismiss' ? 'danger' : 'default'}
             onClick={() => {
+              if (a.kind === 'dismiss') return setSheet('dismiss');
               setSheet(a.kind === 'edit' ? 'edit' : null);
               if (a.kind !== 'edit') runMore(a.kind);
             }}
@@ -250,11 +251,34 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
             {a.label}
           </SheetAction>
         ))}
-        {item.status === 'needs_review' && (
-          <p className="flex items-center gap-2 px-4 pt-3 text-secondary text-pencil">
-            <StatusDot /> Dismissing removes it from the punch list. It stays in the walk’s history.
-          </p>
-        )}
+      </Sheet>
+      <Sheet
+        open={sheet === 'dismiss'}
+        onOpenChange={(o) => !o && setSheet(null)}
+        title={`Dismiss item ${item.number}?`}
+        footer={
+          <div className="flex gap-3">
+            <Button variant="secondary" size="lg" className="flex-1" onClick={() => setSheet(null)}>
+              Keep it
+            </Button>
+            <Button
+              variant="danger"
+              size="lg"
+              className="flex-1"
+              onClick={() => {
+                setSheet(null);
+                runMore('dismiss');
+              }}
+            >
+              Dismiss item
+            </Button>
+          </div>
+        }
+      >
+        <p className="flex items-start gap-2 px-4 pb-2 text-body text-graphite">
+          <StatusDot className="mt-2" />
+          It leaves the punch list and won’t be sent to anyone. The walk’s video and transcript keep it.
+        </p>
       </Sheet>
       <EditSheet
         item={item}
