@@ -193,7 +193,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Backend channels: Slack incoming webhook (if set); email via Resend (if set) *(nice)*; in-app Outbox (always).
   - Trades screens per DESIGN.md.
   - Public read-only share page `/share/item/:token`, styled like the item detail, with "Play this moment".
-- [ ] **6.2 Auto-send policy.** After verification, `consistent=true` items are sent automatically; `needs_review` items wait for a human tap. Every automatic decision is recorded in the item's history.
+- [x] **6.2 Auto-send policy.** After verification, `consistent=true` items are sent automatically; `needs_review` items wait for a human tap. Every automatic decision is recorded in the item's history.
 - [ ] **6.3 PDF punch report** *(nice)*. Cover page (project, date, totals by trade/status), items grouped by room with evidence, sign-off block.
 
 ## Phase 7: Re-walk loop (Track A, then B)

@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 17:47 ET
+Updated: 2026-11-03 17:54 ET
 Current phase: 1 (A) / 4 (C) / 5 (B) in parallel; 0.6 pending footage — targets Tue 8:30 PM / 10:00 PM / Wed 3:00 AM
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: CHANGE-1 (0f06a60, fix round 1), 0.6 script + 1.1–1.7 (0228dab..dfa8cc7, fix round 1 in Phase 2), 4.x fixes + 6.1–6.3 (4b1b7be..2a9fe64)
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script + 1.1–1.7 (0228dab..dfa8cc7) + 1.x fixes + 2.1–2.5 (3cbca8a..94626ef, verifying), 6.3 (2a9fe64, PDF check in the image pending), 9.1 (6dc5330, verifying). Tagged: 6.1-backend, 6.2
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -13,15 +13,23 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| CHANGE-1 docs + contract + mocks (tape→pointing) | builder (fix round 1) | 17:00 | scripts/gen_mock_api.py, fixtures/mock_api | verifier FAIL: video determinism (-threads 1 fix) |
-| 1.1–1.7 fix round 1 (folded into Phase 2) | builder (Track A) | 17:37 | pipeline | verifier FAIL: voice-only frame window; fixes sent |
-| Track A: 2.1–2.5 items, grounding, verification (+ make record when footage lands) | builder (Track A, same agent) | 17:30 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/probe.py (tape→hand fix), fixtures/pipeline/**, fixtures/cache/**, tests/test_pipeline_* | briefed by message |
-| 6.1–6.3 backend + 4.x fixes verify | verifier | 17:41 | read-only | committed untagged pending PASS |
-| 9.1 Docker + fly.toml + DEPLOY.md (deploy-ready only; Fly commands reserved for the human) | builder (Track C, same agent) | 17:41 | Dockerfile, .dockerignore, fly.toml, scripts/entrypoint*, docs/DEPLOY.md | briefed by message; seed (8.1) comes later |
+| 3.1–3.3 eval harness (built on the synthetic walk until footage lands) | builder (eval) | 17:48 | eval/run_eval.py, eval/report.md, eval/README?, scripts/build_mock_api.py, tests/test_eval*.py, fixtures/eval/** | reads Item rows via runner.run_walk on a temp DB; never overwrites fixtures/mock_api without --out |
+| 1.x fixes + 2.1–2.5 verify (worktree .verify/wt-phase2 @ 94626ef) | verifier | 17:50 | read-only | commits untagged pending PASS |
+| Track A: 7.1–7.4 re-walk loop (+ make record / full runs when footage lands) | builder (Track A, same agent) | 17:50 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
+| 9.1 verify (docker build + in-image tests + container smoke) | verifier | 17:53 | read-only | committed untagged pending PASS |
+| CHANGE-2 (small contract: channel_reason, approve-and-send doc, StageState.message, Settings AUTO_SEND/TRUST_PROXY/PUNCHWALK_WORKER) + 8.1 seed (on synthetic data, ready for real walks) | builder (Track C, same agent) | 17:53 | punchwalk/core/models.py, punchwalk/api/schemas.py, web/src/api/types.ts, scripts/gen_mock_api.py, fixtures/mock_api, punchwalk/config.py, .env.example, punchwalk/api/media.py, scripts/seed.py, tests/test_seed.py | briefed by message |
 | 5.5–5.7 walks + walk detail, record, how processed | ui-builder (same agent) | 17:38 | web/** except types.ts | briefed by message |
 
 ## Needs human
-- **Deploy needs you (blocked by the permission classifier, 17:45 ET):** the orchestrator was denied instructing a production deploy ("Production Deploy"). Track C is building the Docker image + fly.toml + `docs/DEPLOY.md` (a copy-paste runbook). When it lands: either run the runbook yourself (`fly apps create punchwalk`, `fly volumes create …`, import secrets, `make deploy`), or restart the orchestrator with permission to run Fly deploys. Without it the app stays deploy-ready but not live.
+- **Deploy needs you (the permission classifier blocks me from running Fly deploys).** The image is built and tested (`docs/DEPLOY.md` has the full runbook). From the repo root:
+  ```
+  fly apps create punchwalk            # if the name is taken: pick one, edit `app` + APP_BASE_URL in fly.toml
+  fly volumes create punchwalk_data --region ewr --size 3 -a punchwalk -y
+  grep -E '^(MODEL_API_KEY|BASETEN_API_KEY|SLACK_WEBHOOK_URL|RESEND_API_KEY|EMAIL_FROM)=.+' .env | fly secrets import -a punchwalk
+  fly deploy --remote-only             # later redeploys: make deploy
+  curl -s https://punchwalk.fly.dev/healthz
+  ```
+  After 8.1 lands, seed the demo project: `fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py'"`. Or restart the orchestrator with permission to run Fly commands and it will do all of this.
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
 - **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
 - Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
@@ -33,8 +41,8 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
 - make eval: not run yet (targets in PLAN.md 3.4)
 - make screenshots: 30/30 written at 5.4 (14/14 strict for 5.2–5.4); 5.5–5.7 screens pending
-- Live API spend: $0.14 of $25 (probe $0.046 + synthetic record/phrasing $0.097)
-- Deploy: not deployed
+- Live API spend: $0.22 of $25 (probe $0.046; synthetic record + Phase 2 fixtures $0.175)
+- Deploy: image built + tested locally (1.08 GB, trixie, ffmpeg 7.1); fly.toml valid; NOT deployed (human runbook in Needs human / docs/DEPLOY.md)
 - Live URL: none
 
 ## Key facts learned
