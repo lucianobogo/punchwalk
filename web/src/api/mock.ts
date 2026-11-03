@@ -375,6 +375,15 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
         }
         return clone(out);
       }),
+
+    approveAndSend: (itemId, channel) =>
+      answer(async () => {
+        const item = await api.patchItem(itemId, { status: 'open', review_reason: null });
+        const project = await load<ProjectOut>(`projects/${item.project_id}.json`);
+        const contact = project.trades.find((t) => t.trade === item.trade);
+        const ch = channel ?? (contact?.has_slack_webhook ? 'slack' : contact?.email ? 'email' : 'outbox');
+        return api.dispatch(item.project_id, item.trade, { channel: ch, item_ids: [itemId] });
+      }),
   };
 
   const control = {

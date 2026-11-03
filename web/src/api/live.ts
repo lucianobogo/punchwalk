@@ -89,4 +89,6 @@ export const liveApi: Api = {
     get(`/api/projects/${enc(id)}/trades/${trade}/preview${channel ? `?channel=${channel}` : ''}`),
   dispatches: (id, trade) => get(`/api/projects/${enc(id)}/trades/${trade}/dispatches`),
   dispatch: (id, trade, body) => send('POST', `/api/projects/${enc(id)}/trades/${trade}/dispatch`, body),
+  approveAndSend: (itemId, channel) =>
+    send('POST', `/api/items/${enc(itemId)}/approve-and-send${channel ? `?channel=${channel}` : ''}`),
 };

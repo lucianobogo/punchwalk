@@ -61,6 +61,8 @@ export interface Api {
   dispatchPreview(projectId: string, trade: Trade, channel?: Channel): Promise<DispatchPreviewOut>;
   dispatches(projectId: string, trade: Trade): Promise<DispatchListOut>;
   dispatch(projectId: string, trade: Trade, body: DispatchCreate): Promise<DispatchOut>;
+  /** "Approve and send to <company>": a needs-a-look item becomes open (a human override), then goes out. */
+  approveAndSend(itemId: string, channel?: Channel): Promise<DispatchOut>;
 }
 
 /** An API error with the server's message, ready to show (DESIGN.md: say what happened and what to do). */

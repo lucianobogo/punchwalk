@@ -1,6 +1,6 @@
 // Every item action with its toast. Status changes offer Undo; nothing here apologizes.
 import { useNavigate } from 'react-router';
-import { useDismissItem, usePatchItem, useSendDispatch, useShareItem } from '../../api/hooks';
+import { useApproveAndSend, useDismissItem, usePatchItem, useSendDispatch, useShareItem } from '../../api/hooks';
 import type { ItemOut, ItemPatch, TradeContactOut } from '../../api/types';
 import { useToast } from '../../components';
 import { pickChannel, recipient, type MoreKind, type PrimaryKind } from './actions';
@@ -15,7 +15,8 @@ export function useItemActions(item: ItemOut | undefined, contact: TradeContactO
   const send = useSendDispatch();
   const dismiss = useDismissItem();
   const share = useShareItem();
-  const busy = patch.isPending || send.isPending || dismiss.isPending;
+  const approve = useApproveAndSend();
+  const busy = patch.isPending || send.isPending || dismiss.isPending || approve.isPending;
 
   async function setStatus(p: ItemPatch, message: string) {
     if (!item) return;
@@ -37,12 +38,14 @@ export function useItemActions(item: ItemOut | undefined, contact: TradeContactO
     if (!item) return;
     const who = recipient(item, contact);
     try {
-      if (approveFirst) await patch.mutateAsync({ id: item.id, patch: { status: 'open', review_reason: null } });
-      await send.mutateAsync({
-        projectId: item.project_id,
-        trade: item.trade,
-        body: { channel: pickChannel(contact), item_ids: [item.id] },
-      });
+      // One call on the server for approve + send, so an item is never left approved but unsent.
+      if (approveFirst) await approve.mutateAsync({ itemId: item.id, channel: pickChannel(contact) });
+      else
+        await send.mutateAsync({
+          projectId: item.project_id,
+          trade: item.trade,
+          body: { channel: pickChannel(contact), item_ids: [item.id] },
+        });
       toast.show(`Sent item ${item.number} to ${who}`);
     } catch (e) {
       toast.show(errorText(e), { tone: 'error' });

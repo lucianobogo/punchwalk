@@ -149,6 +149,14 @@ export function useSendDispatch() {
   });
 }
 
+export function useApproveAndSend() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, channel }: { itemId: string; channel?: Channel }) => api.approveAndSend(itemId, channel),
+    onSuccess: () => invalidateItemViews(qc),
+  });
+}
+
 export function useUploadWalk() {
   const qc = useQueryClient();
   return useMutation({
