@@ -9,7 +9,7 @@
     "job_id": "job_3a_first",
     "recorded_at": "2026-11-04T14:40:00Z",
     "created_at": "2026-11-04T14:52:00Z",
-    "updated_at": "2026-11-04T14:53:03Z",
+    "updated_at": "2026-11-04T14:53:03.200000Z",
     "clips": [
       {
         "order": 0,
@@ -48,39 +48,42 @@
         "model_label": "Muse Voice Transcribe"
       },
       {
-        "stage": "track_tape",
-        "label": "Finding tape",
+        "stage": "track_hands",
+        "label": "Following your hand (SAM 3.1)",
         "status": "done",
         "started_at": "2026-11-04T14:52:18.300000Z",
         "finished_at": "2026-11-04T14:52:47.900000Z",
         "duration_ms": 29600,
         "counts": {
-          "marks": 0
+          "frames": 780,
+          "hands": 4
         },
         "progress": null,
-        "detail": "SAM 3.1 found no tape",
+        "detail": "4 points found",
         "model_label": "SAM 3.1"
       },
       {
-        "stage": "merge_marks",
-        "label": "Following each strip of tape",
+        "stage": "find_points",
+        "label": "Finding where you pointed",
         "status": "done",
         "started_at": "2026-11-04T14:52:47.900000Z",
-        "finished_at": "2026-11-04T14:52:48.100000Z",
-        "duration_ms": 200,
+        "finished_at": "2026-11-04T14:52:48.300000Z",
+        "duration_ms": 400,
         "counts": {
-          "marks": 0
+          "points": 4,
+          "mentions": 4,
+          "voice_only": 0
         },
         "progress": null,
-        "detail": "No tape to follow",
+        "detail": "4 places you pointed",
         "model_label": null
       },
       {
         "stage": "classify_turns",
         "label": "Sorting what was said",
         "status": "done",
-        "started_at": "2026-11-04T14:52:48.100000Z",
-        "finished_at": "2026-11-04T14:52:52Z",
+        "started_at": "2026-11-04T14:52:48.300000Z",
+        "finished_at": "2026-11-04T14:52:52.200000Z",
         "duration_ms": 3900,
         "counts": {
           "lines": 10
@@ -91,26 +94,26 @@
       },
       {
         "stage": "fuse",
-        "label": "Matching what was said to each mark",
+        "label": "Matching what was said to each point",
         "status": "done",
-        "started_at": "2026-11-04T14:52:52Z",
-        "finished_at": "2026-11-04T14:52:52.100000Z",
+        "started_at": "2026-11-04T14:52:52.200000Z",
+        "finished_at": "2026-11-04T14:52:52.300000Z",
         "duration_ms": 100,
         "counts": {
-          "matched": 0,
-          "unnarrated": 0,
-          "voice_only": 4
+          "items": 4,
+          "pointed": 4,
+          "voice_only": 0
         },
         "progress": null,
-        "detail": "4 described with no tape",
+        "detail": "4 matched to where you pointed",
         "model_label": null
       },
       {
         "stage": "pick_evidence",
         "label": "Picking the clearest photo",
         "status": "done",
-        "started_at": "2026-11-04T14:52:52.100000Z",
-        "finished_at": "2026-11-04T14:52:55.400000Z",
+        "started_at": "2026-11-04T14:52:52.300000Z",
+        "finished_at": "2026-11-04T14:52:55.600000Z",
         "duration_ms": 3300,
         "counts": {
           "photos": 4
@@ -123,7 +126,7 @@
         "stage": "write_items",
         "label": "Writing items",
         "status": "running",
-        "started_at": "2026-11-04T14:52:55.400000Z",
+        "started_at": "2026-11-04T14:52:55.600000Z",
         "finished_at": null,
         "duration_ms": null,
         "counts": {
@@ -184,7 +187,7 @@
     "error": null,
     "counts": {
       "items": 2,
-      "marks": 0,
+      "points": 4,
       "turns": 10,
       "needs_review": 0,
       "signed_off": 0,
@@ -318,14 +321,107 @@
       "item_ids": []
     }
   ],
-  "marks": [],
+  "points": [
+    {
+      "id": "pnt_3a1_01",
+      "walk_id": "wlk_3a_first",
+      "item_id": "itm_3a_01",
+      "item_number": 1,
+      "number": 1,
+      "t": 9.5,
+      "frame": 95,
+      "fingertip_x": 1272.7,
+      "fingertip_y": 718.2,
+      "hand_box": {
+        "x1": 1253.3,
+        "y1": 716.4,
+        "x2": 1513.0,
+        "y2": 1080.0
+      },
+      "hold_s": 1.8,
+      "sam_object_ids": [
+        "a:1"
+      ],
+      "mean_conf": 0.86,
+      "turn_id": "trn_3a1_03"
+    },
+    {
+      "id": "pnt_3a1_02",
+      "walk_id": "wlk_3a_first",
+      "item_id": "itm_3a_02",
+      "item_number": 2,
+      "number": 2,
+      "t": 22.6,
+      "frame": 226,
+      "fingertip_x": 1177.7,
+      "fingertip_y": 897.7,
+      "hand_box": {
+        "x1": 1169.7,
+        "y1": 892.3,
+        "x2": 1468.4,
+        "y2": 1080.0
+      },
+      "hold_s": 2.0,
+      "sam_object_ids": [
+        "a:2"
+      ],
+      "mean_conf": 0.87,
+      "turn_id": "trn_3a1_05"
+    },
+    {
+      "id": "pnt_3a1_03",
+      "walk_id": "wlk_3a_first",
+      "item_id": null,
+      "item_number": null,
+      "number": 3,
+      "t": 37.5,
+      "frame": 375,
+      "fingertip_x": 944.2,
+      "fingertip_y": 619.7,
+      "hand_box": {
+        "x1": 936.3,
+        "y1": 614.2,
+        "x2": 1439.0,
+        "y2": 1080.0
+      },
+      "hold_s": 1.7,
+      "sam_object_ids": [
+        "a:3"
+      ],
+      "mean_conf": 0.88,
+      "turn_id": "trn_3a1_07"
+    },
+    {
+      "id": "pnt_3a1_04",
+      "walk_id": "wlk_3a_first",
+      "item_id": null,
+      "item_number": null,
+      "number": 4,
+      "t": 53.6,
+      "frame": 536,
+      "fingertip_x": 994.2,
+      "fingertip_y": 451.5,
+      "hand_box": {
+        "x1": 983.1,
+        "y1": 448.2,
+        "x2": 1463.5,
+        "y2": 1080.0
+      },
+      "hold_s": 1.9,
+      "sam_object_ids": [
+        "a:4"
+      ],
+      "mean_conf": 0.89,
+      "turn_id": "trn_3a1_09"
+    }
+  ],
   "items": [
     {
       "id": "itm_3a_01",
       "project_id": "prj_unit3a",
       "number": 1,
       "origin_walk_id": "wlk_3a_first",
-      "mark_id": null,
+      "point_id": "pnt_3a1_01",
       "turn_ids": [
         "trn_3a1_03"
       ],
@@ -342,30 +438,39 @@
       "quote_start_s": 9.0,
       "quote_end_s": 12.0,
       "video_url": "/media/walks/wlk_3a_first/display.mp4",
-      "video_start_s": 6.0,
+      "video_start_s": 7.0,
       "video_end_s": 13.0,
       "confidence": 0.82,
       "evidence": {
-        "t": 10.2,
+        "t": 10.85,
         "image_url": "/media/items/itm_3a_01/evidence.jpg",
         "raw_url": "/media/items/itm_3a_01/frame.jpg",
         "crop_url": "/media/items/itm_3a_01/crop.jpg",
         "width": 1920,
         "height": 1080,
-        "tape_svg": null,
-        "defect_svg": "M1151 369 L1221 369 L1221 703 L1151 703 Z",
-        "tape_box": null,
+        "defect_svg": "M1154 360 L1224 360 L1224 694 L1154 694 Z",
         "defect_box": {
-          "x1": 1151.4,
-          "y1": 369.0,
-          "x2": 1221.4,
-          "y2": 703.0
+          "x1": 1153.6,
+          "y1": 359.8,
+          "x2": 1223.6,
+          "y2": 693.8
         },
         "crop_box": {
-          "x1": 852.4,
-          "y1": 285.5,
-          "x2": 1520.4,
-          "y2": 786.5
+          "x1": 830.6,
+          "y1": 256.3,
+          "x2": 1658.7,
+          "y2": 877.4
+        },
+        "pointer": {
+          "x": 1265.7,
+          "y": 703.9
+        },
+        "pointing_frame": "/media/items/itm_3a_01/pointing.jpg",
+        "hand_box": {
+          "x1": 1253.3,
+          "y1": 716.4,
+          "x2": 1513.0,
+          "y2": 1080.0
         },
         "grounding": "sam_concept",
         "sam_concept": "tile grout line"
@@ -374,7 +479,7 @@
       "closure": null,
       "history": [
         {
-          "at": "2026-11-04T14:52:58.800000Z",
+          "at": "2026-11-04T14:52:59Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -384,15 +489,15 @@
         }
       ],
       "dispatch": null,
-      "created_at": "2026-11-04T14:52:58.800000Z",
-      "updated_at": "2026-11-04T14:52:58.800000Z"
+      "created_at": "2026-11-04T14:52:59Z",
+      "updated_at": "2026-11-04T14:52:59Z"
     },
     {
       "id": "itm_3a_02",
       "project_id": "prj_unit3a",
       "number": 2,
       "origin_walk_id": "wlk_3a_first",
-      "mark_id": null,
+      "point_id": "pnt_3a1_02",
       "turn_ids": [
         "trn_3a1_05"
       ],
@@ -409,29 +514,38 @@
       "quote_start_s": 22.0,
       "quote_end_s": 25.4,
       "video_url": "/media/walks/wlk_3a_first/display.mp4",
-      "video_start_s": 19.0,
+      "video_start_s": 20.0,
       "video_end_s": 26.4,
       "confidence": 0.85,
       "evidence": {
-        "t": 23.0,
+        "t": 24.05,
         "image_url": "/media/items/itm_3a_02/evidence.jpg",
         "raw_url": "/media/items/itm_3a_02/frame.jpg",
         "crop_url": "/media/items/itm_3a_02/crop.jpg",
         "width": 1920,
         "height": 1080,
-        "tape_svg": null,
-        "defect_svg": "M674 927 L1314 927 L1314 972 L674 972 Z",
-        "tape_box": null,
+        "defect_svg": "M688 931 L1328 931 L1328 976 L688 976 Z",
         "defect_box": {
-          "x1": 674.2,
-          "y1": 926.8,
-          "x2": 1314.2,
-          "y2": 971.8
+          "x1": 688.0,
+          "y1": 931.0,
+          "x2": 1328.0,
+          "y2": 976.0
         },
         "crop_box": {
-          "x1": 514.2,
+          "x1": 528.0,
           "y1": 360.0,
-          "x2": 1474.2,
+          "x2": 1488.0,
+          "y2": 1080.0
+        },
+        "pointer": {
+          "x": 1188.0,
+          "y": 906.0
+        },
+        "pointing_frame": "/media/items/itm_3a_02/pointing.jpg",
+        "hand_box": {
+          "x1": 1169.7,
+          "y1": 892.3,
+          "x2": 1468.4,
           "y2": 1080.0
         },
         "grounding": "sam_concept",
@@ -441,7 +555,7 @@
       "closure": null,
       "history": [
         {
-          "at": "2026-11-04T14:53:02.200000Z",
+          "at": "2026-11-04T14:53:02.400000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -451,8 +565,8 @@
         }
       ],
       "dispatch": null,
-      "created_at": "2026-11-04T14:53:02.200000Z",
-      "updated_at": "2026-11-04T14:53:02.200000Z"
+      "created_at": "2026-11-04T14:53:02.400000Z",
+      "updated_at": "2026-11-04T14:53:02.400000Z"
     }
   ]
 }

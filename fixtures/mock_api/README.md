@@ -56,12 +56,17 @@ the `progress/NN.json` replay.
 Bathroom, Bedroom, Hallway, Living room. The trades directory uses fictional `@example.com` contacts. Ace
 Electric has a Slack webhook (`#punch-electrical`). Northfield Builders and Clearview Glass have no email.
 
+The inspector points at each defect with an index finger, holds it 1.6–2.0 s while describing it, and
+drops the hand. Each pointing event is a `Point` (`points` in walk detail, numbered by time); its item has
+`point_id`, and its evidence has `pointer` (the "pointed here" dot, mapped into the evidence frame),
+`pointing_frame` (the frame with the hand outlined) and `hand_box`.
+
 - **`wlk_2b_first`**: first walk, ready. Ray-Ban Meta glasses, portrait 1080×1920, 153.5 s in 2 clips
-  (`walk1_a.mp4` 82.4 s + `walk1_b.mp4` 71.1 s at offset 82.4). 20 transcript lines, 11 tape marks
-  (`mrk_2b1_01`–`11`), job `job_2b_first`. It took 1 min 52 s and cost about $0.43, including one
-  `meta-fallback` verify call.
-- **`wlk_2b_rewalk`**: re-walk of `wlk_2b_first`, ready. 104 s, 17 lines (10 status updates), 4 tape
-  marks still on the wall (`mrk_2b2_01`–`04`). Result: "6 signed off. 3 still open. 1 needs a look."
+  (`walk1_a.mp4` 82.4 s + `walk1_b.mp4` 71.1 s at offset 82.4). 21 transcript lines, 11 points
+  (`pnt_2b1_01`–`11`; item #11 was described without pointing), job `job_2b_first`. It took 1 min 52 s
+  and cost about $0.44, including one `meta-fallback` verify call.
+- **`wlk_2b_rewalk`**: re-walk of `wlk_2b_first`, ready. 104 s, 17 lines (10 status updates). The
+  inspector points at each spot again (`pnt_2b2_01`–`10`). Result: "6 signed off. 3 still open. 1 needs a look."
 
 | # | id | Title | Room | Trade | Severity | Status now | Notes |
 |---|---|---|---|---|---|---|---|
@@ -74,15 +79,16 @@ Electric has a Slack webhook (`#punch-electrical`). Northfield Builders and Clea
 | 7 | `itm_2b_07` | Scuff marks on wall | Bedroom | painting | cosmetic | dispatched | still open, sent again Nov 4 |
 | 8 | `itm_2b_08` | Switch plate crooked | Hallway | electrical | cosmetic | dispatched | still open, sent again Nov 4 |
 | 9 | `itm_2b_09` | Window screen missing | Living room | windows_glazing | functional | open | never sent (no contact channel); verified by `meta-fallback` |
-| 10 | `itm_2b_10` | Sawdust on floor | Living room | cleaning | cosmetic | closed | grounding `tape_only` |
-| 11 | `itm_2b_11` | Outlet cover cracked | Bedroom | electrical | **safety** | dispatched | voice-only (no tape, no mark), `tape_only`; not checked on re-walk |
-| 12 | `itm_2b_12` | Tape with no description | Bedroom | general | cosmetic | needs_review | unnarrated tape: "Tape mark with no description" |
+| 10 | `itm_2b_10` | Sawdust on floor | Living room | cleaning | cosmetic | closed | grounding `pointed_only` (dot, no outline) |
+| 11 | `itm_2b_11` | Outlet cover cracked | Bedroom | electrical | **safety** | dispatched | voice-only (no point, `point_id` null), grounding `none`; not checked on re-walk |
+| 12 | `itm_2b_12` | Dent in closet door | Bedroom | general | cosmetic | needs_review | pointed, but the photo shows no dent: verification `consistent: false`, "The frame doesn't show the defect described." |
 
 Punch list segments: To do 6, Signed off 6, All 12. Needs a look: #2 and #12.
 
 **Project `prj_unit3a`, "Unit 3A turnover"**: a second project for the project switcher.
 
-- **`wlk_3a_first`**: processing. Phone, landscape 1920×1080, 78 s, no tape (all voice-only). Its
+- **`wlk_3a_first`**: processing. Phone, landscape 1920×1080, 78 s, 4 points (`pnt_3a1_01`–`04`; the
+  last two have `item_id: null` because their items aren't written yet). Its
   snapshot (`progress.json`, job `job_3a_first`) is mid-run: "Writing items, 2 of 4 written". Items
   `itm_3a_01` and `itm_3a_02` are listed in `projects/prj_unit3a/items.json`.
   `itm_3a_03` and `itm_3a_04` exist only as item files, showing the state after the run finishes;
@@ -95,16 +101,23 @@ and 3A item has one.
 
 ## Media
 
-- `media/walks/{walk_id}/display.mp4`: H.264 yuv420p + AAC, `+faststart`, 15 fps. **Mock videos are
-  downscaled** (720×1280 for portrait walks, 1280×720 for landscape). Their aspect matches the walk, so
-  overlay coordinates still line up. The tape in each video moves exactly along `overlay.json`.
+- `media/walks/{walk_id}/display.mp4`: H.264 yuv420p + AAC, `+faststart`, 15 fps, < 700 KB. **Mock videos
+  are downscaled** (720×1280 for portrait walks, 1280×720 for landscape). Their aspect matches the walk,
+  so overlay coordinates still line up. The hand in each video (a simple skin-colored silhouette that
+  slides in from the bottom-right, holds, and leaves) moves exactly along `overlay.json`'s `hands`;
+  `fingertip` is set only while the hand holds still.
 - `media/walks/{walk_id}/poster.jpg`: the walk thumbnail.
-- `media/items/{item_id}/frame.jpg`: the evidence frame without outlines (`raw_url`). `evidence.jpg` is
-  the same frame with the tape (blue) and defect (red, 30% fill) outlined (`image_url`). Both are full
-  frames at the walk's pixel size, which is also the space of `tape_svg` / `defect_svg`.
-- `media/items/{item_id}/crop.jpg`: 800×600 crop with outlines, used for rows and as `before_image_url`.
+- `media/items/{item_id}/frame.jpg`: the evidence frame without outlines (`raw_url`), picked just after
+  the hand leaves. `evidence.jpg` is the same frame with the defect outlined (red, 30% fill) and a small
+  blue dot with a white halo at `pointer` (`image_url`). No burned-in text. Both are full frames at the
+  walk's pixel size, which is also the space of `defect_svg`, `pointer` and the boxes.
+- `media/items/{item_id}/pointing.jpg` (`pointing_frame`, pointed items only): the frame in the middle of
+  the hold, with the hand outlined in blue. `hand_box` is the hand in this frame.
+- `media/items/{item_id}/crop.jpg`: 800×600 crop (centered on the pointer + defect) with outlines, used for
+  rows and as `before_image_url`.
 - `media/items/{item_id}/after.jpg` (800×600, same framing) and `after_frame.jpg` (full frame): the
-  re-walk view for checked items.
+  re-walk view for checked items, with the red outline when the defect is still visible and the dot where
+  the inspector pointed again.
 
 Use the overlay's `width`/`height` as the SVG `viewBox` over the video, not the video's pixel size.
 

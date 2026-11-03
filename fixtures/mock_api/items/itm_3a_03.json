@@ -3,7 +3,7 @@
   "project_id": "prj_unit3a",
   "number": 3,
   "origin_walk_id": "wlk_3a_first",
-  "mark_id": null,
+  "point_id": "pnt_3a1_03",
   "turn_ids": [
     "trn_3a1_07"
   ],
@@ -20,30 +20,39 @@
   "quote_start_s": 37.0,
   "quote_end_s": 40.2,
   "video_url": "/media/walks/wlk_3a_first/display.mp4",
-  "video_start_s": 34.0,
+  "video_start_s": 35.0,
   "video_end_s": 41.2,
   "confidence": 0.8,
   "evidence": {
-    "t": 38.0,
+    "t": 38.75,
     "image_url": "/media/items/itm_3a_03/evidence.jpg",
     "raw_url": "/media/items/itm_3a_03/frame.jpg",
     "crop_url": "/media/items/itm_3a_03/crop.jpg",
     "width": 1920,
     "height": 1080,
-    "tape_svg": null,
-    "defect_svg": "M908 549 L906 577 L900 603 L891 623 L879 636 L866 641 L853 636 L842 623 L832 603 L827 577 L824 549 L827 520 L832 495 L842 474 L853 461 L866 457 L879 461 L891 474 L900 495 L906 520 Z",
-    "tape_box": null,
+    "defect_svg": "M898 551 L896 580 L890 605 L881 626 L869 639 L856 643 L843 639 L831 626 L822 605 L816 580 L814 551 L816 523 L822 497 L831 477 L843 464 L856 459 L869 464 L881 477 L890 497 L896 523 Z",
     "defect_box": {
-      "x1": 824.5,
-      "y1": 456.8,
-      "x2": 908.5,
-      "y2": 640.8
+      "x1": 814.0,
+      "y1": 459.3,
+      "x2": 898.0,
+      "y2": 643.3
     },
     "crop_box": {
-      "x1": 586.5,
-      "y1": 338.8,
-      "x2": 1146.5,
-      "y2": 758.8
+      "x1": 622.8,
+      "y1": 368.5,
+      "x2": 1182.8,
+      "y2": 788.5
+    },
+    "pointer": {
+      "x": 921.7,
+      "y": 627.8
+    },
+    "pointing_frame": "/media/items/itm_3a_03/pointing.jpg",
+    "hand_box": {
+      "x1": 936.3,
+      "y1": 614.2,
+      "x2": 1439.0,
+      "y2": 1080.0
     },
     "grounding": "sam_concept",
     "sam_concept": "paint drip"
@@ -53,12 +62,12 @@
     "note": "Matches the photo and what was said.",
     "issues": [],
     "provider": "baseten",
-    "checked_at": "2026-11-04T14:53:21Z"
+    "checked_at": "2026-11-04T14:53:20.750000Z"
   },
   "closure": null,
   "history": [
     {
-      "at": "2026-11-04T14:53:05.600000Z",
+      "at": "2026-11-04T14:53:05.800000Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -67,7 +76,7 @@
       "note": "Written by Muse Spark Open on Baseten."
     },
     {
-      "at": "2026-11-04T14:53:21Z",
+      "at": "2026-11-04T14:53:20.750000Z",
       "actor": "model",
       "action": "verified",
       "field": null,
@@ -77,6 +86,6 @@
     }
   ],
   "dispatch": null,
-  "created_at": "2026-11-04T14:53:05.600000Z",
-  "updated_at": "2026-11-04T14:53:21Z"
+  "created_at": "2026-11-04T14:53:05.800000Z",
+  "updated_at": "2026-11-04T14:53:20.750000Z"
 }

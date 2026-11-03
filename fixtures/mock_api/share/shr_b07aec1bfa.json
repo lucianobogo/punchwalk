@@ -16,34 +16,38 @@
   "quote_start_s": 39.5,
   "quote_end_s": 42.5,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 36.5,
+  "video_start_s": 37.5,
   "video_end_s": 43.5,
   "evidence": {
-    "t": 40.1,
+    "t": 41.55,
     "image_url": "/media/items/itm_2b_03/evidence.jpg",
     "raw_url": "/media/items/itm_2b_03/frame.jpg",
     "crop_url": "/media/items/itm_2b_03/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M692 517 L962 574 L943 664 L673 607 Z",
-    "defect_svg": "M709 550 L704 595 L686 636 L659 672 L623 699 L582 717 L537 722 L493 717 L451 699 L416 672 L389 636 L371 595 L365 550 L371 506 L389 464 L416 429 L451 401 L493 384 L537 378 L582 384 L623 401 L659 429 L686 464 L704 506 Z",
-    "tape_box": {
-      "x1": 672.9,
-      "y1": 516.7,
-      "x2": 962.0,
-      "y2": 664.1
-    },
+    "defect_svg": "M684 547 L678 591 L661 633 L633 668 L598 696 L556 713 L512 719 L467 713 L426 696 L390 668 L363 633 L345 591 L340 547 L345 502 L363 461 L390 425 L426 398 L467 380 L512 375 L556 380 L598 398 L633 425 L661 461 L678 502 Z",
     "defect_box": {
-      "x1": 365.5,
-      "y1": 378.4,
-      "x2": 709.5,
-      "y2": 722.4
+      "x1": 339.6,
+      "y1": 374.5,
+      "x2": 683.6,
+      "y2": 718.5
     },
     "crop_box": {
-      "x1": 185.2,
-      "y1": 214.9,
-      "x2": 1080.0,
-      "y2": 886.0
+      "x1": 75.8,
+      "y1": 265.6,
+      "x2": 947.3,
+      "y2": 919.2
+    },
+    "pointer": {
+      "x": 550.8,
+      "y": 740.3
+    },
+    "pointing_frame": "/media/items/itm_2b_03/pointing.jpg",
+    "hand_box": {
+      "x1": 500.4,
+      "y1": 744.9,
+      "x2": 895.6,
+      "y2": 1920.0
     },
     "grounding": "sam_box",
     "sam_concept": "ceiling light fixture"
@@ -52,15 +56,15 @@
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_05",
     "quote": "Light over the sink, fixed.",
-    "after_t": 26.6,
+    "after_t": 27.85,
     "before_image_url": "/media/items/itm_2b_03/crop.jpg",
     "after_image_url": "/media/items/itm_2b_03/after.jpg",
     "after_frame_url": "/media/items/itm_2b_03/after_frame.jpg",
     "voice_status": "fixed",
     "vision_status": "fixed",
     "decision": "signed_off",
-    "note": "The defect is gone and the tape is off.",
-    "decided_at": "2026-11-04T13:21:05.800000Z"
+    "note": "The defect is gone where the inspector pointed.",
+    "decided_at": "2026-11-04T13:21:05.600000Z"
   },
   "walked_at": "2026-11-03T15:12:00Z"
 }

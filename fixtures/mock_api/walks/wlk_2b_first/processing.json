@@ -2,8 +2,8 @@
   "walk_id": "wlk_2b_first",
   "kind": "initial",
   "status": "ready",
-  "total_duration_ms": 112000,
-  "total_cost_usd": 0.4251,
+  "total_duration_ms": 111600,
+  "total_cost_usd": 0.4377,
   "models_used": [
     "Muse Voice Transcribe",
     "SAM 3.1",
@@ -15,18 +15,18 @@
       "title": "Transcribe the narration",
       "model_label": "Muse Voice Transcribe",
       "provider": "meta",
-      "detail": "20 lines with start and end times",
+      "detail": "21 lines with start and end times",
       "duration_ms": 7100,
       "calls": 1,
       "fallback_calls": 0,
       "cost_usd": 0.0154
     },
     {
-      "stage": "track_tape",
-      "title": "Track every strip of tape",
+      "stage": "track_hands",
+      "title": "Follow the hand to each defect",
       "model_label": "SAM 3.1",
       "provider": "meta",
-      "detail": "11 marks followed across the whole video",
+      "detail": "11 points found across the whole video",
       "duration_ms": 44400,
       "calls": 2,
       "fallback_calls": 0,
@@ -34,10 +34,10 @@
     },
     {
       "stage": "fuse",
-      "title": "Match each sentence to its tape",
+      "title": "Match each sentence to where you pointed",
       "model_label": null,
       "provider": null,
-      "detail": "Timing and position, computed in the app. 10 matched, 1 mark with no description, 1 described with no tape.",
+      "detail": "Timing and position, computed in the app. 11 matched to where you pointed, 1 described without pointing.",
       "duration_ms": 100,
       "calls": 0,
       "fallback_calls": 0,
@@ -48,33 +48,33 @@
       "title": "Write each item",
       "model_label": "Muse Spark Open on Baseten",
       "provider": "baseten",
-      "detail": "Summary, action, trade, room and severity for 11 items",
+      "detail": "Summary, action, trade, room and severity for 12 items",
       "duration_ms": 16200,
-      "calls": 11,
+      "calls": 12,
       "fallback_calls": 0,
-      "cost_usd": 0.0327
+      "cost_usd": 0.0358
     },
     {
       "stage": "ground_defects",
       "title": "Outline the defect",
       "model_label": "SAM 3.1",
       "provider": "meta",
-      "detail": "Spark Open names what to outline, SAM draws it. 9 outlined.",
-      "duration_ms": 8700,
-      "calls": 14,
+      "detail": "Spark Open names what to outline near your fingertip, SAM draws it. 9 outlined.",
+      "duration_ms": 9600,
+      "calls": 17,
       "fallback_calls": 0,
-      "cost_usd": 0.035
+      "cost_usd": 0.0425
     },
     {
       "stage": "verify",
       "title": "Check each item against its photo",
       "model_label": "Muse Spark Open on Baseten",
       "provider": "baseten",
-      "detail": "11 match the photo and what was said. One check ran on Muse Spark 1.3 after Baseten timed out.",
+      "detail": "11 match the photo and what was said. 1 needs a look: the photo doesn't show the defect described. One check ran on Muse Spark 1.3 after Baseten timed out.",
       "duration_ms": 14600,
-      "calls": 13,
+      "calls": 14,
       "fallback_calls": 1,
-      "cost_usd": 0.0305
+      "cost_usd": 0.0335
     }
   ],
   "calls": [
@@ -100,7 +100,7 @@
       "id": "mc_2b1_002",
       "walk_id": "wlk_2b_first",
       "item_id": null,
-      "stage": "track_tape",
+      "stage": "track_hands",
       "model": "sam-3.1",
       "model_label": "SAM 3.1",
       "provider": "meta",
@@ -118,7 +118,7 @@
       "id": "mc_2b1_003",
       "walk_id": "wlk_2b_first",
       "item_id": null,
-      "stage": "track_tape",
+      "stage": "track_hands",
       "model": "sam-3.1",
       "model_label": "SAM 3.1",
       "provider": "meta",
@@ -135,24 +135,6 @@
     {
       "id": "mc_2b1_004",
       "walk_id": "wlk_2b_first",
-      "item_id": "itm_2b_02",
-      "stage": "merge_marks",
-      "model": "meta-models/muse-spark-open-1026",
-      "model_label": "Muse Spark Open on Baseten",
-      "provider": "baseten",
-      "latency_ms": 2100,
-      "tokens_in": 2200,
-      "tokens_out": 90,
-      "frames": null,
-      "est_cost_usd": 0.00102,
-      "cached": false,
-      "ok": true,
-      "error": null,
-      "started_at": "2026-11-03T15:41:05.900000Z"
-    },
-    {
-      "id": "mc_2b1_005",
-      "walk_id": "wlk_2b_first",
       "item_id": null,
       "stage": "classify_turns",
       "model": "meta-models/muse-spark-open-1026",
@@ -166,10 +148,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:08.200000Z"
+      "started_at": "2026-11-03T15:41:06.900000Z"
     },
     {
-      "id": "mc_2b1_006",
+      "id": "mc_2b1_005",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_01",
       "stage": "write_items",
@@ -184,10 +166,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:16.900000Z"
+      "started_at": "2026-11-03T15:41:15.600000Z"
     },
     {
-      "id": "mc_2b1_007",
+      "id": "mc_2b1_006",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_02",
       "stage": "write_items",
@@ -202,10 +184,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:17.050000Z"
+      "started_at": "2026-11-03T15:41:15.750000Z"
     },
     {
-      "id": "mc_2b1_008",
+      "id": "mc_2b1_007",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_03",
       "stage": "write_items",
@@ -220,10 +202,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:17.200000Z"
+      "started_at": "2026-11-03T15:41:15.900000Z"
     },
     {
-      "id": "mc_2b1_009",
+      "id": "mc_2b1_008",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_04",
       "stage": "write_items",
@@ -238,10 +220,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:17.350000Z"
+      "started_at": "2026-11-03T15:41:16.050000Z"
     },
     {
-      "id": "mc_2b1_010",
+      "id": "mc_2b1_009",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_05",
       "stage": "write_items",
@@ -256,10 +238,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:21.800000Z"
+      "started_at": "2026-11-03T15:41:20.500000Z"
     },
     {
-      "id": "mc_2b1_011",
+      "id": "mc_2b1_010",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_06",
       "stage": "write_items",
@@ -274,10 +256,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:21.950000Z"
+      "started_at": "2026-11-03T15:41:20.650000Z"
     },
     {
-      "id": "mc_2b1_012",
+      "id": "mc_2b1_011",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_07",
       "stage": "write_items",
@@ -292,10 +274,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:22.100000Z"
+      "started_at": "2026-11-03T15:41:20.800000Z"
     },
     {
-      "id": "mc_2b1_013",
+      "id": "mc_2b1_012",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_08",
       "stage": "write_items",
@@ -310,10 +292,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:22.250000Z"
+      "started_at": "2026-11-03T15:41:20.950000Z"
     },
     {
-      "id": "mc_2b1_014",
+      "id": "mc_2b1_013",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_09",
       "stage": "write_items",
@@ -328,10 +310,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:26.700000Z"
+      "started_at": "2026-11-03T15:41:25.400000Z"
     },
     {
-      "id": "mc_2b1_015",
+      "id": "mc_2b1_014",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_10",
       "stage": "write_items",
@@ -346,10 +328,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:26.850000Z"
+      "started_at": "2026-11-03T15:41:25.550000Z"
     },
     {
-      "id": "mc_2b1_016",
+      "id": "mc_2b1_015",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_11",
       "stage": "write_items",
@@ -364,7 +346,25 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:27Z"
+      "started_at": "2026-11-03T15:41:25.700000Z"
+    },
+    {
+      "id": "mc_2b1_016",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_12",
+      "stage": "write_items",
+      "model": "meta-models/muse-spark-open-1026",
+      "model_label": "Muse Spark Open on Baseten",
+      "provider": "baseten",
+      "latency_ms": 3337,
+      "tokens_in": 5840,
+      "tokens_out": 509,
+      "frames": null,
+      "est_cost_usd": 0.00315,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:41:25.850000Z"
     },
     {
       "id": "mc_2b1_017",
@@ -382,7 +382,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:33.100000Z"
+      "started_at": "2026-11-03T15:41:31.800000Z"
     },
     {
       "id": "mc_2b1_018",
@@ -400,7 +400,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:33.700000Z"
+      "started_at": "2026-11-03T15:41:32.400000Z"
     },
     {
       "id": "mc_2b1_019",
@@ -418,7 +418,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:34.300000Z"
+      "started_at": "2026-11-03T15:41:33Z"
     },
     {
       "id": "mc_2b1_020",
@@ -436,7 +436,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:34.900000Z"
+      "started_at": "2026-11-03T15:41:33.600000Z"
     },
     {
       "id": "mc_2b1_021",
@@ -454,7 +454,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:35.500000Z"
+      "started_at": "2026-11-03T15:41:34.200000Z"
     },
     {
       "id": "mc_2b1_022",
@@ -472,7 +472,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:35.600000Z"
+      "started_at": "2026-11-03T15:41:34.300000Z"
     },
     {
       "id": "mc_2b1_023",
@@ -490,7 +490,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:36.100000Z"
+      "started_at": "2026-11-03T15:41:34.800000Z"
     },
     {
       "id": "mc_2b1_024",
@@ -508,7 +508,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:36.700000Z"
+      "started_at": "2026-11-03T15:41:35.400000Z"
     },
     {
       "id": "mc_2b1_025",
@@ -526,7 +526,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:37.300000Z"
+      "started_at": "2026-11-03T15:41:36Z"
     },
     {
       "id": "mc_2b1_026",
@@ -544,7 +544,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:37.900000Z"
+      "started_at": "2026-11-03T15:41:36.600000Z"
     },
     {
       "id": "mc_2b1_027",
@@ -562,7 +562,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:38.500000Z"
+      "started_at": "2026-11-03T15:41:37.200000Z"
     },
     {
       "id": "mc_2b1_028",
@@ -580,7 +580,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:39.100000Z"
+      "started_at": "2026-11-03T15:41:37.800000Z"
     },
     {
       "id": "mc_2b1_029",
@@ -598,10 +598,28 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:39.200000Z"
+      "started_at": "2026-11-03T15:41:37.900000Z"
     },
     {
       "id": "mc_2b1_030",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_12",
+      "stage": "ground_defects",
+      "model": "sam-3.1",
+      "model_label": "SAM 3.1",
+      "provider": "meta",
+      "latency_ms": 1280,
+      "tokens_in": null,
+      "tokens_out": null,
+      "frames": null,
+      "est_cost_usd": 0.0025,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:41:38.400000Z"
+    },
+    {
+      "id": "mc_2b1_031",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_10",
       "stage": "ground_defects",
@@ -616,10 +634,46 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:39.800000Z"
+      "started_at": "2026-11-03T15:41:38.500000Z"
     },
     {
-      "id": "mc_2b1_031",
+      "id": "mc_2b1_032",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_11",
+      "stage": "ground_defects",
+      "model": "sam-3.1",
+      "model_label": "SAM 3.1",
+      "provider": "meta",
+      "latency_ms": 1190,
+      "tokens_in": null,
+      "tokens_out": null,
+      "frames": null,
+      "est_cost_usd": 0.0025,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:41:39.100000Z"
+    },
+    {
+      "id": "mc_2b1_033",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_12",
+      "stage": "ground_defects",
+      "model": "sam-3.1",
+      "model_label": "SAM 3.1",
+      "provider": "meta",
+      "latency_ms": 1190,
+      "tokens_in": null,
+      "tokens_out": null,
+      "frames": null,
+      "est_cost_usd": 0.0025,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:41:39.700000Z"
+    },
+    {
+      "id": "mc_2b1_034",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_01",
       "stage": "verify",
@@ -634,10 +688,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:41.800000Z"
+      "started_at": "2026-11-03T15:41:41.400000Z"
     },
     {
-      "id": "mc_2b1_032",
+      "id": "mc_2b1_035",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_02",
       "stage": "verify",
@@ -652,10 +706,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:41.920000Z"
+      "started_at": "2026-11-03T15:41:41.520000Z"
     },
     {
-      "id": "mc_2b1_033",
+      "id": "mc_2b1_036",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_03",
       "stage": "verify",
@@ -670,10 +724,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:42.040000Z"
+      "started_at": "2026-11-03T15:41:41.640000Z"
     },
     {
-      "id": "mc_2b1_034",
+      "id": "mc_2b1_037",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_04",
       "stage": "verify",
@@ -688,10 +742,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:42.160000Z"
+      "started_at": "2026-11-03T15:41:41.760000Z"
     },
     {
-      "id": "mc_2b1_035",
+      "id": "mc_2b1_038",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_05",
       "stage": "verify",
@@ -706,10 +760,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:45.900000Z"
+      "started_at": "2026-11-03T15:41:45.500000Z"
     },
     {
-      "id": "mc_2b1_036",
+      "id": "mc_2b1_039",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_06",
       "stage": "verify",
@@ -724,10 +778,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:46.020000Z"
+      "started_at": "2026-11-03T15:41:45.620000Z"
     },
     {
-      "id": "mc_2b1_037",
+      "id": "mc_2b1_040",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_07",
       "stage": "verify",
@@ -742,10 +796,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:46.140000Z"
+      "started_at": "2026-11-03T15:41:45.740000Z"
     },
     {
-      "id": "mc_2b1_038",
+      "id": "mc_2b1_041",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_08",
       "stage": "verify",
@@ -760,10 +814,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:46.260000Z"
+      "started_at": "2026-11-03T15:41:45.860000Z"
     },
     {
-      "id": "mc_2b1_039",
+      "id": "mc_2b1_042",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_09",
       "stage": "verify",
@@ -778,10 +832,10 @@
       "cached": false,
       "ok": false,
       "error": "502 Bad Gateway",
-      "started_at": "2026-11-03T15:41:50Z"
+      "started_at": "2026-11-03T15:41:49.600000Z"
     },
     {
-      "id": "mc_2b1_040",
+      "id": "mc_2b1_043",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_10",
       "stage": "verify",
@@ -796,10 +850,10 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:50.120000Z"
+      "started_at": "2026-11-03T15:41:49.720000Z"
     },
     {
-      "id": "mc_2b1_041",
+      "id": "mc_2b1_044",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_11",
       "stage": "verify",
@@ -814,10 +868,28 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:50.240000Z"
+      "started_at": "2026-11-03T15:41:49.840000Z"
     },
     {
-      "id": "mc_2b1_042",
+      "id": "mc_2b1_045",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_12",
+      "stage": "verify",
+      "model": "meta-models/muse-spark-open-1026",
+      "model_label": "Muse Spark Open on Baseten",
+      "provider": "baseten",
+      "latency_ms": 3770,
+      "tokens_in": 4530,
+      "tokens_out": 721,
+      "frames": null,
+      "est_cost_usd": 0.00297,
+      "cached": false,
+      "ok": true,
+      "error": null,
+      "started_at": "2026-11-03T15:41:49.960000Z"
+    },
+    {
+      "id": "mc_2b1_046",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_09",
       "stage": "verify",
@@ -832,10 +904,10 @@
       "cached": false,
       "ok": false,
       "error": "Timed out after 3.0 s",
-      "started_at": "2026-11-03T15:41:52.300000Z"
+      "started_at": "2026-11-03T15:41:51.900000Z"
     },
     {
-      "id": "mc_2b1_043",
+      "id": "mc_2b1_047",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_09",
       "stage": "verify",
@@ -850,7 +922,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-03T15:41:55.600000Z"
+      "started_at": "2026-11-03T15:41:55.200000Z"
     }
   ],
   "eval": {

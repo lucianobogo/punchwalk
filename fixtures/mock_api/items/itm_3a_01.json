@@ -3,7 +3,7 @@
   "project_id": "prj_unit3a",
   "number": 1,
   "origin_walk_id": "wlk_3a_first",
-  "mark_id": null,
+  "point_id": "pnt_3a1_01",
   "turn_ids": [
     "trn_3a1_03"
   ],
@@ -20,30 +20,39 @@
   "quote_start_s": 9.0,
   "quote_end_s": 12.0,
   "video_url": "/media/walks/wlk_3a_first/display.mp4",
-  "video_start_s": 6.0,
+  "video_start_s": 7.0,
   "video_end_s": 13.0,
   "confidence": 0.82,
   "evidence": {
-    "t": 10.2,
+    "t": 10.85,
     "image_url": "/media/items/itm_3a_01/evidence.jpg",
     "raw_url": "/media/items/itm_3a_01/frame.jpg",
     "crop_url": "/media/items/itm_3a_01/crop.jpg",
     "width": 1920,
     "height": 1080,
-    "tape_svg": null,
-    "defect_svg": "M1151 369 L1221 369 L1221 703 L1151 703 Z",
-    "tape_box": null,
+    "defect_svg": "M1154 360 L1224 360 L1224 694 L1154 694 Z",
     "defect_box": {
-      "x1": 1151.4,
-      "y1": 369.0,
-      "x2": 1221.4,
-      "y2": 703.0
+      "x1": 1153.6,
+      "y1": 359.8,
+      "x2": 1223.6,
+      "y2": 693.8
     },
     "crop_box": {
-      "x1": 852.4,
-      "y1": 285.5,
-      "x2": 1520.4,
-      "y2": 786.5
+      "x1": 830.6,
+      "y1": 256.3,
+      "x2": 1658.7,
+      "y2": 877.4
+    },
+    "pointer": {
+      "x": 1265.7,
+      "y": 703.9
+    },
+    "pointing_frame": "/media/items/itm_3a_01/pointing.jpg",
+    "hand_box": {
+      "x1": 1253.3,
+      "y1": 716.4,
+      "x2": 1513.0,
+      "y2": 1080.0
     },
     "grounding": "sam_concept",
     "sam_concept": "tile grout line"
@@ -52,7 +61,7 @@
   "closure": null,
   "history": [
     {
-      "at": "2026-11-04T14:52:58.800000Z",
+      "at": "2026-11-04T14:52:59Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -62,6 +71,6 @@
     }
   ],
   "dispatch": null,
-  "created_at": "2026-11-04T14:52:58.800000Z",
-  "updated_at": "2026-11-04T14:52:58.800000Z"
+  "created_at": "2026-11-04T14:52:59Z",
+  "updated_at": "2026-11-04T14:52:59Z"
 }

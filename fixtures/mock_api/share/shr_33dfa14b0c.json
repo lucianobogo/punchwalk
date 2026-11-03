@@ -16,7 +16,7 @@
   "quote_start_s": 112.0,
   "quote_end_s": 116.0,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 109.0,
+  "video_start_s": 110.0,
   "video_end_s": 117.0,
   "evidence": {
     "t": 113.8,
@@ -25,9 +25,7 @@
     "crop_url": "/media/items/itm_2b_11/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": null,
     "defect_svg": null,
-    "tape_box": null,
     "defect_box": null,
     "crop_box": {
       "x1": 94.6,
@@ -35,7 +33,10 @@
       "x2": 974.6,
       "y2": 1321.2
     },
-    "grounding": "tape_only",
+    "pointer": null,
+    "pointing_frame": null,
+    "hand_box": null,
+    "grounding": "none",
     "sam_concept": "outlet cover plate"
   },
   "closure": {
@@ -50,7 +51,7 @@
     "vision_status": "not_checked",
     "decision": "not_checked",
     "note": "Not checked on re-walk",
-    "decided_at": "2026-11-04T13:21:15.500000Z"
+    "decided_at": "2026-11-04T13:21:15.300000Z"
   },
   "walked_at": "2026-11-03T15:12:00Z"
 }

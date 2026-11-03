@@ -3,9 +3,9 @@
   "project_id": "prj_unit2b",
   "number": 8,
   "origin_walk_id": "wlk_2b_first",
-  "mark_id": "mrk_2b1_08",
+  "point_id": "pnt_2b1_09",
   "turn_ids": [
-    "trn_2b1_16"
+    "trn_2b1_17"
   ],
   "title": "Switch plate crooked",
   "description": "The switch plate by the hall closet is crooked.",
@@ -20,35 +20,39 @@
   "quote_start_s": 127.5,
   "quote_end_s": 130.5,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 124.5,
+  "video_start_s": 125.5,
   "video_end_s": 131.5,
   "confidence": 0.95,
   "evidence": {
-    "t": 128.1,
+    "t": 129.55,
     "image_url": "/media/items/itm_2b_08/evidence.jpg",
     "raw_url": "/media/items/itm_2b_08/frame.jpg",
     "crop_url": "/media/items/itm_2b_08/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M634 855 L910 855 L910 945 L634 945 Z",
-    "defect_svg": "M664 802 L606 1076 L420 1037 L478 763 Z",
-    "tape_box": {
-      "x1": 633.7,
-      "y1": 854.6,
-      "x2": 909.7,
-      "y2": 944.6
-    },
+    "defect_svg": "M673 813 L614 1087 L428 1048 L487 774 Z",
     "defect_box": {
-      "x1": 419.7,
-      "y1": 762.9,
-      "x2": 663.8,
-      "y2": 1076.3
+      "x1": 428.5,
+      "y1": 773.7,
+      "x2": 672.5,
+      "y2": 1087.1
     },
     "crop_box": {
-      "x1": 297.2,
-      "y1": 644.0,
-      "x2": 1032.2,
-      "y2": 1195.3
+      "x1": 136.4,
+      "y1": 670.2,
+      "x2": 964.6,
+      "y2": 1291.4
+    },
+    "pointer": {
+      "x": 599.5,
+      "y": 1117.8
+    },
+    "pointing_frame": "/media/items/itm_2b_08/pointing.jpg",
+    "hand_box": {
+      "x1": 527.8,
+      "y1": 1107.6,
+      "x2": 881.1,
+      "y2": 1920.0
     },
     "grounding": "sam_concept",
     "sam_concept": "light switch plate"
@@ -58,13 +62,13 @@
     "note": "Matches the photo and what was said.",
     "issues": [],
     "provider": "baseten",
-    "checked_at": "2026-11-03T15:41:52.200000Z"
+    "checked_at": "2026-11-03T15:41:50.600000Z"
   },
   "closure": {
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_13",
     "quote": "Switch plate, still crooked.",
-    "after_t": 76.6,
+    "after_t": 77.85,
     "before_image_url": "/media/items/itm_2b_08/crop.jpg",
     "after_image_url": "/media/items/itm_2b_08/after.jpg",
     "after_frame_url": "/media/items/itm_2b_08/after_frame.jpg",
@@ -72,11 +76,11 @@
     "vision_status": "still_visible",
     "decision": "still_open",
     "note": "Said not fixed, and the defect is still visible.",
-    "decided_at": "2026-11-04T13:21:14.300000Z"
+    "decided_at": "2026-11-04T13:21:14.100000Z"
   },
   "history": [
     {
-      "at": "2026-11-03T15:41:28.100000Z",
+      "at": "2026-11-03T15:41:26Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -85,7 +89,7 @@
       "note": "Written by Muse Spark Open on Baseten."
     },
     {
-      "at": "2026-11-03T15:41:52.200000Z",
+      "at": "2026-11-03T15:41:50.600000Z",
       "actor": "model",
       "action": "verified",
       "field": null,
@@ -103,7 +107,7 @@
       "note": "Sent to Ace Electric on Slack (#punch-electrical)."
     },
     {
-      "at": "2026-11-04T13:21:14.300000Z",
+      "at": "2026-11-04T13:21:14.100000Z",
       "actor": "model",
       "action": "rewalk_checked",
       "field": null,
@@ -112,7 +116,7 @@
       "note": "Said not fixed on the re-walk. Still open."
     },
     {
-      "at": "2026-11-04T13:21:14.500000Z",
+      "at": "2026-11-04T13:21:14.300000Z",
       "actor": "system",
       "action": "status_changed",
       "field": "status",
@@ -138,6 +142,6 @@
     "sent_at": "2026-11-04T13:25:00Z",
     "times_sent": 2
   },
-  "created_at": "2026-11-03T15:41:28.100000Z",
+  "created_at": "2026-11-03T15:41:26Z",
   "updated_at": "2026-11-04T13:25:00Z"
 }

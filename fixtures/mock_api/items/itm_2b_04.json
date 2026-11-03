@@ -3,7 +3,7 @@
   "project_id": "prj_unit2b",
   "number": 4,
   "origin_walk_id": "wlk_2b_first",
-  "mark_id": "mrk_2b1_04",
+  "point_id": "pnt_2b1_04",
   "turn_ids": [
     "trn_2b1_08"
   ],
@@ -20,35 +20,39 @@
   "quote_start_s": 57.0,
   "quote_end_s": 60.6,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 54.0,
+  "video_start_s": 55.0,
   "video_end_s": 61.6,
   "confidence": 0.86,
   "evidence": {
-    "t": 57.6,
+    "t": 58.75,
     "image_url": "/media/items/itm_2b_04/evidence.jpg",
     "raw_url": "/media/items/itm_2b_04/frame.jpg",
     "crop_url": "/media/items/itm_2b_04/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M401 1043 L696 1027 L701 1119 L406 1134 Z",
-    "defect_svg": "M235 950 L859 1002 L867 902 L243 850 Z",
-    "tape_box": {
-      "x1": 400.7,
-      "y1": 1027.1,
-      "x2": 701.1,
-      "y2": 1134.5
-    },
+    "defect_svg": "M233 963 L857 1015 L866 915 L242 863 Z",
     "defect_box": {
-      "x1": 234.8,
-      "y1": 850.0,
-      "x2": 867.1,
-      "y2": 1001.6
+      "x1": 233.4,
+      "y1": 863.4,
+      "x2": 865.7,
+      "y2": 1015.1
     },
     "crop_box": {
-      "x1": 76.7,
-      "y1": 636.5,
-      "x2": 1025.2,
-      "y2": 1347.9
+      "x1": 75.4,
+      "y1": 666.5,
+      "x2": 1023.8,
+      "y2": 1377.8
+    },
+    "pointer": {
+      "x": 594.6,
+      "y": 1110.9
+    },
+    "pointing_frame": "/media/items/itm_2b_04/pointing.jpg",
+    "hand_box": {
+      "x1": 530.5,
+      "y1": 1096.3,
+      "x2": 887.5,
+      "y2": 1920.0
     },
     "grounding": "sam_concept",
     "sam_concept": "towel bar"
@@ -58,25 +62,25 @@
     "note": "Matches the photo and what was said.",
     "issues": [],
     "provider": "baseten",
-    "checked_at": "2026-11-03T15:41:47Z"
+    "checked_at": "2026-11-03T15:41:46Z"
   },
   "closure": {
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_07",
     "quote": "Towel bar, fixed.",
-    "after_t": 38.6,
+    "after_t": 39.95,
     "before_image_url": "/media/items/itm_2b_04/crop.jpg",
     "after_image_url": "/media/items/itm_2b_04/after.jpg",
     "after_frame_url": "/media/items/itm_2b_04/after_frame.jpg",
     "voice_status": "fixed",
     "vision_status": "fixed",
     "decision": "signed_off",
-    "note": "The defect is gone and the tape is off.",
-    "decided_at": "2026-11-04T13:21:07.500000Z"
+    "note": "The defect is gone where the inspector pointed.",
+    "decided_at": "2026-11-04T13:21:07.300000Z"
   },
   "history": [
     {
-      "at": "2026-11-03T15:41:22.500000Z",
+      "at": "2026-11-03T15:41:20.800000Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -85,7 +89,7 @@
       "note": "Written by Muse Spark Open on Baseten."
     },
     {
-      "at": "2026-11-03T15:41:47Z",
+      "at": "2026-11-03T15:41:46Z",
       "actor": "model",
       "action": "verified",
       "field": null,
@@ -121,7 +125,7 @@
       "note": "Sent again to Northfield Builders from the outbox."
     },
     {
-      "at": "2026-11-04T13:21:07.500000Z",
+      "at": "2026-11-04T13:21:07.300000Z",
       "actor": "model",
       "action": "rewalk_checked",
       "field": null,
@@ -130,7 +134,7 @@
       "note": "Marked fixed on the re-walk, and the defect is gone."
     },
     {
-      "at": "2026-11-04T13:21:07.700000Z",
+      "at": "2026-11-04T13:21:07.500000Z",
       "actor": "system",
       "action": "status_changed",
       "field": "status",
@@ -147,6 +151,6 @@
     "sent_at": "2026-11-03T16:06:00Z",
     "times_sent": 2
   },
-  "created_at": "2026-11-03T15:41:22.500000Z",
-  "updated_at": "2026-11-04T13:21:07.700000Z"
+  "created_at": "2026-11-03T15:41:20.800000Z",
+  "updated_at": "2026-11-04T13:21:07.500000Z"
 }

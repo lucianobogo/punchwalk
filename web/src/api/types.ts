@@ -33,8 +33,11 @@ export type WalkStatus = 'uploaded' | 'processing' | 'ready' | 'failed';
 
 export type TurnKind = 'location' | 'defect' | 'status_update' | 'other';
 
-/** How the defect outline was found. tape_only = no defect outline. */
-export type Grounding = 'sam_concept' | 'sam_box' | 'tape_only';
+/**
+ * How the defect was located. sam_concept / sam_box = SAM outlined it; pointed_only = only the
+ * "pointed here" marker (no outline); none = voice-only item (no outline, no marker).
+ */
+export type Grounding = 'sam_concept' | 'sam_box' | 'pointed_only' | 'none';
 
 export type Channel = 'slack' | 'email' | 'outbox';
 
@@ -52,8 +55,8 @@ export type StageStatus = 'pending' | 'running' | 'done' | 'failed' | 'skipped';
 export type Stage =
   | 'ingest'
   | 'transcribe'
-  | 'track_tape'
-  | 'merge_marks'
+  | 'track_hands'
+  | 'find_points'
   | 'classify_turns'
   | 'fuse'
   | 'pick_evidence'
@@ -95,7 +98,7 @@ export const MODEL_SAM = 'sam-3.1';
 export const MODEL_SPARK_OPEN = 'meta-models/muse-spark-open-1026';
 export const MODEL_SPARK_HOSTED = 'muse-spark-1.3';
 
-export const REVIEW_NO_DESCRIPTION = 'Tape mark with no description';
+export const REVIEW_NOT_IN_FRAME = "The frame doesn't show the defect described.";
 export const REVIEW_FALSE_FIX = 'Marked fixed on the re-walk, but the defect is still visible.';
 export const NOT_CHECKED_ON_REWALK = 'Not checked on re-walk';
 
@@ -133,10 +136,10 @@ export const TRADE_LABEL: Record<Trade, string> = {
 export const STAGE_LABEL: Record<Stage, string> = {
   ingest: 'Preparing the video',
   transcribe: 'Listening to the walk',
-  track_tape: 'Finding tape',
-  merge_marks: 'Following each strip of tape',
+  track_hands: 'Following your hand (SAM 3.1)',
+  find_points: 'Finding where you pointed',
   classify_turns: 'Sorting what was said',
-  fuse: 'Matching what was said to each mark',
+  fuse: 'Matching what was said to each point',
   pick_evidence: 'Picking the clearest photo',
   write_items: 'Writing items',
   ground_defects: 'Outlining each defect',
@@ -187,9 +190,10 @@ export interface BoxOut {
   y2: number;
 }
 
-export interface IntervalOut {
-  start_s: number;
-  end_s: number;
+/** A pixel position (fingertip, "pointed here" marker). */
+export interface XYOut {
+  x: number;
+  y: number;
 }
 
 /** todo = open + dispatched + needs_review; open = open + dispatched. */
@@ -304,7 +308,7 @@ export interface WalkMediaOut {
 /** Initial walk: items it created. Re-walk: items it checked (items = checked). */
 export interface WalkCountsOut {
   items: number;
-  marks: number;
+  points: number;
   turns: number;
   needs_review: number;
   signed_off: number;
@@ -356,17 +360,26 @@ export interface TurnOut {
   item_ids: string[];
 }
 
-/** One strip of tape found in the walk (display pixels). */
-export interface MarkOut {
+/** One pointing event: the hand held still while pointing at a defect (display pixels). */
+export interface PointOut {
   id: string;
   walk_id: string;
+  /** item it created (initial walk) or checked (re-walk); null until written. */
   item_id: string | null;
-  number: number | null;
+  /** that item's number, for the number tab. */
+  item_number: number | null;
+  /** 1-based, in time order within this walk. */
+  number: number;
+  /** seconds into display.mp4 (middle of the hold). */
+  t: number;
+  frame: number;
+  fingertip_x: number;
+  fingertip_y: number;
+  hand_box: BoxOut;
+  hold_s: number;
   sam_object_ids: string[];
-  intervals: IntervalOut[];
-  best_t: number | null;
-  box_at_best: BoxOut | null;
   mean_conf: number | null;
+  turn_id: string | null;
 }
 
 /** POST /api/projects/{project_id}/walks (multipart: kind, rewalk_of?, clips[] in order). */
@@ -420,11 +433,16 @@ export interface EvidenceOut {
   /** pixel size of image_url/raw_url; SVG paths and boxes use it (viewBox). */
   width: number;
   height: number;
-  tape_svg: string | null;
+  /** defect outline (red), SVG path d. */
   defect_svg: string | null;
-  tape_box: BoxOut | null;
   defect_box: BoxOut | null;
   crop_box: BoxOut | null;
+  /** "pointed here" marker (small blue dot); null for voice-only items. */
+  pointer: XYOut | null;
+  /** URL of the frame where the hand points, hand outlined (blue). */
+  pointing_frame: string | null;
+  /** the hand in pointing_frame (same pixel size as image_url). */
+  hand_box: BoxOut | null;
   grounding: Grounding;
   sam_concept: string | null;
 }
@@ -478,7 +496,7 @@ export interface ItemOut {
   project_id: string;
   number: number;
   origin_walk_id: string;
-  mark_id: string | null;
+  point_id: string | null;
   turn_ids: string[];
   title: string;
   description: string;
@@ -572,23 +590,26 @@ export interface ShareItemOut {
 export interface WalkDetailOut {
   walk: WalkOut;
   turns: TurnOut[];
-  marks: MarkOut[];
+  points: PointOut[];
   items: ItemOut[];
 }
 
 // =========================================================================== overlay
 
-export interface OverlayMarkOut {
-  mark_id: string;
-  item_id: string | null;
+/** The inspector's hand in one overlay frame, around a pointing event. */
+export interface OverlayHandOut {
+  point_id: string;
+  /** the item's number, for the number tab at the fingertip; null if no item. */
   number: number | null;
   box: BoxOut;
   svg: string;
+  /** set while the hand is held still (pointing), else null. */
+  fingertip: XYOut | null;
 }
 
 export interface OverlayFrameOut {
   t: number;
-  marks: OverlayMarkOut[];
+  hands: OverlayHandOut[];
 }
 
 export interface OverlayEventOut {
@@ -598,7 +619,7 @@ export interface OverlayEventOut {
 }
 
 /**
- * GET /api/walks/{walk_id}/overlay. Sampled at fps (10); only frames with a visible mark are listed,
+ * GET /api/walks/{walk_id}/overlay. Sampled at fps (10); only frames with a hand on screen are listed,
  * so no frame within 1/fps of the current time means no outlines. Coordinates: width x height.
  */
 export interface OverlayOut {

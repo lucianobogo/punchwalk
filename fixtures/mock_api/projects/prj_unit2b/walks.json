@@ -10,7 +10,7 @@
       "job_id": "job_2b_rewalk",
       "recorded_at": "2026-11-04T13:05:00Z",
       "created_at": "2026-11-04T13:20:00Z",
-      "updated_at": "2026-11-04T13:21:15.900000Z",
+      "updated_at": "2026-11-04T13:21:15.700000Z",
       "clips": [
         {
           "order": 0,
@@ -49,39 +49,42 @@
           "model_label": "Muse Voice Transcribe"
         },
         {
-          "stage": "track_tape",
-          "label": "Finding tape",
+          "stage": "track_hands",
+          "label": "Following your hand (SAM 3.1)",
           "status": "done",
           "started_at": "2026-11-04T13:20:16.300000Z",
           "finished_at": "2026-11-04T13:20:48.100000Z",
           "duration_ms": 31800,
           "counts": {
-            "marks": 4
+            "frames": 1040,
+            "hands": 10
           },
           "progress": null,
-          "detail": "SAM 3.1 found 4 tape marks",
+          "detail": "10 points found",
           "model_label": "SAM 3.1"
         },
         {
-          "stage": "merge_marks",
-          "label": "Following each strip of tape",
+          "stage": "find_points",
+          "label": "Finding where you pointed",
           "status": "done",
           "started_at": "2026-11-04T13:20:48.100000Z",
-          "finished_at": "2026-11-04T13:20:49Z",
-          "duration_ms": 900,
+          "finished_at": "2026-11-04T13:20:48.800000Z",
+          "duration_ms": 700,
           "counts": {
-            "marks": 4
+            "points": 10,
+            "mentions": 10,
+            "voice_only": 0
           },
           "progress": null,
-          "detail": "4 marks after joining repeat sightings",
+          "detail": "10 places you pointed",
           "model_label": null
         },
         {
           "stage": "classify_turns",
           "label": "Sorting what was said",
           "status": "done",
-          "started_at": "2026-11-04T13:20:49Z",
-          "finished_at": "2026-11-04T13:20:53.100000Z",
+          "started_at": "2026-11-04T13:20:48.800000Z",
+          "finished_at": "2026-11-04T13:20:52.900000Z",
           "duration_ms": 4100,
           "counts": {
             "lines": 17
@@ -92,10 +95,10 @@
         },
         {
           "stage": "fuse",
-          "label": "Matching what was said to each mark",
+          "label": "Matching what was said to each point",
           "status": "done",
-          "started_at": "2026-11-04T13:20:53.100000Z",
-          "finished_at": "2026-11-04T13:20:53.200000Z",
+          "started_at": "2026-11-04T13:20:52.900000Z",
+          "finished_at": "2026-11-04T13:20:53Z",
           "duration_ms": 100,
           "counts": {
             "status_updates": 10
@@ -108,8 +111,8 @@
           "stage": "pick_evidence",
           "label": "Picking the clearest photo",
           "status": "done",
-          "started_at": "2026-11-04T13:20:53.200000Z",
-          "finished_at": "2026-11-04T13:20:56.100000Z",
+          "started_at": "2026-11-04T13:20:53Z",
+          "finished_at": "2026-11-04T13:20:55.900000Z",
           "duration_ms": 2900,
           "counts": {
             "photos": 10
@@ -122,8 +125,8 @@
           "stage": "resolve_closures",
           "label": "Checking what was fixed",
           "status": "done",
-          "started_at": "2026-11-04T13:20:56.100000Z",
-          "finished_at": "2026-11-04T13:21:15.500000Z",
+          "started_at": "2026-11-04T13:20:55.900000Z",
+          "finished_at": "2026-11-04T13:21:15.300000Z",
           "duration_ms": 19400,
           "counts": {
             "signed_off": 6,
@@ -138,8 +141,8 @@
           "stage": "persist",
           "label": "Saving the punch list",
           "status": "done",
-          "started_at": "2026-11-04T13:21:15.500000Z",
-          "finished_at": "2026-11-04T13:21:15.900000Z",
+          "started_at": "2026-11-04T13:21:15.300000Z",
+          "finished_at": "2026-11-04T13:21:15.700000Z",
           "duration_ms": 400,
           "counts": {},
           "progress": null,
@@ -160,7 +163,7 @@
       "error": null,
       "counts": {
         "items": 10,
-        "marks": 4,
+        "points": 10,
         "turns": 17,
         "needs_review": 1,
         "signed_off": 6,
@@ -178,7 +181,7 @@
       "job_id": "job_2b_first",
       "recorded_at": "2026-11-03T15:12:00Z",
       "created_at": "2026-11-03T15:40:00Z",
-      "updated_at": "2026-11-03T15:41:57Z",
+      "updated_at": "2026-11-03T15:41:56.600000Z",
       "clips": [
         {
           "order": 0,
@@ -216,76 +219,79 @@
           "finished_at": "2026-11-03T15:40:21.300000Z",
           "duration_ms": 7100,
           "counts": {
-            "lines": 20
+            "lines": 21
           },
           "progress": null,
-          "detail": "Muse Voice Transcribe found 20 lines",
+          "detail": "Muse Voice Transcribe found 21 lines",
           "model_label": "Muse Voice Transcribe"
         },
         {
-          "stage": "track_tape",
-          "label": "Finding tape",
+          "stage": "track_hands",
+          "label": "Following your hand (SAM 3.1)",
           "status": "done",
           "started_at": "2026-11-03T15:40:21.300000Z",
           "finished_at": "2026-11-03T15:41:05.700000Z",
           "duration_ms": 44400,
           "counts": {
-            "marks": 11
+            "frames": 1535,
+            "hands": 11
           },
           "progress": null,
-          "detail": "SAM 3.1 found 11 tape marks",
+          "detail": "11 points found",
           "model_label": "SAM 3.1"
         },
         {
-          "stage": "merge_marks",
-          "label": "Following each strip of tape",
+          "stage": "find_points",
+          "label": "Finding where you pointed",
           "status": "done",
           "started_at": "2026-11-03T15:41:05.700000Z",
-          "finished_at": "2026-11-03T15:41:08.100000Z",
-          "duration_ms": 2400,
+          "finished_at": "2026-11-03T15:41:06.800000Z",
+          "duration_ms": 1100,
           "counts": {
-            "marks": 11
+            "points": 11,
+            "mentions": 12,
+            "voice_only": 1
           },
           "progress": null,
-          "detail": "11 marks after joining repeat sightings",
+          "detail": "11 places you pointed, 1 described without pointing",
           "model_label": null
         },
         {
           "stage": "classify_turns",
           "label": "Sorting what was said",
           "status": "done",
-          "started_at": "2026-11-03T15:41:08.100000Z",
-          "finished_at": "2026-11-03T15:41:12.900000Z",
+          "started_at": "2026-11-03T15:41:06.800000Z",
+          "finished_at": "2026-11-03T15:41:11.600000Z",
           "duration_ms": 4800,
           "counts": {
-            "lines": 20
+            "lines": 21
           },
           "progress": null,
-          "detail": "Muse Spark Open on Baseten sorted 20 lines",
+          "detail": "Muse Spark Open on Baseten sorted 21 lines",
           "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "fuse",
-          "label": "Matching what was said to each mark",
+          "label": "Matching what was said to each point",
           "status": "done",
-          "started_at": "2026-11-03T15:41:12.900000Z",
-          "finished_at": "2026-11-03T15:41:13Z",
+          "started_at": "2026-11-03T15:41:11.600000Z",
+          "finished_at": "2026-11-03T15:41:11.700000Z",
           "duration_ms": 100,
           "counts": {
-            "matched": 10,
-            "unnarrated": 1,
+            "items": 12,
+            "pointed": 11,
             "voice_only": 1
           },
           "progress": null,
-          "detail": "10 matched, 1 mark with no description, 1 described with no tape",
+          "detail": "11 matched to where you pointed, 1 described without pointing",
           "model_label": null
         },
         {
           "stage": "pick_evidence",
           "label": "Picking the clearest photo",
           "status": "done",
-          "started_at": "2026-11-03T15:41:13Z",
-          "finished_at": "2026-11-03T15:41:16.900000Z",
+          "started_at": "2026-11-03T15:41:11.700000Z",
+          "finished_at": "2026-11-03T15:41:15.600000Z",
           "duration_ms": 3900,
           "counts": {
             "photos": 12
@@ -298,24 +304,24 @@
           "stage": "write_items",
           "label": "Writing items",
           "status": "done",
-          "started_at": "2026-11-03T15:41:16.900000Z",
-          "finished_at": "2026-11-03T15:41:33.100000Z",
+          "started_at": "2026-11-03T15:41:15.600000Z",
+          "finished_at": "2026-11-03T15:41:31.800000Z",
           "duration_ms": 16200,
           "counts": {
-            "written": 11,
-            "total": 11
+            "written": 12,
+            "total": 12
           },
           "progress": null,
-          "detail": "Muse Spark Open on Baseten wrote 11 items",
+          "detail": "Muse Spark Open on Baseten wrote 12 items",
           "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "ground_defects",
           "label": "Outlining each defect",
           "status": "done",
-          "started_at": "2026-11-03T15:41:33.100000Z",
-          "finished_at": "2026-11-03T15:41:41.800000Z",
-          "duration_ms": 8700,
+          "started_at": "2026-11-03T15:41:31.800000Z",
+          "finished_at": "2026-11-03T15:41:41.400000Z",
+          "duration_ms": 9600,
           "counts": {
             "outlined": 9
           },
@@ -327,24 +333,24 @@
           "stage": "verify",
           "label": "Checking each item against its photo",
           "status": "done",
-          "started_at": "2026-11-03T15:41:41.800000Z",
-          "finished_at": "2026-11-03T15:41:56.400000Z",
+          "started_at": "2026-11-03T15:41:41.400000Z",
+          "finished_at": "2026-11-03T15:41:56Z",
           "duration_ms": 14600,
           "counts": {
-            "checked": 11,
+            "checked": 12,
             "matched": 11,
-            "total": 11
+            "total": 12
           },
           "progress": null,
-          "detail": "11 match the photo and what was said, 1 tape with no description",
+          "detail": "11 match the photo and what was said, 1 needs a look",
           "model_label": "Muse Spark Open on Baseten"
         },
         {
           "stage": "persist",
           "label": "Saving the punch list",
           "status": "done",
-          "started_at": "2026-11-03T15:41:56.400000Z",
-          "finished_at": "2026-11-03T15:41:57Z",
+          "started_at": "2026-11-03T15:41:56Z",
+          "finished_at": "2026-11-03T15:41:56.600000Z",
           "duration_ms": 600,
           "counts": {},
           "progress": null,
@@ -365,8 +371,8 @@
       "error": null,
       "counts": {
         "items": 12,
-        "marks": 11,
-        "turns": 20,
+        "points": 11,
+        "turns": 21,
         "needs_review": 2,
         "signed_off": 6,
         "still_open": 4,

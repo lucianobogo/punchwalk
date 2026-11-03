@@ -16,28 +16,37 @@
   "quote_start_s": 22.0,
   "quote_end_s": 25.4,
   "video_url": "/media/walks/wlk_3a_first/display.mp4",
-  "video_start_s": 19.0,
+  "video_start_s": 20.0,
   "video_end_s": 26.4,
   "evidence": {
-    "t": 23.0,
+    "t": 24.05,
     "image_url": "/media/items/itm_3a_02/evidence.jpg",
     "raw_url": "/media/items/itm_3a_02/frame.jpg",
     "crop_url": "/media/items/itm_3a_02/crop.jpg",
     "width": 1920,
     "height": 1080,
-    "tape_svg": null,
-    "defect_svg": "M674 927 L1314 927 L1314 972 L674 972 Z",
-    "tape_box": null,
+    "defect_svg": "M688 931 L1328 931 L1328 976 L688 976 Z",
     "defect_box": {
-      "x1": 674.2,
-      "y1": 926.8,
-      "x2": 1314.2,
-      "y2": 971.8
+      "x1": 688.0,
+      "y1": 931.0,
+      "x2": 1328.0,
+      "y2": 976.0
     },
     "crop_box": {
-      "x1": 514.2,
+      "x1": 528.0,
       "y1": 360.0,
-      "x2": 1474.2,
+      "x2": 1488.0,
+      "y2": 1080.0
+    },
+    "pointer": {
+      "x": 1188.0,
+      "y": 906.0
+    },
+    "pointing_frame": "/media/items/itm_3a_02/pointing.jpg",
+    "hand_box": {
+      "x1": 1169.7,
+      "y1": 892.3,
+      "x2": 1468.4,
       "y2": 1080.0
     },
     "grounding": "sam_concept",

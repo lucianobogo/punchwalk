@@ -3,7 +3,7 @@
   "project_id": "prj_unit2b",
   "number": 6,
   "origin_walk_id": "wlk_2b_first",
-  "mark_id": "mrk_2b1_06",
+  "point_id": "pnt_2b1_06",
   "turn_ids": [
     "trn_2b1_12"
   ],
@@ -20,35 +20,39 @@
   "quote_start_s": 92.0,
   "quote_end_s": 95.4,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 89.0,
+  "video_start_s": 90.0,
   "video_end_s": 96.4,
   "confidence": 0.9,
   "evidence": {
-    "t": 92.6,
+    "t": 94.05,
     "image_url": "/media/items/itm_2b_06/evidence.jpg",
     "raw_url": "/media/items/itm_2b_06/frame.jpg",
     "crop_url": "/media/items/itm_2b_06/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M598 848 L863 829 L870 919 L604 937 Z",
-    "defect_svg": "M846 1009 L906 1009 L906 1155 L846 1155 Z",
-    "tape_box": {
-      "x1": 598.0,
-      "y1": 829.0,
-      "x2": 869.6,
-      "y2": 937.3
-    },
+    "defect_svg": "M852 1008 L912 1008 L912 1154 L852 1154 Z",
     "defect_box": {
-      "x1": 845.8,
-      "y1": 1009.1,
-      "x2": 905.8,
-      "y2": 1155.1
+      "x1": 851.8,
+      "y1": 1008.1,
+      "x2": 911.8,
+      "y2": 1154.1
     },
     "crop_box": {
-      "x1": 425.7,
-      "y1": 747.4,
-      "x2": 1078.0,
-      "y2": 1236.7
+      "x1": 520.0,
+      "y1": 919.2,
+      "x2": 1080.0,
+      "y2": 1339.2
+    },
+    "pointer": {
+      "x": 882.0,
+      "y": 1180.2
+    },
+    "pointing_frame": "/media/items/itm_2b_06/pointing.jpg",
+    "hand_box": {
+      "x1": 745.9,
+      "y1": 1182.1,
+      "x2": 983.9,
+      "y2": 1920.0
     },
     "grounding": "sam_concept",
     "sam_concept": "door strike plate"
@@ -58,25 +62,25 @@
     "note": "Matches the photo and what was said.",
     "issues": [],
     "provider": "baseten",
-    "checked_at": "2026-11-03T15:41:49.600000Z"
+    "checked_at": "2026-11-03T15:41:48.300000Z"
   },
   "closure": {
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_10",
     "quote": "Bedroom door latches now, fixed.",
-    "after_t": 57.6,
+    "after_t": 58.65,
     "before_image_url": "/media/items/itm_2b_06/crop.jpg",
     "after_image_url": "/media/items/itm_2b_06/after.jpg",
     "after_frame_url": "/media/items/itm_2b_06/after_frame.jpg",
     "voice_status": "fixed",
     "vision_status": "fixed",
     "decision": "signed_off",
-    "note": "The defect is gone and the tape is off.",
-    "decided_at": "2026-11-04T13:21:10.900000Z"
+    "note": "The defect is gone where the inspector pointed.",
+    "decided_at": "2026-11-04T13:21:10.700000Z"
   },
   "history": [
     {
-      "at": "2026-11-03T15:41:25.300000Z",
+      "at": "2026-11-03T15:41:23.400000Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -85,7 +89,7 @@
       "note": "Written by Muse Spark Open on Baseten."
     },
     {
-      "at": "2026-11-03T15:41:49.600000Z",
+      "at": "2026-11-03T15:41:48.300000Z",
       "actor": "model",
       "action": "verified",
       "field": null,
@@ -103,7 +107,7 @@
       "note": "Sent to Keystone Door & Hardware by email (lena.brooks@example.com)."
     },
     {
-      "at": "2026-11-04T13:21:10.900000Z",
+      "at": "2026-11-04T13:21:10.700000Z",
       "actor": "model",
       "action": "rewalk_checked",
       "field": null,
@@ -112,7 +116,7 @@
       "note": "Marked fixed on the re-walk, and the defect is gone."
     },
     {
-      "at": "2026-11-04T13:21:11.100000Z",
+      "at": "2026-11-04T13:21:10.900000Z",
       "actor": "system",
       "action": "status_changed",
       "field": "status",
@@ -129,6 +133,6 @@
     "sent_at": "2026-11-03T15:42:04Z",
     "times_sent": 1
   },
-  "created_at": "2026-11-03T15:41:25.300000Z",
-  "updated_at": "2026-11-04T13:21:11.100000Z"
+  "created_at": "2026-11-03T15:41:23.400000Z",
+  "updated_at": "2026-11-04T13:21:10.900000Z"
 }

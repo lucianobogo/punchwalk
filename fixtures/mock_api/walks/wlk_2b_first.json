@@ -9,7 +9,7 @@
     "job_id": "job_2b_first",
     "recorded_at": "2026-11-03T15:12:00Z",
     "created_at": "2026-11-03T15:40:00Z",
-    "updated_at": "2026-11-03T15:41:57Z",
+    "updated_at": "2026-11-03T15:41:56.600000Z",
     "clips": [
       {
         "order": 0,
@@ -47,76 +47,79 @@
         "finished_at": "2026-11-03T15:40:21.300000Z",
         "duration_ms": 7100,
         "counts": {
-          "lines": 20
+          "lines": 21
         },
         "progress": null,
-        "detail": "Muse Voice Transcribe found 20 lines",
+        "detail": "Muse Voice Transcribe found 21 lines",
         "model_label": "Muse Voice Transcribe"
       },
       {
-        "stage": "track_tape",
-        "label": "Finding tape",
+        "stage": "track_hands",
+        "label": "Following your hand (SAM 3.1)",
         "status": "done",
         "started_at": "2026-11-03T15:40:21.300000Z",
         "finished_at": "2026-11-03T15:41:05.700000Z",
         "duration_ms": 44400,
         "counts": {
-          "marks": 11
+          "frames": 1535,
+          "hands": 11
         },
         "progress": null,
-        "detail": "SAM 3.1 found 11 tape marks",
+        "detail": "11 points found",
         "model_label": "SAM 3.1"
       },
       {
-        "stage": "merge_marks",
-        "label": "Following each strip of tape",
+        "stage": "find_points",
+        "label": "Finding where you pointed",
         "status": "done",
         "started_at": "2026-11-03T15:41:05.700000Z",
-        "finished_at": "2026-11-03T15:41:08.100000Z",
-        "duration_ms": 2400,
+        "finished_at": "2026-11-03T15:41:06.800000Z",
+        "duration_ms": 1100,
         "counts": {
-          "marks": 11
+          "points": 11,
+          "mentions": 12,
+          "voice_only": 1
         },
         "progress": null,
-        "detail": "11 marks after joining repeat sightings",
+        "detail": "11 places you pointed, 1 described without pointing",
         "model_label": null
       },
       {
         "stage": "classify_turns",
         "label": "Sorting what was said",
         "status": "done",
-        "started_at": "2026-11-03T15:41:08.100000Z",
-        "finished_at": "2026-11-03T15:41:12.900000Z",
+        "started_at": "2026-11-03T15:41:06.800000Z",
+        "finished_at": "2026-11-03T15:41:11.600000Z",
         "duration_ms": 4800,
         "counts": {
-          "lines": 20
+          "lines": 21
         },
         "progress": null,
-        "detail": "Muse Spark Open on Baseten sorted 20 lines",
+        "detail": "Muse Spark Open on Baseten sorted 21 lines",
         "model_label": "Muse Spark Open on Baseten"
       },
       {
         "stage": "fuse",
-        "label": "Matching what was said to each mark",
+        "label": "Matching what was said to each point",
         "status": "done",
-        "started_at": "2026-11-03T15:41:12.900000Z",
-        "finished_at": "2026-11-03T15:41:13Z",
+        "started_at": "2026-11-03T15:41:11.600000Z",
+        "finished_at": "2026-11-03T15:41:11.700000Z",
         "duration_ms": 100,
         "counts": {
-          "matched": 10,
-          "unnarrated": 1,
+          "items": 12,
+          "pointed": 11,
           "voice_only": 1
         },
         "progress": null,
-        "detail": "10 matched, 1 mark with no description, 1 described with no tape",
+        "detail": "11 matched to where you pointed, 1 described without pointing",
         "model_label": null
       },
       {
         "stage": "pick_evidence",
         "label": "Picking the clearest photo",
         "status": "done",
-        "started_at": "2026-11-03T15:41:13Z",
-        "finished_at": "2026-11-03T15:41:16.900000Z",
+        "started_at": "2026-11-03T15:41:11.700000Z",
+        "finished_at": "2026-11-03T15:41:15.600000Z",
         "duration_ms": 3900,
         "counts": {
           "photos": 12
@@ -129,24 +132,24 @@
         "stage": "write_items",
         "label": "Writing items",
         "status": "done",
-        "started_at": "2026-11-03T15:41:16.900000Z",
-        "finished_at": "2026-11-03T15:41:33.100000Z",
+        "started_at": "2026-11-03T15:41:15.600000Z",
+        "finished_at": "2026-11-03T15:41:31.800000Z",
         "duration_ms": 16200,
         "counts": {
-          "written": 11,
-          "total": 11
+          "written": 12,
+          "total": 12
         },
         "progress": null,
-        "detail": "Muse Spark Open on Baseten wrote 11 items",
+        "detail": "Muse Spark Open on Baseten wrote 12 items",
         "model_label": "Muse Spark Open on Baseten"
       },
       {
         "stage": "ground_defects",
         "label": "Outlining each defect",
         "status": "done",
-        "started_at": "2026-11-03T15:41:33.100000Z",
-        "finished_at": "2026-11-03T15:41:41.800000Z",
-        "duration_ms": 8700,
+        "started_at": "2026-11-03T15:41:31.800000Z",
+        "finished_at": "2026-11-03T15:41:41.400000Z",
+        "duration_ms": 9600,
         "counts": {
           "outlined": 9
         },
@@ -158,24 +161,24 @@
         "stage": "verify",
         "label": "Checking each item against its photo",
         "status": "done",
-        "started_at": "2026-11-03T15:41:41.800000Z",
-        "finished_at": "2026-11-03T15:41:56.400000Z",
+        "started_at": "2026-11-03T15:41:41.400000Z",
+        "finished_at": "2026-11-03T15:41:56Z",
         "duration_ms": 14600,
         "counts": {
-          "checked": 11,
+          "checked": 12,
           "matched": 11,
-          "total": 11
+          "total": 12
         },
         "progress": null,
-        "detail": "11 match the photo and what was said, 1 tape with no description",
+        "detail": "11 match the photo and what was said, 1 needs a look",
         "model_label": "Muse Spark Open on Baseten"
       },
       {
         "stage": "persist",
         "label": "Saving the punch list",
         "status": "done",
-        "started_at": "2026-11-03T15:41:56.400000Z",
-        "finished_at": "2026-11-03T15:41:57Z",
+        "started_at": "2026-11-03T15:41:56Z",
+        "finished_at": "2026-11-03T15:41:56.600000Z",
         "duration_ms": 600,
         "counts": {},
         "progress": null,
@@ -196,8 +199,8 @@
     "error": null,
     "counts": {
       "items": 12,
-      "marks": 11,
-      "turns": 20,
+      "points": 11,
+      "turns": 21,
       "needs_review": 2,
       "signed_off": 6,
       "still_open": 4,
@@ -393,6 +396,20 @@
       "id": "trn_2b1_15",
       "walk_id": "wlk_2b_first",
       "idx": 14,
+      "start_ms": 119000,
+      "end_ms": 122000,
+      "text": "Closet door's got a dent down at the bottom.",
+      "kind": "defect",
+      "room": "Bedroom",
+      "claimed": null,
+      "item_ids": [
+        "itm_2b_12"
+      ]
+    },
+    {
+      "id": "trn_2b1_16",
+      "walk_id": "wlk_2b_first",
+      "idx": 15,
       "start_ms": 124000,
       "end_ms": 124800,
       "text": "Hallway.",
@@ -402,9 +419,9 @@
       "item_ids": []
     },
     {
-      "id": "trn_2b1_16",
+      "id": "trn_2b1_17",
       "walk_id": "wlk_2b_first",
-      "idx": 15,
+      "idx": 16,
       "start_ms": 127500,
       "end_ms": 130500,
       "text": "Switch plate by the hall closet is crooked.",
@@ -416,9 +433,9 @@
       ]
     },
     {
-      "id": "trn_2b1_17",
+      "id": "trn_2b1_18",
       "walk_id": "wlk_2b_first",
-      "idx": 16,
+      "idx": 17,
       "start_ms": 135000,
       "end_ms": 136000,
       "text": "Living room.",
@@ -428,9 +445,9 @@
       "item_ids": []
     },
     {
-      "id": "trn_2b1_18",
+      "id": "trn_2b1_19",
       "walk_id": "wlk_2b_first",
-      "idx": 17,
+      "idx": 18,
       "start_ms": 139000,
       "end_ms": 142200,
       "text": "Window screen's missing on the left window.",
@@ -442,9 +459,9 @@
       ]
     },
     {
-      "id": "trn_2b1_19",
+      "id": "trn_2b1_20",
       "walk_id": "wlk_2b_first",
-      "idx": 18,
+      "idx": 19,
       "start_ms": 147500,
       "end_ms": 151000,
       "text": "And there's sawdust on the floor by the window, needs a sweep.",
@@ -456,9 +473,9 @@
       ]
     },
     {
-      "id": "trn_2b1_20",
+      "id": "trn_2b1_21",
       "walk_id": "wlk_2b_first",
-      "idx": 19,
+      "idx": 20,
       "start_ms": 151600,
       "end_ms": 153000,
       "text": "That's the walk.",
@@ -468,265 +485,259 @@
       "item_ids": []
     }
   ],
-  "marks": [
+  "points": [
     {
-      "id": "mrk_2b1_01",
+      "id": "pnt_2b1_01",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_01",
+      "item_number": 1,
       "number": 1,
+      "t": 14.5,
+      "frame": 145,
+      "fingertip_x": 619.8,
+      "fingertip_y": 1032.3,
+      "hand_box": {
+        "x1": 544.4,
+        "y1": 1031.8,
+        "x2": 885.9,
+        "y2": 1920.0
+      },
+      "hold_s": 1.8,
       "sam_object_ids": [
         "a:1"
       ],
-      "intervals": [
-        {
-          "start_s": 9.3,
-          "end_s": 18.4
-        }
-      ],
-      "best_t": 14.6,
-      "box_at_best": {
-        "x1": 584.2,
-        "y1": 768.4,
-        "x2": 910.8,
-        "y2": 909.4
-      },
-      "mean_conf": 0.78
+      "mean_conf": 0.86,
+      "turn_id": "trn_2b1_03"
     },
     {
-      "id": "mrk_2b1_02",
+      "id": "pnt_2b1_02",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_02",
+      "item_number": 2,
       "number": 2,
-      "sam_object_ids": [
-        "a:2",
-        "a:3"
-      ],
-      "intervals": [
-        {
-          "start_s": 22.3,
-          "end_s": 24.6
-        },
-        {
-          "start_s": 25.4,
-          "end_s": 31.6
-        }
-      ],
-      "best_t": 27.6,
-      "box_at_best": {
-        "x1": 625.8,
-        "y1": 1326.1,
-        "x2": 921.8,
-        "y2": 1420.1
+      "t": 27.4,
+      "frame": 274,
+      "fingertip_x": 594.8,
+      "fingertip_y": 1542.7,
+      "hand_box": {
+        "x1": 579.7,
+        "y1": 1540.8,
+        "x2": 847.4,
+        "y2": 1920.0
       },
-      "mean_conf": 0.795
+      "hold_s": 1.6,
+      "sam_object_ids": [
+        "a:2"
+      ],
+      "mean_conf": 0.87,
+      "turn_id": "trn_2b1_05"
     },
     {
-      "id": "mrk_2b1_03",
+      "id": "pnt_2b1_03",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_03",
+      "item_number": 3,
       "number": 3,
+      "t": 40.1,
+      "frame": 401,
+      "fingertip_x": 578.2,
+      "fingertip_y": 745.3,
+      "hand_box": {
+        "x1": 500.4,
+        "y1": 744.9,
+        "x2": 895.6,
+        "y2": 1920.0
+      },
+      "hold_s": 2.0,
+      "sam_object_ids": [
+        "a:3"
+      ],
+      "mean_conf": 0.88,
+      "turn_id": "trn_2b1_06"
+    },
+    {
+      "id": "pnt_2b1_04",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_04",
+      "item_number": 4,
+      "number": 4,
+      "t": 57.5,
+      "frame": 575,
+      "fingertip_x": 592.8,
+      "fingertip_y": 1097.0,
+      "hand_box": {
+        "x1": 530.5,
+        "y1": 1096.3,
+        "x2": 887.5,
+        "y2": 1920.0
+      },
+      "hold_s": 1.7,
       "sam_object_ids": [
         "a:4"
       ],
-      "intervals": [
-        {
-          "start_s": 34.8,
-          "end_s": 43.7
-        }
-      ],
-      "best_t": 40.1,
-      "box_at_best": {
-        "x1": 672.9,
-        "y1": 516.7,
-        "x2": 962.0,
-        "y2": 664.1
-      },
-      "mean_conf": 0.81
+      "mean_conf": 0.89,
+      "turn_id": "trn_2b1_08"
     },
     {
-      "id": "mrk_2b1_04",
+      "id": "pnt_2b1_05",
       "walk_id": "wlk_2b_first",
-      "item_id": "itm_2b_04",
-      "number": 4,
+      "item_id": "itm_2b_05",
+      "item_number": 5,
+      "number": 5,
+      "t": 70.0,
+      "frame": 700,
+      "fingertip_x": 636.6,
+      "fingertip_y": 854.7,
+      "hand_box": {
+        "x1": 550.8,
+        "y1": 854.5,
+        "x2": 898.2,
+        "y2": 1920.0
+      },
+      "hold_s": 1.9,
       "sam_object_ids": [
         "a:5"
       ],
-      "intervals": [
-        {
-          "start_s": 52.3,
-          "end_s": 61.8
-        }
-      ],
-      "best_t": 57.6,
-      "box_at_best": {
-        "x1": 400.7,
-        "y1": 1027.1,
-        "x2": 701.1,
-        "y2": 1134.5
-      },
-      "mean_conf": 0.825
+      "mean_conf": 0.9,
+      "turn_id": "trn_2b1_09"
     },
     {
-      "id": "mrk_2b1_05",
-      "walk_id": "wlk_2b_first",
-      "item_id": "itm_2b_05",
-      "number": 5,
-      "sam_object_ids": [
-        "a:6"
-      ],
-      "intervals": [
-        {
-          "start_s": 64.8,
-          "end_s": 74.0
-        }
-      ],
-      "best_t": 70.1,
-      "box_at_best": {
-        "x1": 151.7,
-        "y1": 1180.6,
-        "x2": 440.7,
-        "y2": 1280.5
-      },
-      "mean_conf": 0.84
-    },
-    {
-      "id": "mrk_2b1_06",
+      "id": "pnt_2b1_06",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_06",
+      "item_number": 6,
       "number": 6,
+      "t": 92.6,
+      "frame": 926,
+      "fingertip_x": 877.3,
+      "fingertip_y": 1182.1,
+      "hand_box": {
+        "x1": 745.9,
+        "y1": 1182.1,
+        "x2": 983.9,
+        "y2": 1920.0
+      },
+      "hold_s": 2.0,
       "sam_object_ids": [
         "b:1"
       ],
-      "intervals": [
-        {
-          "start_s": 87.3,
-          "end_s": 96.6
-        }
-      ],
-      "best_t": 92.6,
-      "box_at_best": {
-        "x1": 598.0,
-        "y1": 829.0,
-        "x2": 869.6,
-        "y2": 937.3
-      },
-      "mean_conf": 0.855
+      "mean_conf": 0.91,
+      "turn_id": "trn_2b1_12"
     },
     {
-      "id": "mrk_2b1_07",
+      "id": "pnt_2b1_07",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_07",
+      "item_number": 7,
       "number": 7,
+      "t": 104.5,
+      "frame": 1045,
+      "fingertip_x": 435.0,
+      "fingertip_y": 1111.2,
+      "hand_box": {
+        "x1": 409.1,
+        "y1": 1109.7,
+        "x2": 847.4,
+        "y2": 1920.0
+      },
+      "hold_s": 1.8,
       "sam_object_ids": [
         "b:2"
       ],
-      "intervals": [
-        {
-          "start_s": 99.3,
-          "end_s": 108.0
-        }
-      ],
-      "best_t": 104.6,
-      "box_at_best": {
-        "x1": 269.5,
-        "y1": 789.0,
-        "x2": 563.5,
-        "y2": 910.4
-      },
-      "mean_conf": 0.87
+      "mean_conf": 0.92,
+      "turn_id": "trn_2b1_13"
     },
     {
-      "id": "mrk_2b1_12",
+      "id": "pnt_2b1_08",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_12",
-      "number": 12,
-      "sam_object_ids": [
-        "b:3",
-        "b:4"
-      ],
-      "intervals": [
-        {
-          "start_s": 117.9,
-          "end_s": 123.1
-        }
-      ],
-      "best_t": 120.5,
-      "box_at_best": {
-        "x1": 420.5,
-        "y1": 926.1,
-        "x2": 709.6,
-        "y2": 1028.0
+      "item_number": 12,
+      "number": 8,
+      "t": 119.4,
+      "frame": 1194,
+      "fingertip_x": 546.2,
+      "fingertip_y": 1439.4,
+      "hand_box": {
+        "x1": 525.1,
+        "y1": 1437.7,
+        "x2": 833.1,
+        "y2": 1920.0
       },
-      "mean_conf": 0.885
+      "hold_s": 1.7,
+      "sam_object_ids": [
+        "b:3"
+      ],
+      "mean_conf": 0.93,
+      "turn_id": "trn_2b1_15"
     },
     {
-      "id": "mrk_2b1_08",
+      "id": "pnt_2b1_09",
       "walk_id": "wlk_2b_first",
       "item_id": "itm_2b_08",
-      "number": 8,
+      "item_number": 8,
+      "number": 9,
+      "t": 128.1,
+      "frame": 1281,
+      "fingertip_x": 590.3,
+      "fingertip_y": 1108.3,
+      "hand_box": {
+        "x1": 527.8,
+        "y1": 1107.6,
+        "x2": 881.1,
+        "y2": 1920.0
+      },
+      "hold_s": 2.0,
+      "sam_object_ids": [
+        "b:4"
+      ],
+      "mean_conf": 0.94,
+      "turn_id": "trn_2b1_17"
+    },
+    {
+      "id": "pnt_2b1_10",
+      "walk_id": "wlk_2b_first",
+      "item_id": "itm_2b_09",
+      "item_number": 9,
+      "number": 10,
+      "t": 139.4,
+      "frame": 1394,
+      "fingertip_x": 686.8,
+      "fingertip_y": 1345.7,
+      "hand_box": {
+        "x1": 618.2,
+        "y1": 1345.0,
+        "x2": 900.6,
+        "y2": 1920.0
+      },
+      "hold_s": 1.6,
       "sam_object_ids": [
         "b:5"
       ],
-      "intervals": [
-        {
-          "start_s": 124.9,
-          "end_s": 131.7
-        }
-      ],
-      "best_t": 128.1,
-      "box_at_best": {
-        "x1": 633.7,
-        "y1": 854.6,
-        "x2": 909.7,
-        "y2": 944.6
-      },
-      "mean_conf": 0.9
+      "mean_conf": 0.86,
+      "turn_id": "trn_2b1_19"
     },
     {
-      "id": "mrk_2b1_09",
+      "id": "pnt_2b1_11",
       "walk_id": "wlk_2b_first",
-      "item_id": "itm_2b_09",
-      "number": 9,
+      "item_id": "itm_2b_10",
+      "item_number": 10,
+      "number": 11,
+      "t": 148.0,
+      "frame": 1480,
+      "fingertip_x": 572.3,
+      "fingertip_y": 1499.7,
+      "hand_box": {
+        "x1": 551.7,
+        "y1": 1498.0,
+        "x2": 833.9,
+        "y2": 1920.0
+      },
+      "hold_s": 1.9,
       "sam_object_ids": [
         "b:6"
       ],
-      "intervals": [
-        {
-          "start_s": 136.5,
-          "end_s": 143.4
-        }
-      ],
-      "best_t": 139.6,
-      "box_at_best": {
-        "x1": 401.5,
-        "y1": 1372.4,
-        "x2": 697.5,
-        "y2": 1464.4
-      },
-      "mean_conf": 0.915
-    },
-    {
-      "id": "mrk_2b1_10",
-      "walk_id": "wlk_2b_first",
-      "item_id": "itm_2b_10",
-      "number": 10,
-      "sam_object_ids": [
-        "b:7"
-      ],
-      "intervals": [
-        {
-          "start_s": 144.3,
-          "end_s": 152.2
-        }
-      ],
-      "best_t": 148.1,
-      "box_at_best": {
-        "x1": 638.5,
-        "y1": 1176.7,
-        "x2": 928.6,
-        "y2": 1332.7
-      },
-      "mean_conf": 0.78
+      "mean_conf": 0.87,
+      "turn_id": "trn_2b1_20"
     }
   ],
   "items": [
@@ -735,7 +746,7 @@
       "project_id": "prj_unit2b",
       "number": 1,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_01",
+      "point_id": "pnt_2b1_01",
       "turn_ids": [
         "trn_2b1_03"
       ],
@@ -752,35 +763,39 @@
       "quote_start_s": 14.0,
       "quote_end_s": 17.2,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 11.0,
+      "video_start_s": 12.0,
       "video_end_s": 18.2,
       "confidence": 0.93,
       "evidence": {
-        "t": 14.6,
+        "t": 15.85,
         "image_url": "/media/items/itm_2b_01/evidence.jpg",
         "raw_url": "/media/items/itm_2b_01/frame.jpg",
         "crop_url": "/media/items/itm_2b_01/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M584 812 L897 768 L911 865 L598 909 Z",
-        "defect_svg": "M651 961 L649 975 L643 988 L633 998 L620 1005 L605 1007 L591 1005 L578 998 L568 988 L562 975 L559 961 L562 947 L568 934 L578 924 L591 917 L605 915 L620 917 L633 924 L643 934 L649 947 Z",
-        "tape_box": {
-          "x1": 584.2,
-          "y1": 768.4,
-          "x2": 910.8,
-          "y2": 909.4
-        },
+        "defect_svg": "M622 973 L620 988 L613 1000 L603 1011 L590 1017 L576 1019 L562 1017 L549 1011 L539 1000 L532 988 L530 973 L532 959 L539 946 L549 936 L562 930 L576 927 L590 930 L603 936 L613 946 L620 959 Z",
         "defect_box": {
-          "x1": 559.5,
-          "y1": 914.9,
-          "x2": 651.5,
-          "y2": 1006.9
+          "x1": 530.0,
+          "y1": 927.4,
+          "x2": 622.0,
+          "y2": 1019.4
         },
         "crop_box": {
-          "x1": 455.1,
-          "y1": 677.6,
-          "x2": 1015.1,
-          "y2": 1097.6
+          "x1": 310.9,
+          "y1": 810.4,
+          "x2": 870.9,
+          "y2": 1230.4
+        },
+        "pointer": {
+          "x": 590.9,
+          "y": 1043.5
+        },
+        "pointing_frame": "/media/items/itm_2b_01/pointing.jpg",
+        "hand_box": {
+          "x1": 544.4,
+          "y1": 1031.8,
+          "x2": 885.9,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "cabinet knob hole"
@@ -790,25 +805,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:43.100000Z"
+        "checked_at": "2026-11-03T15:41:42.550000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_03",
         "quote": "Cabinet knob, fixed.",
-        "after_t": 9.6,
+        "after_t": 10.65,
         "before_image_url": "/media/items/itm_2b_01/crop.jpg",
         "after_image_url": "/media/items/itm_2b_01/after.jpg",
         "after_frame_url": "/media/items/itm_2b_01/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:02.400000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:02.200000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:18.300000Z",
+          "at": "2026-11-03T15:41:16.900000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -817,7 +832,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:43.100000Z",
+          "at": "2026-11-03T15:41:42.550000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -835,7 +850,7 @@
           "note": "Sent to Oakline Millwork by email (dev.patel@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:02.400000Z",
+          "at": "2026-11-04T13:21:02.200000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -844,7 +859,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:02.600000Z",
+          "at": "2026-11-04T13:21:02.400000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -861,15 +876,15 @@
         "sent_at": "2026-11-03T15:42:01Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:18.300000Z",
-      "updated_at": "2026-11-04T13:21:02.600000Z"
+      "created_at": "2026-11-03T15:41:16.900000Z",
+      "updated_at": "2026-11-04T13:21:02.400000Z"
     },
     {
       "id": "itm_2b_02",
       "project_id": "prj_unit2b",
       "number": 2,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_02",
+      "point_id": "pnt_2b1_02",
       "turn_ids": [
         "trn_2b1_05"
       ],
@@ -886,35 +901,39 @@
       "quote_start_s": 27.0,
       "quote_end_s": 30.4,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 24.0,
+      "video_start_s": 25.0,
       "video_end_s": 31.4,
       "confidence": 0.91,
       "evidence": {
-        "t": 27.6,
+        "t": 28.65,
         "image_url": "/media/items/itm_2b_02/evidence.jpg",
         "raw_url": "/media/items/itm_2b_02/frame.jpg",
         "crop_url": "/media/items/itm_2b_02/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M626 1326 L922 1326 L922 1420 L626 1420 Z",
-        "defect_svg": "M659 1428 L653 1457 L638 1484 L613 1505 L583 1518 L549 1523 L515 1518 L484 1505 L460 1484 L444 1457 L439 1428 L444 1399 L460 1372 L484 1351 L515 1338 L549 1333 L583 1338 L613 1351 L638 1372 L653 1399 Z",
-        "tape_box": {
-          "x1": 625.8,
-          "y1": 1326.1,
-          "x2": 921.8,
-          "y2": 1420.1
-        },
+        "defect_svg": "M660 1426 L655 1456 L639 1482 L615 1503 L584 1517 L550 1521 L516 1517 L486 1503 L461 1482 L446 1456 L440 1426 L446 1397 L461 1371 L486 1350 L516 1336 L550 1331 L584 1336 L615 1350 L639 1371 L655 1397 Z",
         "defect_box": {
-          "x1": 438.8,
-          "y1": 1333.1,
-          "x2": 658.8,
-          "y2": 1523.1
+          "x1": 440.3,
+          "y1": 1331.4,
+          "x2": 660.3,
+          "y2": 1521.4
         },
         "crop_box": {
-          "x1": 318.0,
-          "y1": 1152.9,
-          "x2": 1042.5,
-          "y2": 1696.3
+          "x1": 275.7,
+          "y1": 1259.7,
+          "x2": 835.7,
+          "y2": 1679.7
+        },
+        "pointer": {
+          "x": 601.0,
+          "y": 1538.1
+        },
+        "pointing_frame": "/media/items/itm_2b_02/pointing.jpg",
+        "hand_box": {
+          "x1": 579.7,
+          "y1": 1540.8,
+          "x2": 847.4,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "coffee stain"
@@ -924,25 +943,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:44.400000Z"
+        "checked_at": "2026-11-03T15:41:43.700000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_04",
         "quote": "Coffee drips on the counter, fixed.",
-        "after_t": 18.6,
+        "after_t": 19.75,
         "before_image_url": "/media/items/itm_2b_02/crop.jpg",
         "after_image_url": "/media/items/itm_2b_02/after.jpg",
         "after_frame_url": "/media/items/itm_2b_02/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "still_visible",
         "decision": "needs_review",
-        "note": "Coffee drips are still visible next to the tape.",
-        "decided_at": "2026-11-04T13:21:04.100000Z"
+        "note": "Coffee drips are still visible where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:03.900000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:19.700000Z",
+          "at": "2026-11-03T15:41:18.200000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -951,7 +970,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:44.400000Z",
+          "at": "2026-11-03T15:41:43.700000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -969,7 +988,7 @@
           "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:04.100000Z",
+          "at": "2026-11-04T13:21:03.900000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -978,7 +997,7 @@
           "note": "Marked fixed on the re-walk, but the coffee drips are still visible."
         },
         {
-          "at": "2026-11-04T13:21:04.300000Z",
+          "at": "2026-11-04T13:21:04.100000Z",
           "actor": "system",
           "action": "flagged",
           "field": "status",
@@ -995,15 +1014,15 @@
         "sent_at": "2026-11-03T15:42:02Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:19.700000Z",
-      "updated_at": "2026-11-04T13:21:04.300000Z"
+      "created_at": "2026-11-03T15:41:18.200000Z",
+      "updated_at": "2026-11-04T13:21:04.100000Z"
     },
     {
       "id": "itm_2b_03",
       "project_id": "prj_unit2b",
       "number": 3,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_03",
+      "point_id": "pnt_2b1_03",
       "turn_ids": [
         "trn_2b1_06"
       ],
@@ -1020,35 +1039,39 @@
       "quote_start_s": 39.5,
       "quote_end_s": 42.5,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 36.5,
+      "video_start_s": 37.5,
       "video_end_s": 43.5,
       "confidence": 0.88,
       "evidence": {
-        "t": 40.1,
+        "t": 41.55,
         "image_url": "/media/items/itm_2b_03/evidence.jpg",
         "raw_url": "/media/items/itm_2b_03/frame.jpg",
         "crop_url": "/media/items/itm_2b_03/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M692 517 L962 574 L943 664 L673 607 Z",
-        "defect_svg": "M709 550 L704 595 L686 636 L659 672 L623 699 L582 717 L537 722 L493 717 L451 699 L416 672 L389 636 L371 595 L365 550 L371 506 L389 464 L416 429 L451 401 L493 384 L537 378 L582 384 L623 401 L659 429 L686 464 L704 506 Z",
-        "tape_box": {
-          "x1": 672.9,
-          "y1": 516.7,
-          "x2": 962.0,
-          "y2": 664.1
-        },
+        "defect_svg": "M684 547 L678 591 L661 633 L633 668 L598 696 L556 713 L512 719 L467 713 L426 696 L390 668 L363 633 L345 591 L340 547 L345 502 L363 461 L390 425 L426 398 L467 380 L512 375 L556 380 L598 398 L633 425 L661 461 L678 502 Z",
         "defect_box": {
-          "x1": 365.5,
-          "y1": 378.4,
-          "x2": 709.5,
-          "y2": 722.4
+          "x1": 339.6,
+          "y1": 374.5,
+          "x2": 683.6,
+          "y2": 718.5
         },
         "crop_box": {
-          "x1": 185.2,
-          "y1": 214.9,
-          "x2": 1080.0,
-          "y2": 886.0
+          "x1": 75.8,
+          "y1": 265.6,
+          "x2": 947.3,
+          "y2": 919.2
+        },
+        "pointer": {
+          "x": 550.8,
+          "y": 740.3
+        },
+        "pointing_frame": "/media/items/itm_2b_03/pointing.jpg",
+        "hand_box": {
+          "x1": 500.4,
+          "y1": 744.9,
+          "x2": 895.6,
+          "y2": 1920.0
         },
         "grounding": "sam_box",
         "sam_concept": "ceiling light fixture"
@@ -1058,25 +1081,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:45.700000Z"
+        "checked_at": "2026-11-03T15:41:44.850000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_05",
         "quote": "Light over the sink, fixed.",
-        "after_t": 26.6,
+        "after_t": 27.85,
         "before_image_url": "/media/items/itm_2b_03/crop.jpg",
         "after_image_url": "/media/items/itm_2b_03/after.jpg",
         "after_frame_url": "/media/items/itm_2b_03/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:05.800000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:05.600000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:21.100000Z",
+          "at": "2026-11-03T15:41:19.500000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1085,7 +1108,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:45.700000Z",
+          "at": "2026-11-03T15:41:44.850000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1103,7 +1126,7 @@
           "note": "Sent to Ace Electric on Slack (#punch-electrical)."
         },
         {
-          "at": "2026-11-04T13:21:05.800000Z",
+          "at": "2026-11-04T13:21:05.600000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1112,7 +1135,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:06Z",
+          "at": "2026-11-04T13:21:05.800000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -1129,15 +1152,15 @@
         "sent_at": "2026-11-03T15:42:03Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:21.100000Z",
-      "updated_at": "2026-11-04T13:21:06Z"
+      "created_at": "2026-11-03T15:41:19.500000Z",
+      "updated_at": "2026-11-04T13:21:05.800000Z"
     },
     {
       "id": "itm_2b_04",
       "project_id": "prj_unit2b",
       "number": 4,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_04",
+      "point_id": "pnt_2b1_04",
       "turn_ids": [
         "trn_2b1_08"
       ],
@@ -1154,35 +1177,39 @@
       "quote_start_s": 57.0,
       "quote_end_s": 60.6,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 54.0,
+      "video_start_s": 55.0,
       "video_end_s": 61.6,
       "confidence": 0.86,
       "evidence": {
-        "t": 57.6,
+        "t": 58.75,
         "image_url": "/media/items/itm_2b_04/evidence.jpg",
         "raw_url": "/media/items/itm_2b_04/frame.jpg",
         "crop_url": "/media/items/itm_2b_04/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M401 1043 L696 1027 L701 1119 L406 1134 Z",
-        "defect_svg": "M235 950 L859 1002 L867 902 L243 850 Z",
-        "tape_box": {
-          "x1": 400.7,
-          "y1": 1027.1,
-          "x2": 701.1,
-          "y2": 1134.5
-        },
+        "defect_svg": "M233 963 L857 1015 L866 915 L242 863 Z",
         "defect_box": {
-          "x1": 234.8,
-          "y1": 850.0,
-          "x2": 867.1,
-          "y2": 1001.6
+          "x1": 233.4,
+          "y1": 863.4,
+          "x2": 865.7,
+          "y2": 1015.1
         },
         "crop_box": {
-          "x1": 76.7,
-          "y1": 636.5,
-          "x2": 1025.2,
-          "y2": 1347.9
+          "x1": 75.4,
+          "y1": 666.5,
+          "x2": 1023.8,
+          "y2": 1377.8
+        },
+        "pointer": {
+          "x": 594.6,
+          "y": 1110.9
+        },
+        "pointing_frame": "/media/items/itm_2b_04/pointing.jpg",
+        "hand_box": {
+          "x1": 530.5,
+          "y1": 1096.3,
+          "x2": 887.5,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "towel bar"
@@ -1192,25 +1219,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:47Z"
+        "checked_at": "2026-11-03T15:41:46Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_07",
         "quote": "Towel bar, fixed.",
-        "after_t": 38.6,
+        "after_t": 39.95,
         "before_image_url": "/media/items/itm_2b_04/crop.jpg",
         "after_image_url": "/media/items/itm_2b_04/after.jpg",
         "after_frame_url": "/media/items/itm_2b_04/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:07.500000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:07.300000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:22.500000Z",
+          "at": "2026-11-03T15:41:20.800000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1219,7 +1246,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:47Z",
+          "at": "2026-11-03T15:41:46Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1255,7 +1282,7 @@
           "note": "Sent again to Northfield Builders from the outbox."
         },
         {
-          "at": "2026-11-04T13:21:07.500000Z",
+          "at": "2026-11-04T13:21:07.300000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1264,7 +1291,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:07.700000Z",
+          "at": "2026-11-04T13:21:07.500000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -1281,15 +1308,15 @@
         "sent_at": "2026-11-03T16:06:00Z",
         "times_sent": 2
       },
-      "created_at": "2026-11-03T15:41:22.500000Z",
-      "updated_at": "2026-11-04T13:21:07.700000Z"
+      "created_at": "2026-11-03T15:41:20.800000Z",
+      "updated_at": "2026-11-04T13:21:07.500000Z"
     },
     {
       "id": "itm_2b_05",
       "project_id": "prj_unit2b",
       "number": 5,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_05",
+      "point_id": "pnt_2b1_05",
       "turn_ids": [
         "trn_2b1_09"
       ],
@@ -1306,35 +1333,39 @@
       "quote_start_s": 69.5,
       "quote_end_s": 72.8,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 66.5,
+      "video_start_s": 67.5,
       "video_end_s": 73.8,
       "confidence": 0.92,
       "evidence": {
-        "t": 70.1,
+        "t": 71.45,
         "image_url": "/media/items/itm_2b_05/evidence.jpg",
         "raw_url": "/media/items/itm_2b_05/frame.jpg",
         "crop_url": "/media/items/itm_2b_05/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M155 1181 L441 1191 L438 1281 L152 1271 Z",
-        "defect_svg": "M773 695 L765 736 L742 774 L705 804 L659 823 L608 830 L557 823 L511 804 L475 774 L451 736 L443 695 L451 653 L475 615 L511 585 L557 566 L608 560 L659 566 L705 585 L742 615 L765 653 Z",
-        "tape_box": {
-          "x1": 151.7,
-          "y1": 1180.6,
-          "x2": 440.7,
-          "y2": 1280.5
-        },
+        "defect_svg": "M742 708 L734 750 L711 788 L674 818 L628 837 L577 843 L526 837 L480 818 L444 788 L420 750 L412 708 L420 667 L444 629 L480 599 L526 580 L577 573 L628 580 L674 599 L711 629 L734 667 Z",
         "defect_box": {
-          "x1": 443.2,
-          "y1": 559.6,
-          "x2": 773.2,
-          "y2": 829.6
+          "x1": 412.4,
+          "y1": 573.3,
+          "x2": 742.4,
+          "y2": 843.3
         },
         "crop_box": {
-          "x1": 0.0,
-          "y1": 515.1,
-          "x2": 1080.0,
-          "y2": 1325.1
+          "x1": 213.6,
+          "y1": 482.4,
+          "x2": 941.3,
+          "y2": 1028.1
+        },
+        "pointer": {
+          "x": 604.7,
+          "y": 867.2
+        },
+        "pointing_frame": "/media/items/itm_2b_05/pointing.jpg",
+        "hand_box": {
+          "x1": 550.8,
+          "y1": 854.5,
+          "x2": 898.2,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "toothpaste splatter"
@@ -1344,25 +1375,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:48.300000Z"
+        "checked_at": "2026-11-03T15:41:47.150000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_08",
         "quote": "Mirror's clean, fixed.",
-        "after_t": 46.1,
+        "after_t": 47.55,
         "before_image_url": "/media/items/itm_2b_05/crop.jpg",
         "after_image_url": "/media/items/itm_2b_05/after.jpg",
         "after_frame_url": "/media/items/itm_2b_05/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:09.200000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:09Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:23.900000Z",
+          "at": "2026-11-03T15:41:22.100000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1371,7 +1402,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:48.300000Z",
+          "at": "2026-11-03T15:41:47.150000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1389,7 +1420,7 @@
           "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:09.200000Z",
+          "at": "2026-11-04T13:21:09Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1398,7 +1429,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:09.400000Z",
+          "at": "2026-11-04T13:21:09.200000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -1415,15 +1446,15 @@
         "sent_at": "2026-11-03T15:42:02Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:23.900000Z",
-      "updated_at": "2026-11-04T13:21:09.400000Z"
+      "created_at": "2026-11-03T15:41:22.100000Z",
+      "updated_at": "2026-11-04T13:21:09.200000Z"
     },
     {
       "id": "itm_2b_06",
       "project_id": "prj_unit2b",
       "number": 6,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_06",
+      "point_id": "pnt_2b1_06",
       "turn_ids": [
         "trn_2b1_12"
       ],
@@ -1440,35 +1471,39 @@
       "quote_start_s": 92.0,
       "quote_end_s": 95.4,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 89.0,
+      "video_start_s": 90.0,
       "video_end_s": 96.4,
       "confidence": 0.9,
       "evidence": {
-        "t": 92.6,
+        "t": 94.05,
         "image_url": "/media/items/itm_2b_06/evidence.jpg",
         "raw_url": "/media/items/itm_2b_06/frame.jpg",
         "crop_url": "/media/items/itm_2b_06/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M598 848 L863 829 L870 919 L604 937 Z",
-        "defect_svg": "M846 1009 L906 1009 L906 1155 L846 1155 Z",
-        "tape_box": {
-          "x1": 598.0,
-          "y1": 829.0,
-          "x2": 869.6,
-          "y2": 937.3
-        },
+        "defect_svg": "M852 1008 L912 1008 L912 1154 L852 1154 Z",
         "defect_box": {
-          "x1": 845.8,
-          "y1": 1009.1,
-          "x2": 905.8,
-          "y2": 1155.1
+          "x1": 851.8,
+          "y1": 1008.1,
+          "x2": 911.8,
+          "y2": 1154.1
         },
         "crop_box": {
-          "x1": 425.7,
-          "y1": 747.4,
-          "x2": 1078.0,
-          "y2": 1236.7
+          "x1": 520.0,
+          "y1": 919.2,
+          "x2": 1080.0,
+          "y2": 1339.2
+        },
+        "pointer": {
+          "x": 882.0,
+          "y": 1180.2
+        },
+        "pointing_frame": "/media/items/itm_2b_06/pointing.jpg",
+        "hand_box": {
+          "x1": 745.9,
+          "y1": 1182.1,
+          "x2": 983.9,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "door strike plate"
@@ -1478,25 +1513,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:49.600000Z"
+        "checked_at": "2026-11-03T15:41:48.300000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_10",
         "quote": "Bedroom door latches now, fixed.",
-        "after_t": 57.6,
+        "after_t": 58.65,
         "before_image_url": "/media/items/itm_2b_06/crop.jpg",
         "after_image_url": "/media/items/itm_2b_06/after.jpg",
         "after_frame_url": "/media/items/itm_2b_06/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:10.900000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:10.700000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:25.300000Z",
+          "at": "2026-11-03T15:41:23.400000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1505,7 +1540,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:49.600000Z",
+          "at": "2026-11-03T15:41:48.300000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1523,7 +1558,7 @@
           "note": "Sent to Keystone Door & Hardware by email (lena.brooks@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:10.900000Z",
+          "at": "2026-11-04T13:21:10.700000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1532,7 +1567,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:11.100000Z",
+          "at": "2026-11-04T13:21:10.900000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -1549,15 +1584,15 @@
         "sent_at": "2026-11-03T15:42:04Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:25.300000Z",
-      "updated_at": "2026-11-04T13:21:11.100000Z"
+      "created_at": "2026-11-03T15:41:23.400000Z",
+      "updated_at": "2026-11-04T13:21:10.900000Z"
     },
     {
       "id": "itm_2b_07",
       "project_id": "prj_unit2b",
       "number": 7,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_07",
+      "point_id": "pnt_2b1_07",
       "turn_ids": [
         "trn_2b1_13"
       ],
@@ -1574,35 +1609,39 @@
       "quote_start_s": 104.0,
       "quote_end_s": 107.0,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 101.0,
+      "video_start_s": 102.0,
       "video_end_s": 108.0,
       "confidence": 0.94,
       "evidence": {
-        "t": 104.6,
+        "t": 105.85,
         "image_url": "/media/items/itm_2b_07/evidence.jpg",
         "raw_url": "/media/items/itm_2b_07/frame.jpg",
         "crop_url": "/media/items/itm_2b_07/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M269 819 L554 789 L564 881 L279 910 Z",
-        "defect_svg": "M541 1000 L534 1024 L513 1046 L480 1063 L438 1074 L391 1078 L345 1074 L303 1063 L270 1046 L249 1024 L241 1000 L249 976 L270 954 L303 937 L345 926 L391 922 L438 926 L480 937 L513 954 L534 976 Z",
-        "tape_box": {
-          "x1": 269.5,
-          "y1": 789.0,
-          "x2": 563.5,
-          "y2": 910.4
-        },
+        "defect_svg": "M517 996 L510 1020 L488 1042 L455 1059 L413 1070 L367 1074 L321 1070 L279 1059 L246 1042 L224 1020 L217 996 L224 972 L246 950 L279 933 L321 922 L367 918 L413 922 L455 933 L488 950 L510 972 Z",
         "defect_box": {
-          "x1": 241.5,
-          "y1": 921.7,
-          "x2": 541.5,
-          "y2": 1077.7
+          "x1": 217.0,
+          "y1": 918.0,
+          "x2": 517.0,
+          "y2": 1074.0
         },
         "crop_box": {
-          "x1": 113.8,
-          "y1": 716.9,
-          "x2": 691.2,
-          "y2": 1149.9
+          "x1": 87.0,
+          "y1": 836.5,
+          "x2": 647.0,
+          "y2": 1256.5
+        },
+        "pointer": {
+          "x": 411.5,
+          "y": 1105.0
+        },
+        "pointing_frame": "/media/items/itm_2b_07/pointing.jpg",
+        "hand_box": {
+          "x1": 409.1,
+          "y1": 1109.7,
+          "x2": 847.4,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "wall scuff mark"
@@ -1612,13 +1651,13 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:50.900000Z"
+        "checked_at": "2026-11-03T15:41:49.450000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_11",
         "quote": "Bedroom scuffs, still there.",
-        "after_t": 65.6,
+        "after_t": 66.75,
         "before_image_url": "/media/items/itm_2b_07/crop.jpg",
         "after_image_url": "/media/items/itm_2b_07/after.jpg",
         "after_frame_url": "/media/items/itm_2b_07/after_frame.jpg",
@@ -1626,11 +1665,11 @@
         "vision_status": "still_visible",
         "decision": "still_open",
         "note": "Said not fixed, and the defect is still visible.",
-        "decided_at": "2026-11-04T13:21:12.600000Z"
+        "decided_at": "2026-11-04T13:21:12.400000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:26.700000Z",
+          "at": "2026-11-03T15:41:24.700000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1639,7 +1678,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:50.900000Z",
+          "at": "2026-11-03T15:41:49.450000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1657,7 +1696,7 @@
           "note": "Sent to Brightline Painting by email (tom.reyes@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:12.600000Z",
+          "at": "2026-11-04T13:21:12.400000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1666,7 +1705,7 @@
           "note": "Said not fixed on the re-walk. Still open."
         },
         {
-          "at": "2026-11-04T13:21:12.800000Z",
+          "at": "2026-11-04T13:21:12.600000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -1692,7 +1731,7 @@
         "sent_at": "2026-11-04T13:25:30Z",
         "times_sent": 2
       },
-      "created_at": "2026-11-03T15:41:26.700000Z",
+      "created_at": "2026-11-03T15:41:24.700000Z",
       "updated_at": "2026-11-04T13:25:30Z"
     },
     {
@@ -1700,7 +1739,7 @@
       "project_id": "prj_unit2b",
       "number": 11,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": null,
+      "point_id": null,
       "turn_ids": [
         "trn_2b1_14"
       ],
@@ -1717,7 +1756,7 @@
       "quote_start_s": 112.0,
       "quote_end_s": 116.0,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 109.0,
+      "video_start_s": 110.0,
       "video_end_s": 117.0,
       "confidence": 0.84,
       "evidence": {
@@ -1727,9 +1766,7 @@
         "crop_url": "/media/items/itm_2b_11/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": null,
         "defect_svg": null,
-        "tape_box": null,
         "defect_box": null,
         "crop_box": {
           "x1": 94.6,
@@ -1737,7 +1774,10 @@
           "x2": 974.6,
           "y2": 1321.2
         },
-        "grounding": "tape_only",
+        "pointer": null,
+        "pointing_frame": null,
+        "hand_box": null,
+        "grounding": "none",
         "sam_concept": "outlet cover plate"
       },
       "verification": {
@@ -1745,7 +1785,7 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:56.100000Z"
+        "checked_at": "2026-11-03T15:41:54.050000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
@@ -1759,11 +1799,11 @@
         "vision_status": "not_checked",
         "decision": "not_checked",
         "note": "Not checked on re-walk",
-        "decided_at": "2026-11-04T13:21:15.500000Z"
+        "decided_at": "2026-11-04T13:21:15.300000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:32.300000Z",
+          "at": "2026-11-03T15:41:29.900000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1772,7 +1812,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:56.100000Z",
+          "at": "2026-11-03T15:41:54.050000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1790,7 +1830,7 @@
           "note": "Sent to Ace Electric on Slack (#punch-electrical)."
         },
         {
-          "at": "2026-11-04T13:21:15.500000Z",
+          "at": "2026-11-04T13:21:15.300000Z",
           "actor": "system",
           "action": "rewalk_checked",
           "field": null,
@@ -1807,82 +1847,105 @@
         "sent_at": "2026-11-03T15:42:03Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:32.300000Z",
-      "updated_at": "2026-11-04T13:21:15.500000Z"
+      "created_at": "2026-11-03T15:41:29.900000Z",
+      "updated_at": "2026-11-04T13:21:15.300000Z"
     },
     {
       "id": "itm_2b_12",
       "project_id": "prj_unit2b",
       "number": 12,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_12",
-      "turn_ids": [],
-      "title": "Tape with no description",
-      "description": "A strip of tape on the bedroom wall, but nobody said what's wrong here.",
-      "action": "Describe the problem or dismiss this item",
+      "point_id": "pnt_2b1_08",
+      "turn_ids": [
+        "trn_2b1_15"
+      ],
+      "title": "Dent in closet door",
+      "description": "The bedroom closet door has a dent near the bottom.",
+      "action": "Repair the dent and touch up the door",
       "trade": "general",
       "room": "Bedroom",
-      "location_detail": "Bedroom wall",
+      "location_detail": "Bottom of the closet door",
       "severity": "cosmetic",
       "status": "needs_review",
-      "review_reason": "Tape mark with no description",
-      "quote": null,
-      "quote_start_s": null,
-      "quote_end_s": null,
+      "review_reason": "The frame doesn't show the defect described.",
+      "quote": "Closet door's got a dent down at the bottom.",
+      "quote_start_s": 119.0,
+      "quote_end_s": 122.0,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 117.9,
-      "video_end_s": 123.1,
-      "confidence": null,
+      "video_start_s": 117.0,
+      "video_end_s": 123.0,
+      "confidence": 0.41,
       "evidence": {
-        "t": 120.5,
+        "t": 120.75,
         "image_url": "/media/items/itm_2b_12/evidence.jpg",
         "raw_url": "/media/items/itm_2b_12/frame.jpg",
         "crop_url": "/media/items/itm_2b_12/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M421 936 L706 926 L710 1018 L424 1028 Z",
         "defect_svg": null,
-        "tape_box": {
-          "x1": 420.5,
-          "y1": 926.1,
-          "x2": 709.6,
-          "y2": 1028.0
-        },
         "defect_box": null,
         "crop_box": {
-          "x1": 285.1,
-          "y1": 767.1,
-          "x2": 845.1,
-          "y2": 1187.1
+          "x1": 128.2,
+          "y1": 1075.6,
+          "x2": 968.2,
+          "y2": 1705.6
         },
-        "grounding": "tape_only",
-        "sam_concept": null
+        "pointer": {
+          "x": 568.2,
+          "y": 1450.6
+        },
+        "pointing_frame": "/media/items/itm_2b_12/pointing.jpg",
+        "hand_box": {
+          "x1": 525.1,
+          "y1": 1437.7,
+          "x2": 833.1,
+          "y2": 1920.0
+        },
+        "grounding": "pointed_only",
+        "sam_concept": "door dent"
       },
-      "verification": null,
+      "verification": {
+        "consistent": false,
+        "note": "The frame doesn't show the defect described.",
+        "issues": [
+          "No dent is visible on the closet door where the inspector pointed."
+        ],
+        "provider": "baseten",
+        "checked_at": "2026-11-03T15:41:55.200000Z"
+      },
       "closure": null,
       "history": [
         {
-          "at": "2026-11-03T15:41:13.050000Z",
-          "actor": "system",
+          "at": "2026-11-03T15:41:31.200000Z",
+          "actor": "model",
           "action": "created",
           "field": "status",
           "from": null,
+          "to": "open",
+          "note": "Written by Muse Spark Open on Baseten."
+        },
+        {
+          "at": "2026-11-03T15:41:55.200000Z",
+          "actor": "model",
+          "action": "flagged",
+          "field": "status",
+          "from": "open",
           "to": "needs_review",
-          "note": "Tape was in view for 5 seconds, but nobody described it."
+          "note": "The frame doesn't show the defect described. No dent is visible on the closet door where the inspector pointed."
         }
       ],
       "dispatch": null,
-      "created_at": "2026-11-03T15:41:13.050000Z",
-      "updated_at": "2026-11-03T15:41:13.050000Z"
+      "created_at": "2026-11-03T15:41:31.200000Z",
+      "updated_at": "2026-11-03T15:41:55.200000Z"
     },
     {
       "id": "itm_2b_08",
       "project_id": "prj_unit2b",
       "number": 8,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_08",
+      "point_id": "pnt_2b1_09",
       "turn_ids": [
-        "trn_2b1_16"
+        "trn_2b1_17"
       ],
       "title": "Switch plate crooked",
       "description": "The switch plate by the hall closet is crooked.",
@@ -1897,35 +1960,39 @@
       "quote_start_s": 127.5,
       "quote_end_s": 130.5,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 124.5,
+      "video_start_s": 125.5,
       "video_end_s": 131.5,
       "confidence": 0.95,
       "evidence": {
-        "t": 128.1,
+        "t": 129.55,
         "image_url": "/media/items/itm_2b_08/evidence.jpg",
         "raw_url": "/media/items/itm_2b_08/frame.jpg",
         "crop_url": "/media/items/itm_2b_08/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M634 855 L910 855 L910 945 L634 945 Z",
-        "defect_svg": "M664 802 L606 1076 L420 1037 L478 763 Z",
-        "tape_box": {
-          "x1": 633.7,
-          "y1": 854.6,
-          "x2": 909.7,
-          "y2": 944.6
-        },
+        "defect_svg": "M673 813 L614 1087 L428 1048 L487 774 Z",
         "defect_box": {
-          "x1": 419.7,
-          "y1": 762.9,
-          "x2": 663.8,
-          "y2": 1076.3
+          "x1": 428.5,
+          "y1": 773.7,
+          "x2": 672.5,
+          "y2": 1087.1
         },
         "crop_box": {
-          "x1": 297.2,
-          "y1": 644.0,
-          "x2": 1032.2,
-          "y2": 1195.3
+          "x1": 136.4,
+          "y1": 670.2,
+          "x2": 964.6,
+          "y2": 1291.4
+        },
+        "pointer": {
+          "x": 599.5,
+          "y": 1117.8
+        },
+        "pointing_frame": "/media/items/itm_2b_08/pointing.jpg",
+        "hand_box": {
+          "x1": 527.8,
+          "y1": 1107.6,
+          "x2": 881.1,
+          "y2": 1920.0
         },
         "grounding": "sam_concept",
         "sam_concept": "light switch plate"
@@ -1935,13 +2002,13 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:52.200000Z"
+        "checked_at": "2026-11-03T15:41:50.600000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_13",
         "quote": "Switch plate, still crooked.",
-        "after_t": 76.6,
+        "after_t": 77.85,
         "before_image_url": "/media/items/itm_2b_08/crop.jpg",
         "after_image_url": "/media/items/itm_2b_08/after.jpg",
         "after_frame_url": "/media/items/itm_2b_08/after_frame.jpg",
@@ -1949,11 +2016,11 @@
         "vision_status": "still_visible",
         "decision": "still_open",
         "note": "Said not fixed, and the defect is still visible.",
-        "decided_at": "2026-11-04T13:21:14.300000Z"
+        "decided_at": "2026-11-04T13:21:14.100000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:28.100000Z",
+          "at": "2026-11-03T15:41:26Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -1962,7 +2029,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:52.200000Z",
+          "at": "2026-11-03T15:41:50.600000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -1980,7 +2047,7 @@
           "note": "Sent to Ace Electric on Slack (#punch-electrical)."
         },
         {
-          "at": "2026-11-04T13:21:14.300000Z",
+          "at": "2026-11-04T13:21:14.100000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -1989,7 +2056,7 @@
           "note": "Said not fixed on the re-walk. Still open."
         },
         {
-          "at": "2026-11-04T13:21:14.500000Z",
+          "at": "2026-11-04T13:21:14.300000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -2015,7 +2082,7 @@
         "sent_at": "2026-11-04T13:25:00Z",
         "times_sent": 2
       },
-      "created_at": "2026-11-03T15:41:28.100000Z",
+      "created_at": "2026-11-03T15:41:26Z",
       "updated_at": "2026-11-04T13:25:00Z"
     },
     {
@@ -2023,9 +2090,9 @@
       "project_id": "prj_unit2b",
       "number": 9,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_09",
+      "point_id": "pnt_2b1_10",
       "turn_ids": [
-        "trn_2b1_18"
+        "trn_2b1_19"
       ],
       "title": "Window screen missing",
       "description": "The left living room window has no screen.",
@@ -2040,35 +2107,39 @@
       "quote_start_s": 139.0,
       "quote_end_s": 142.2,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 136.0,
+      "video_start_s": 137.0,
       "video_end_s": 143.2,
       "confidence": 0.87,
       "evidence": {
-        "t": 139.6,
+        "t": 140.65,
         "image_url": "/media/items/itm_2b_09/evidence.jpg",
         "raw_url": "/media/items/itm_2b_09/frame.jpg",
         "crop_url": "/media/items/itm_2b_09/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M402 1372 L698 1372 L698 1464 L402 1464 Z",
-        "defect_svg": "M255 313 L845 313 L845 1283 L255 1283 Z",
-        "tape_box": {
-          "x1": 401.5,
-          "y1": 1372.4,
-          "x2": 697.5,
-          "y2": 1464.4
-        },
+        "defect_svg": "M229 323 L819 323 L819 1293 L229 1293 Z",
         "defect_box": {
-          "x1": 254.5,
-          "y1": 313.4,
-          "x2": 844.5,
-          "y2": 1283.4
+          "x1": 229.3,
+          "y1": 322.6,
+          "x2": 819.3,
+          "y2": 1292.6
         },
         "crop_box": {
           "x1": 0.0,
-          "y1": 483.9,
+          "y1": 470.5,
           "x2": 1080.0,
-          "y2": 1293.9
+          "y2": 1280.5
+        },
+        "pointer": {
+          "x": 655.5,
+          "y": 1358.4
+        },
+        "pointing_frame": "/media/items/itm_2b_09/pointing.jpg",
+        "hand_box": {
+          "x1": 618.2,
+          "y1": 1345.0,
+          "x2": 900.6,
+          "y2": 1920.0
         },
         "grounding": "sam_box",
         "sam_concept": "window"
@@ -2078,13 +2149,13 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "meta-fallback",
-        "checked_at": "2026-11-03T15:41:53.500000Z"
+        "checked_at": "2026-11-03T15:41:51.750000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_15",
         "quote": "Window screen, still missing.",
-        "after_t": 88.6,
+        "after_t": 89.95,
         "before_image_url": "/media/items/itm_2b_09/crop.jpg",
         "after_image_url": "/media/items/itm_2b_09/after.jpg",
         "after_frame_url": "/media/items/itm_2b_09/after_frame.jpg",
@@ -2092,11 +2163,11 @@
         "vision_status": "still_visible",
         "decision": "still_open",
         "note": "Said not fixed, and the defect is still visible.",
-        "decided_at": "2026-11-04T13:21:16Z"
+        "decided_at": "2026-11-04T13:21:15.800000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:29.500000Z",
+          "at": "2026-11-03T15:41:27.300000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -2105,7 +2176,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:53.500000Z",
+          "at": "2026-11-03T15:41:51.750000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -2114,7 +2185,7 @@
           "note": "Matches the photo and what was said. Checked by Muse Spark 1.3 after Baseten timed out."
         },
         {
-          "at": "2026-11-03T15:42:33.500000Z",
+          "at": "2026-11-03T15:42:31.750000Z",
           "actor": "system",
           "action": "noted",
           "field": null,
@@ -2123,7 +2194,7 @@
           "note": "Not sent automatically: no email or Slack on file for Clearview Glass."
         },
         {
-          "at": "2026-11-04T13:21:16Z",
+          "at": "2026-11-04T13:21:15.800000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -2133,17 +2204,17 @@
         }
       ],
       "dispatch": null,
-      "created_at": "2026-11-03T15:41:29.500000Z",
-      "updated_at": "2026-11-04T13:21:16Z"
+      "created_at": "2026-11-03T15:41:27.300000Z",
+      "updated_at": "2026-11-04T13:21:15.800000Z"
     },
     {
       "id": "itm_2b_10",
       "project_id": "prj_unit2b",
       "number": 10,
       "origin_walk_id": "wlk_2b_first",
-      "mark_id": "mrk_2b1_10",
+      "point_id": "pnt_2b1_11",
       "turn_ids": [
-        "trn_2b1_19"
+        "trn_2b1_20"
       ],
       "title": "Sawdust on floor",
       "description": "Sawdust on the living room floor by the window.",
@@ -2158,32 +2229,36 @@
       "quote_start_s": 147.5,
       "quote_end_s": 151.0,
       "video_url": "/media/walks/wlk_2b_first/display.mp4",
-      "video_start_s": 144.5,
+      "video_start_s": 145.5,
       "video_end_s": 152.0,
       "confidence": 0.83,
       "evidence": {
-        "t": 148.1,
+        "t": 149.45,
         "image_url": "/media/items/itm_2b_10/evidence.jpg",
         "raw_url": "/media/items/itm_2b_10/frame.jpg",
         "crop_url": "/media/items/itm_2b_10/crop.jpg",
         "width": 1080,
         "height": 1920,
-        "tape_svg": "M661 1177 L929 1243 L906 1333 L639 1266 Z",
         "defect_svg": null,
-        "tape_box": {
-          "x1": 638.5,
-          "y1": 1176.7,
-          "x2": 928.6,
-          "y2": 1332.7
-        },
         "defect_box": null,
         "crop_box": {
-          "x1": 203.6,
-          "y1": 999.4,
-          "x2": 1073.6,
-          "y2": 1652.0
+          "x1": 225.6,
+          "y1": 1162.5,
+          "x2": 854.0,
+          "y2": 1633.7
         },
-        "grounding": "tape_only",
+        "pointer": {
+          "x": 597.5,
+          "y": 1485.2
+        },
+        "pointing_frame": "/media/items/itm_2b_10/pointing.jpg",
+        "hand_box": {
+          "x1": 551.7,
+          "y1": 1498.0,
+          "x2": 833.9,
+          "y2": 1920.0
+        },
+        "grounding": "pointed_only",
         "sam_concept": "sawdust"
       },
       "verification": {
@@ -2191,25 +2266,25 @@
         "note": "Matches the photo and what was said.",
         "issues": [],
         "provider": "baseten",
-        "checked_at": "2026-11-03T15:41:54.800000Z"
+        "checked_at": "2026-11-03T15:41:52.900000Z"
       },
       "closure": {
         "rewalk_id": "wlk_2b_rewalk",
         "rewalk_turn_id": "trn_2b2_16",
         "quote": "Floor's swept, fixed.",
-        "after_t": 96.6,
+        "after_t": 98.05,
         "before_image_url": "/media/items/itm_2b_10/crop.jpg",
         "after_image_url": "/media/items/itm_2b_10/after.jpg",
         "after_frame_url": "/media/items/itm_2b_10/after_frame.jpg",
         "voice_status": "fixed",
         "vision_status": "fixed",
         "decision": "signed_off",
-        "note": "The defect is gone and the tape is off.",
-        "decided_at": "2026-11-04T13:21:17.700000Z"
+        "note": "The defect is gone where the inspector pointed.",
+        "decided_at": "2026-11-04T13:21:17.500000Z"
       },
       "history": [
         {
-          "at": "2026-11-03T15:41:30.900000Z",
+          "at": "2026-11-03T15:41:28.600000Z",
           "actor": "model",
           "action": "created",
           "field": "status",
@@ -2218,7 +2293,7 @@
           "note": "Written by Muse Spark Open on Baseten."
         },
         {
-          "at": "2026-11-03T15:41:54.800000Z",
+          "at": "2026-11-03T15:41:52.900000Z",
           "actor": "model",
           "action": "verified",
           "field": null,
@@ -2236,7 +2311,7 @@
           "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
         },
         {
-          "at": "2026-11-04T13:21:17.700000Z",
+          "at": "2026-11-04T13:21:17.500000Z",
           "actor": "model",
           "action": "rewalk_checked",
           "field": null,
@@ -2245,7 +2320,7 @@
           "note": "Marked fixed on the re-walk, and the defect is gone."
         },
         {
-          "at": "2026-11-04T13:21:17.900000Z",
+          "at": "2026-11-04T13:21:17.700000Z",
           "actor": "system",
           "action": "status_changed",
           "field": "status",
@@ -2262,8 +2337,8 @@
         "sent_at": "2026-11-03T15:42:02Z",
         "times_sent": 1
       },
-      "created_at": "2026-11-03T15:41:30.900000Z",
-      "updated_at": "2026-11-04T13:21:17.900000Z"
+      "created_at": "2026-11-03T15:41:28.600000Z",
+      "updated_at": "2026-11-04T13:21:17.700000Z"
     }
   ]
 }

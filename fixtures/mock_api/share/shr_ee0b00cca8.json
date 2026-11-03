@@ -16,46 +16,50 @@
   "quote_start_s": 147.5,
   "quote_end_s": 151.0,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 144.5,
+  "video_start_s": 145.5,
   "video_end_s": 152.0,
   "evidence": {
-    "t": 148.1,
+    "t": 149.45,
     "image_url": "/media/items/itm_2b_10/evidence.jpg",
     "raw_url": "/media/items/itm_2b_10/frame.jpg",
     "crop_url": "/media/items/itm_2b_10/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M661 1177 L929 1243 L906 1333 L639 1266 Z",
     "defect_svg": null,
-    "tape_box": {
-      "x1": 638.5,
-      "y1": 1176.7,
-      "x2": 928.6,
-      "y2": 1332.7
-    },
     "defect_box": null,
     "crop_box": {
-      "x1": 203.6,
-      "y1": 999.4,
-      "x2": 1073.6,
-      "y2": 1652.0
+      "x1": 225.6,
+      "y1": 1162.5,
+      "x2": 854.0,
+      "y2": 1633.7
     },
-    "grounding": "tape_only",
+    "pointer": {
+      "x": 597.5,
+      "y": 1485.2
+    },
+    "pointing_frame": "/media/items/itm_2b_10/pointing.jpg",
+    "hand_box": {
+      "x1": 551.7,
+      "y1": 1498.0,
+      "x2": 833.9,
+      "y2": 1920.0
+    },
+    "grounding": "pointed_only",
     "sam_concept": "sawdust"
   },
   "closure": {
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_16",
     "quote": "Floor's swept, fixed.",
-    "after_t": 96.6,
+    "after_t": 98.05,
     "before_image_url": "/media/items/itm_2b_10/crop.jpg",
     "after_image_url": "/media/items/itm_2b_10/after.jpg",
     "after_frame_url": "/media/items/itm_2b_10/after_frame.jpg",
     "voice_status": "fixed",
     "vision_status": "fixed",
     "decision": "signed_off",
-    "note": "The defect is gone and the tape is off.",
-    "decided_at": "2026-11-04T13:21:17.700000Z"
+    "note": "The defect is gone where the inspector pointed.",
+    "decided_at": "2026-11-04T13:21:17.500000Z"
   },
   "walked_at": "2026-11-03T15:12:00Z"
 }

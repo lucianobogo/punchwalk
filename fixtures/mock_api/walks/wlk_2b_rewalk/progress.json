@@ -36,39 +36,42 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
-      "stage": "track_tape",
-      "label": "Finding tape",
+      "stage": "track_hands",
+      "label": "Following your hand (SAM 3.1)",
       "status": "done",
       "started_at": "2026-11-04T13:20:16.300000Z",
       "finished_at": "2026-11-04T13:20:48.100000Z",
       "duration_ms": 31800,
       "counts": {
-        "marks": 4
+        "frames": 1040,
+        "hands": 10
       },
       "progress": null,
-      "detail": "SAM 3.1 found 4 tape marks",
+      "detail": "10 points found",
       "model_label": "SAM 3.1"
     },
     {
-      "stage": "merge_marks",
-      "label": "Following each strip of tape",
+      "stage": "find_points",
+      "label": "Finding where you pointed",
       "status": "done",
       "started_at": "2026-11-04T13:20:48.100000Z",
-      "finished_at": "2026-11-04T13:20:49Z",
-      "duration_ms": 900,
+      "finished_at": "2026-11-04T13:20:48.800000Z",
+      "duration_ms": 700,
       "counts": {
-        "marks": 4
+        "points": 10,
+        "mentions": 10,
+        "voice_only": 0
       },
       "progress": null,
-      "detail": "4 marks after joining repeat sightings",
+      "detail": "10 places you pointed",
       "model_label": null
     },
     {
       "stage": "classify_turns",
       "label": "Sorting what was said",
       "status": "done",
-      "started_at": "2026-11-04T13:20:49Z",
-      "finished_at": "2026-11-04T13:20:53.100000Z",
+      "started_at": "2026-11-04T13:20:48.800000Z",
+      "finished_at": "2026-11-04T13:20:52.900000Z",
       "duration_ms": 4100,
       "counts": {
         "lines": 17
@@ -79,10 +82,10 @@
     },
     {
       "stage": "fuse",
-      "label": "Matching what was said to each mark",
+      "label": "Matching what was said to each point",
       "status": "done",
-      "started_at": "2026-11-04T13:20:53.100000Z",
-      "finished_at": "2026-11-04T13:20:53.200000Z",
+      "started_at": "2026-11-04T13:20:52.900000Z",
+      "finished_at": "2026-11-04T13:20:53Z",
       "duration_ms": 100,
       "counts": {
         "status_updates": 10
@@ -95,8 +98,8 @@
       "stage": "pick_evidence",
       "label": "Picking the clearest photo",
       "status": "done",
-      "started_at": "2026-11-04T13:20:53.200000Z",
-      "finished_at": "2026-11-04T13:20:56.100000Z",
+      "started_at": "2026-11-04T13:20:53Z",
+      "finished_at": "2026-11-04T13:20:55.900000Z",
       "duration_ms": 2900,
       "counts": {
         "photos": 10
@@ -109,8 +112,8 @@
       "stage": "resolve_closures",
       "label": "Checking what was fixed",
       "status": "done",
-      "started_at": "2026-11-04T13:20:56.100000Z",
-      "finished_at": "2026-11-04T13:21:15.500000Z",
+      "started_at": "2026-11-04T13:20:55.900000Z",
+      "finished_at": "2026-11-04T13:21:15.300000Z",
       "duration_ms": 19400,
       "counts": {
         "signed_off": 6,
@@ -125,8 +128,8 @@
       "stage": "persist",
       "label": "Saving the punch list",
       "status": "done",
-      "started_at": "2026-11-04T13:21:15.500000Z",
-      "finished_at": "2026-11-04T13:21:15.900000Z",
+      "started_at": "2026-11-04T13:21:15.300000Z",
+      "finished_at": "2026-11-04T13:21:15.700000Z",
       "duration_ms": 400,
       "counts": {},
       "progress": null,
@@ -141,6 +144,6 @@
   "error": null,
   "created_at": "2026-11-04T13:20:00Z",
   "started_at": "2026-11-04T13:20:05Z",
-  "finished_at": "2026-11-04T13:21:15.900000Z",
-  "updated_at": "2026-11-04T13:21:15.900000Z"
+  "finished_at": "2026-11-04T13:21:15.700000Z",
+  "updated_at": "2026-11-04T13:21:15.700000Z"
 }

@@ -23,7 +23,7 @@
       "id": "mc_3a1_002",
       "walk_id": "wlk_3a_first",
       "item_id": null,
-      "stage": "track_tape",
+      "stage": "track_hands",
       "model": "sam-3.1",
       "model_label": "SAM 3.1",
       "provider": "meta",
@@ -53,7 +53,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T14:52:48.200000Z"
+      "started_at": "2026-11-04T14:52:48.400000Z"
     },
     {
       "id": "mc_3a1_004",
@@ -71,7 +71,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T14:52:55.400000Z"
+      "started_at": "2026-11-04T14:52:55.600000Z"
     },
     {
       "id": "mc_3a1_005",
@@ -89,7 +89,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T14:52:55.550000Z"
+      "started_at": "2026-11-04T14:52:55.750000Z"
     }
   ]
 }

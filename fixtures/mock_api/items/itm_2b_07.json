@@ -3,7 +3,7 @@
   "project_id": "prj_unit2b",
   "number": 7,
   "origin_walk_id": "wlk_2b_first",
-  "mark_id": "mrk_2b1_07",
+  "point_id": "pnt_2b1_07",
   "turn_ids": [
     "trn_2b1_13"
   ],
@@ -20,35 +20,39 @@
   "quote_start_s": 104.0,
   "quote_end_s": 107.0,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 101.0,
+  "video_start_s": 102.0,
   "video_end_s": 108.0,
   "confidence": 0.94,
   "evidence": {
-    "t": 104.6,
+    "t": 105.85,
     "image_url": "/media/items/itm_2b_07/evidence.jpg",
     "raw_url": "/media/items/itm_2b_07/frame.jpg",
     "crop_url": "/media/items/itm_2b_07/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M269 819 L554 789 L564 881 L279 910 Z",
-    "defect_svg": "M541 1000 L534 1024 L513 1046 L480 1063 L438 1074 L391 1078 L345 1074 L303 1063 L270 1046 L249 1024 L241 1000 L249 976 L270 954 L303 937 L345 926 L391 922 L438 926 L480 937 L513 954 L534 976 Z",
-    "tape_box": {
-      "x1": 269.5,
-      "y1": 789.0,
-      "x2": 563.5,
-      "y2": 910.4
-    },
+    "defect_svg": "M517 996 L510 1020 L488 1042 L455 1059 L413 1070 L367 1074 L321 1070 L279 1059 L246 1042 L224 1020 L217 996 L224 972 L246 950 L279 933 L321 922 L367 918 L413 922 L455 933 L488 950 L510 972 Z",
     "defect_box": {
-      "x1": 241.5,
-      "y1": 921.7,
-      "x2": 541.5,
-      "y2": 1077.7
+      "x1": 217.0,
+      "y1": 918.0,
+      "x2": 517.0,
+      "y2": 1074.0
     },
     "crop_box": {
-      "x1": 113.8,
-      "y1": 716.9,
-      "x2": 691.2,
-      "y2": 1149.9
+      "x1": 87.0,
+      "y1": 836.5,
+      "x2": 647.0,
+      "y2": 1256.5
+    },
+    "pointer": {
+      "x": 411.5,
+      "y": 1105.0
+    },
+    "pointing_frame": "/media/items/itm_2b_07/pointing.jpg",
+    "hand_box": {
+      "x1": 409.1,
+      "y1": 1109.7,
+      "x2": 847.4,
+      "y2": 1920.0
     },
     "grounding": "sam_concept",
     "sam_concept": "wall scuff mark"
@@ -58,13 +62,13 @@
     "note": "Matches the photo and what was said.",
     "issues": [],
     "provider": "baseten",
-    "checked_at": "2026-11-03T15:41:50.900000Z"
+    "checked_at": "2026-11-03T15:41:49.450000Z"
   },
   "closure": {
     "rewalk_id": "wlk_2b_rewalk",
     "rewalk_turn_id": "trn_2b2_11",
     "quote": "Bedroom scuffs, still there.",
-    "after_t": 65.6,
+    "after_t": 66.75,
     "before_image_url": "/media/items/itm_2b_07/crop.jpg",
     "after_image_url": "/media/items/itm_2b_07/after.jpg",
     "after_frame_url": "/media/items/itm_2b_07/after_frame.jpg",
@@ -72,11 +76,11 @@
     "vision_status": "still_visible",
     "decision": "still_open",
     "note": "Said not fixed, and the defect is still visible.",
-    "decided_at": "2026-11-04T13:21:12.600000Z"
+    "decided_at": "2026-11-04T13:21:12.400000Z"
   },
   "history": [
     {
-      "at": "2026-11-03T15:41:26.700000Z",
+      "at": "2026-11-03T15:41:24.700000Z",
       "actor": "model",
       "action": "created",
       "field": "status",
@@ -85,7 +89,7 @@
       "note": "Written by Muse Spark Open on Baseten."
     },
     {
-      "at": "2026-11-03T15:41:50.900000Z",
+      "at": "2026-11-03T15:41:49.450000Z",
       "actor": "model",
       "action": "verified",
       "field": null,
@@ -103,7 +107,7 @@
       "note": "Sent to Brightline Painting by email (tom.reyes@example.com)."
     },
     {
-      "at": "2026-11-04T13:21:12.600000Z",
+      "at": "2026-11-04T13:21:12.400000Z",
       "actor": "model",
       "action": "rewalk_checked",
       "field": null,
@@ -112,7 +116,7 @@
       "note": "Said not fixed on the re-walk. Still open."
     },
     {
-      "at": "2026-11-04T13:21:12.800000Z",
+      "at": "2026-11-04T13:21:12.600000Z",
       "actor": "system",
       "action": "status_changed",
       "field": "status",
@@ -138,6 +142,6 @@
     "sent_at": "2026-11-04T13:25:30Z",
     "times_sent": 2
   },
-  "created_at": "2026-11-03T15:41:26.700000Z",
+  "created_at": "2026-11-03T15:41:24.700000Z",
   "updated_at": "2026-11-04T13:25:30Z"
 }

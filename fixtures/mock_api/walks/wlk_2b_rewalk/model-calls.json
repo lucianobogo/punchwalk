@@ -23,7 +23,7 @@
       "id": "mc_2b2_002",
       "walk_id": "wlk_2b_rewalk",
       "item_id": null,
-      "stage": "track_tape",
+      "stage": "track_hands",
       "model": "sam-3.1",
       "model_label": "SAM 3.1",
       "provider": "meta",
@@ -53,7 +53,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:20:49.100000Z"
+      "started_at": "2026-11-04T13:20:48.900000Z"
     },
     {
       "id": "mc_2b2_004",
@@ -71,7 +71,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:20:56.200000Z"
+      "started_at": "2026-11-04T13:20:56Z"
     },
     {
       "id": "mc_2b2_005",
@@ -89,7 +89,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:00.700000Z"
+      "started_at": "2026-11-04T13:21:00.500000Z"
     },
     {
       "id": "mc_2b2_006",
@@ -107,7 +107,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:00.840000Z"
+      "started_at": "2026-11-04T13:21:00.640000Z"
     },
     {
       "id": "mc_2b2_007",
@@ -125,7 +125,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:00.980000Z"
+      "started_at": "2026-11-04T13:21:00.780000Z"
     },
     {
       "id": "mc_2b2_008",
@@ -143,7 +143,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:01.120000Z"
+      "started_at": "2026-11-04T13:21:00.920000Z"
     },
     {
       "id": "mc_2b2_009",
@@ -161,7 +161,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:05.500000Z"
+      "started_at": "2026-11-04T13:21:05.300000Z"
     },
     {
       "id": "mc_2b2_010",
@@ -179,7 +179,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:05.640000Z"
+      "started_at": "2026-11-04T13:21:05.440000Z"
     },
     {
       "id": "mc_2b2_011",
@@ -197,7 +197,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:05.780000Z"
+      "started_at": "2026-11-04T13:21:05.580000Z"
     },
     {
       "id": "mc_2b2_012",
@@ -215,7 +215,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:05.920000Z"
+      "started_at": "2026-11-04T13:21:05.720000Z"
     },
     {
       "id": "mc_2b2_013",
@@ -233,7 +233,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:10.300000Z"
+      "started_at": "2026-11-04T13:21:10.100000Z"
     },
     {
       "id": "mc_2b2_014",
@@ -251,7 +251,7 @@
       "cached": false,
       "ok": true,
       "error": null,
-      "started_at": "2026-11-04T13:21:10.440000Z"
+      "started_at": "2026-11-04T13:21:10.240000Z"
     }
   ]
 }

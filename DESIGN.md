@@ -16,13 +16,13 @@
 | `08-how-processed.png` | How this walk was processed |
 | `09-landing-desktop.png` | Landing page on desktop |
 
-The renders use drawn stand-ins for photos and video. The real app shows real evidence frames.
+The renders use drawn stand-ins for photos and video. The real app shows real evidence frames. The renders were made before the pointing change: the blue tape strips in them are placeholders for real frames (the app shows the defect outline plus a blue "pointed here" dot, and a hand outline in video). Everything else in them still holds.
 
 ## Direction
 
-- **Subject:** the end-of-job punch walk: primed drywall, blue painter's tape with numbers in black marker, redlines on drawings, sign-off sheets.
+- **Subject:** the end-of-job punch walk: primed drywall, an inspector pointing at each problem and saying what's wrong, redlines on drawings, sign-off sheets.
 - **Feel:** calm, exact, field-ready. White surfaces like primed drywall, graphite text, and one bold device.
-- **The memorable thing is the tape tab:** each item's number written in graphite "marker" on a strip of light blue painter's tape. A tab sits on the corner of every evidence photo and thumbnail, labels each tape outline in the video, and leads list rows. Everything around it stays quiet and disciplined.
+- **The memorable thing is the tape tab:** each item's number written in graphite "marker" on a little strip of light blue painter's tape, the way punch lists used to be marked on the wall. A tab sits on the corner of every evidence photo and thumbnail, follows the fingertip in the video while the inspector points, and leads list rows. Everything around it stays quiet and disciplined.
 
 ## Color
 
@@ -32,25 +32,26 @@ Light mode is the default, because job sites are bright.
 |---|---|---|
 | Primer | `#F2F4F5` | App background |
 | Sheet | `#FFFFFF` | Cards, rows, sheets, bars |
-| Graphite | `#1B2430` | Primary text, icons, tape-tab numbers |
+| Graphite | `#1B2430` | Primary text, icons, tab numbers |
 | Pencil | `#5B6673` | Secondary text |
 | Hairline | `#DCE1E5` | Borders, dividers |
-| Tape tab | `#5AA2EA` | Tape-tab fill (Graphite number on it: 5.8:1) |
-| Tape | `#2F86E0` | Tape outlines in photos and video, the Record button, progress |
+| Tape tab | `#5AA2EA` | Tab fill (Graphite number on it: 5.8:1) |
+| Tape | `#2F86E0` | The "pointed here" dot in photos, hand outlines in video, the Record button, progress |
 | Tape ink | `#1D63B5` | Blue text, links, primary buttons (white text on it passes AA) |
 | Tape tint | `#E8F1FB` | Play buttons, the selected-row background |
-| Redline | `#D93B30` | Defect outlines (white halo underneath) |
+| Redline | `#D93B30` | Defect outlines + 30% fill (white halo underneath) |
 | Safety | `#FBE9E7` bg, `#A3241B` text | The "Safety" severity pill |
 | Signed off | `#2F9E6B` fills, `#1F7A50` text | Signed-off badge and label |
 | Hold | `#C9861A` fills, `#8A5A0B` text | "Needs a look" dot and label; flagged card `#FFFBF3` with border `#EBD3A6` |
 
 - No gradients and no colored left-border accents.
 - The only translucency is the tab bar and the bottom action bar (white at 94%).
-- Dark mode *(nice)*: background `#0F151C`, sheets `#18202A`, text `#E8ECEF`, Pencil `#9AA5B1`, Hairline `#2A3440`. Tape colors stay the same.
+- The color names "Tape", "Tape tab", "Tape ink" and "Tape tint" are kept from the painter's-tape palette; they no longer refer to tape in the footage.
+- Dark mode *(nice)*: background `#0F151C`, sheets `#18202A`, text `#E8ECEF`, Pencil `#9AA5B1`, Hairline `#2A3440`. The blue and red stay the same.
 
 ## Type
 
-**Archivo** (variable, self-hosted via `@fontsource-variable/archivo`) for everything. The width axis does the work: normal width for reading text, and **Archivo Expanded** (`font-stretch: 125%`, or 112% for 22 px titles) for screen titles, tape-tab numbers and the landing headline.
+**Archivo** (variable, self-hosted via `@fontsource-variable/archivo`) for everything. The width axis does the work: normal width for reading text, and **Archivo Expanded** (`font-stretch: 125%`, or 112% for 22 px titles) for screen titles, tab numbers and the landing headline.
 
 | Role | Size / line height | Style |
 |---|---|---|
@@ -60,7 +61,7 @@ Light mode is the default, because job sites are bright.
 | Body | 15 / 21 | Regular |
 | Secondary | 13 / 18 | Regular, Pencil |
 | Section header | 13 / 16 | Medium, Pencil, sentence case |
-| Tape number | 15 (40 px tab), 13 (32 px tab) | Expanded 125%, bold, Graphite |
+| Tab number | 15 (40 px tab), 13 (32 px tab) | Expanded 125%, bold, Graphite |
 | Tab bar label | 11 / 13 | Medium (semibold when active) |
 
 - Tabular numerals for counts, times and money.
@@ -75,11 +76,14 @@ Light mode is the default, because job sites are bright.
 
 ## Signature component: the tape tab
 
+The item's number tab. It keeps the look of a strip of painter's tape, but it's a UI element only: there is no physical tape in the footage.
+
 - A strip in Tape tab blue, rotated −3°, with slightly ragged left and right ends. Draw it as an SVG path, not a CSS rectangle. The path used in the renders: `M3 0H37L39 3L37 6L40 9L37 12L39 15L37 18L40 21L37 24H3L1 21L3 18L0 15L3 12L1 9L3 6L0 3Z` on a 40 × 24 viewBox.
 - Two sizes: **40 × 24** for photos, video and detail headers; **32 × 20** for list rows, thumbnails and message previews.
 - The number is Graphite, Expanded, bold: `7`, `12`. No "#" and no leading zeros.
 - **On photos and thumbnails:** it overlaps the top-left corner by 6–8 px, as if stuck on.
-- **In the video overlay:** it labels each tape outline.
+- **In the video overlay:** while the inspector points, it sits at the fingertip, next to the blue hand outline.
+- **"Pointed here" dot:** on evidence photos and thumbnails, a Tape-blue dot (6–8 px radius at full frame, white halo) marks where the finger pointed. Drawn with the defect outline and hidden by the outline toggle with it.
 - **Status badge** on the tab's top-right corner:
   - Hold dot for Needs a look
   - white check on Signed off green for signed off
@@ -97,7 +101,7 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
 ## Motion
 
 - **One orchestrated moment.** On walk detail, when the video reaches the second an item was called out:
-  - its tape outline is "pressed on" (scale 1.06 → 1, 180 ms)
+  - its number tab is "pressed on" at the fingertip (scale 1.06 → 1, 180 ms)
   - a new-item card slides up over the bottom of the video, labeled "New"
   - after ~2 s the card settles into the list below
 - Everything else only responds to the user: sheets slide up, chips toggle, the before/after slider follows the finger. Use 150–250 ms, ease-out.
@@ -117,6 +121,8 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
 
 ## Screens
 
+The `docs/design/*.png` renders show blue tape strips in the photos and video. They are placeholders for real frames: build the red defect outline, the blue "pointed here" dot and (in video) the hand outline described below instead.
+
 ### Punch list (home), `01-punch-list.png`
 
 - **Title:** the project name with a chevron. Tapping it switches projects.
@@ -124,7 +130,7 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
 - **Filter chips:** Trade, Severity, Room. Each opens a sheet of checkable options with their counts ("Electrical 3") and a button that says "Show 3 items". Active chips fill with Tape tint and get a clear control. A search button at the end of the row opens search plus group and sort (group by room, the default, in walk order, or by trade; sort by walk order or severity).
 - **Needs a look first:** a section with a Hold dot and count, then sections by room in walk order.
 - **Compact rows** (not big cards; about five fit on screen):
-  - an 88 × 66 thumbnail (4:3 crop centered on tape + defect) with its tape tab on the corner
+  - an 88 × 66 thumbnail (the 4:3 evidence crop, centered on where the finger pointed + the defect) with its tape tab on the corner
   - the title, one line
   - a summary of up to 2 lines in Pencil (for Needs a look: why it needs a look)
   - a "Safety" pill with a warning icon, only when the severity is Safety
@@ -133,12 +139,12 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
 - Filters are kept in the URL, so a filtered view can be shared.
 - **Empty states:**
   - No filter results: "No items match these filters." with a "Clear filters" button.
-  - First run: "No walks yet. Tape each problem, describe it out loud, and record the walk." with a "Record a walk" button.
+  - First run: "No walks yet. Point at each problem, say what's wrong, and record the walk." with a "Record a walk" button.
   - To do empty: "Everything is signed off." with a "See signed-off items" button.
 
 ### Item detail, `02-item-detail.png`
 
-- The evidence photo sits inset 16 px with radius 14, with the tape tab on its corner, pinch-to-zoom, and an "Outlines on" toggle. Signed-off items show a before/after slider instead.
+- The evidence photo sits inset 16 px with radius 14, with the tape tab on its corner, pinch-to-zoom, and an "Outlines on" toggle. With outlines on, the defect is outlined in red and a small blue dot marks where the finger pointed; off shows the plain frame. Voice-only items show the frame with no dot. Signed-off items show a before/after slider instead.
 - Then, in order:
   1. The title (22 px) and the AI summary.
   2. The action, on a line with a wrench icon.
@@ -148,14 +154,14 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
   6. History timeline.
 - **Bottom bar:** one primary action that depends on the status, plus a "More" button (opens a sheet):
   - **Open:** primary "Sign off". More: Send again, Mark as needs a look, Edit.
-  - **Needs a look:** primary "Approve and send to <company>", or "Add a description" for a tape nobody described. More: Dismiss item, Edit.
+  - **Needs a look:** primary "Approve and send to <company>" (after a look at the photo, or an edit when the photo doesn't show the defect). More: Dismiss item, Edit.
   - **Signed off:** primary "Reopen".
 - An edit icon in the top bar opens editing. Every edit is a human override and shows up in History.
 
 ### Play this moment (sheet), `03-play-this-moment.png`
 
-- A dark sheet (`#0F151C`) with its tape tab, title and a close button. Portrait glasses video fills the width (3:4), with outlines on.
-- Playback starts at `video_start_s` (3 s before the item was called out). A caption box shows the quote while it's spoken, and playback pauses at `video_end_s`.
+- A dark sheet (`#0F151C`) with its tape tab, title and a close button. Portrait glasses video fills the width (3:4), with outlines on (the hand outline and number tab while the inspector points).
+- Playback starts at `video_start_s` (2 s before the item was called out, so the hand is seen coming in). A caption box shows the quote while it's spoken, and playback pauses at `video_end_s`.
 - **Controls:**
   - a scrubber limited to the moment
   - the current time on the left and "Moment ends 0:16" on the right
@@ -166,7 +172,7 @@ Three statuses, everywhere: **Open**, **Needs a look**, **Signed off**.
 - **List rows:** thumbnail, date and time, duration, items found, and status ("Processing", "Ready", or "Failed. Tap to retry").
 - **Walk detail (the demo's hero screen), `04-walk-detail.png`:**
   - Title row: "First walk" with "Nov 3, 12 items" on the right.
-  - The portrait video is ~500 px tall, with tape outlines and tape tabs.
+  - The portrait video is ~500 px tall. While the inspector points, the hand is outlined in Tape blue and the item's tape tab sits at the fingertip (from the overlay's `hands`); nothing is drawn between points.
   - Compact controls sit over the bottom of the video: play/pause, a timeline with a Tape-tab-blue marker for every item (each marker seeks; 44 px hit area), and the current time.
   - The new-item card appears over the video at its moment (see Motion).
   - Below the video, a segmented control switches between "Items so far N" and "Transcript". Tapping a row or a line seeks.
@@ -184,12 +190,12 @@ One screen, top to bottom:
 Then a checklist card fills in live. Each step has a status icon (check, progress ring, empty ring), the step name, and one plain line that names the model and the count:
 
 - "Listening to the walk": "Muse Voice Transcribe found 23 lines"
-- "Finding tape": "SAM 3.1 found 11 tape marks"
-- "Matching what was said to each mark": "10 matched, 1 mark with no description"
+- "Following your hand (SAM 3.1)": "11 points found"
+- "Matching what was said to each point": "11 matched to where you pointed, 1 described without pointing"
 - "Writing items": "Muse Spark Open on Baseten, 7 of 12 written", with a progress bar
 - "Checking each item against its photo": "Muse Spark Open on Baseten, waiting"
 
-Below the checklist, an "Items so far" strip of thumbnails with tape tabs, and the line "You can leave this screen. Items appear on the punch list as they're written." When it finishes: "12 items ready" and an "Open punch list" button.
+Below the checklist, an "Items so far" strip of thumbnails with their tabs, and the line "You can leave this screen. Items appear on the punch list as they're written." When it finishes: "12 items ready" and an "Open punch list" button.
 
 ### Trades, `06-send-to-trade.png`
 
@@ -208,6 +214,7 @@ Below the checklist, an "Items so far" strip of thumbnails with tape tabs, and t
 - **The flagged item comes first,** on a Hold-tinted card (no left border):
   - "Needs a look" label, tape tab, title
   - "Marked fixed on the re-walk, but the defect is still visible."
+  - (the inspector pointed at the spot again on the re-walk; the after photo has the same framing and its own blue dot)
   - before and after photos side by side, with dates
   - buttons "Send again" and "Open item"
 - **Then a "Signed off N" list:** rows with a check badge on the tab, the title, and "Signed off" in green text.
@@ -216,13 +223,13 @@ Below the checklist, an "Items so far" strip of thumbnails with tape tabs, and t
 ### How this walk was processed, `08-how-processed.png`
 
 - Title, then one line: "Done in 1 min 52 s for about $0.41, using three Meta models" (real numbers from the model-call log).
-- A step list with uniform graphite markers. Each step has its name, a model chip ("Muse Voice Transcribe", "SAM 3.1", "Muse Spark Open on Baseten"), a plain detail line, and its duration.
+- A step list with uniform graphite markers. The SAM step is "Follow the hand to each defect" ("11 points found across the whole video"). Each step has its name, a model chip ("Muse Voice Transcribe", "SAM 3.1", "Muse Spark Open on Baseten"), a plain detail line, and its duration.
 - "On our labeled test walks": defects found, right trade, false "fixed" claims caught, from `eval/report.md`. Never invent these numbers; hide the section if there's no report.
 
 ### Landing page, `09-landing-desktop.png`
 
 - **Desktop (≥ 1024 px):**
-  - **Header:** the logo (a Tape-tab strip with a graphite check mark) and the "Punchwalk" wordmark (Expanded bold) on the left; a "How it works" link on the right.
+  - **Header:** the logo (a tape-tab strip with a graphite check mark) and the "Punchwalk" wordmark (Expanded bold) on the left; a "How it works" link on the right.
   - **Left column:**
     - the headline on two deliberate lines, "Walk it once." / "Get a punch list with proof." (56 / 60, Expanded)
     - one paragraph
@@ -247,7 +254,7 @@ Below the checklist, an "Items so far" strip of thumbnails with tape tabs, and t
   - name and short_name "Punchwalk"
   - display "standalone", start_url "/app"
   - background color Primer, theme color Sheet
-  - icons at 192 and 512 px, plus a maskable icon. The icon is the Tape-tab strip with a graphite check on Primer.
+  - icons at 192 and 512 px, plus a maskable icon. The icon is the tape-tab strip with a graphite check on Primer.
 - Add an `apple-touch-icon` at 180 px.
 - Add `<meta name="apple-mobile-web-app-capable" content="yes">`, set the status bar style to "default", and use `viewport-fit=cover`.
 - Apply `env(safe-area-inset-*)` to the top bar, the tab bar and the bottom action bar. Never draw a fake status bar.
@@ -263,16 +270,18 @@ Below the checklist, an "Items so far" strip of thumbnails with tape tabs, and t
 - Identical rounded cards with the same grey shadow everywhere; gradient washes; colored left-border accents; glassy blur on everything.
 - All-caps labels, small labels above headings, meta strings joined with dots, monospace data labels, arrows tacked onto button text.
 - Emoji in the UI, stock illustrations, decorative icons that carry no meaning.
+- Talking about tape anywhere in the UI. Users point; nothing is stuck on the wall. Copy says "point", "where you pointed", "Following your hand".
+- Burned-in text or numbers on evidence images (the UI draws the tab), or a box around the hand on photos.
 - Color as the only signal.
 
 ## Screenshot checklist (`make screenshots`: WebKit, iPhone 15 Pro)
 
-1. Punch list: To do (default); filtered (Electrical + Safety); no filter results; first run; To do empty
+1. Punch list: To do (default); filtered (Electrical + Safety); no filter results; first run; To do empty (thumbnails show the red outline + blue dot)
 2. Filter sheet open (Trade)
-3. Item detail: open item; needs-a-look item; signed-off item with before/after; the More sheet
+3. Item detail: open item (outlines on, then off); needs-a-look item (photo doesn't show the defect); signed-off item with before/after; the More sheet
 4. Play this moment, mid-play with the caption visible
 5. Walks list (one processing, one ready)
-6. Walk detail mid-play, with the new-item card over the video; and scrolled, with the mini-player
+6. Walk detail mid-play while pointing (hand outline + number tab at the fingertip), with the new-item card over the video; and scrolled, with the mini-player
 7. Record: clips added; processing checklist mid-run; done
 8. Trades list; trade screen with message preview; sent toast
 9. Re-walk summary

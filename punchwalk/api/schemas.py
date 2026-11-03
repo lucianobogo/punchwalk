@@ -10,7 +10,7 @@ Conventions:
 - Media URLs are root-relative (`/media/...`), served with HTTP range support.
 - Boxes and SVG paths are in the pixel space of the image/video they belong to
   (`EvidenceOut.width/height`, `OverlayOut.width/height`).
-- Items are numbered per project: `number` is an int; the tape tab shows `7`, reports show `#007`.
+- Items are numbered per project: `number` is an int; the number tab shows `7`, reports show `#007`.
 - All routes are under `/api` except `/healthz` and `/media/...`.
 """
 
@@ -63,9 +63,11 @@ class BoxOut(Schema):
     y2: float
 
 
-class IntervalOut(Schema):
-    start_s: float
-    end_s: float
+class XYOut(Schema):
+    """A pixel position (fingertip, "pointed here" marker)."""
+
+    x: float
+    y: float
 
 
 class ItemCountsOut(Schema):
@@ -188,7 +190,7 @@ class WalkCountsOut(Schema):
     """For an initial walk: items it created. For a re-walk: items it checked (`items` = checked)."""
 
     items: int
-    marks: int
+    points: int  # pointing events found in this walk
     turns: int
     needs_review: int
     signed_off: int
@@ -242,18 +244,23 @@ class TurnOut(Schema):
     item_ids: list[str]  # items this line created or updated
 
 
-class MarkOut(Schema):
-    """One strip of tape found in the walk. Boxes in display pixels."""
+class PointOut(Schema):
+    """One pointing event: the hand held still while pointing at a defect. Display pixels."""
 
     id: str
     walk_id: str
-    item_id: str | None
-    number: int | None  # the item's number, for the tape tab
+    item_id: str | None  # the item it created (initial walk) or checked (re-walk); null until written
+    item_number: int | None  # that item's number, for the number tab
+    number: int  # 1-based, in time order within this walk
+    t: float  # seconds into display.mp4 (middle of the hold)
+    frame: int  # sam.mp4 frame index
+    fingertip_x: float
+    fingertip_y: float
+    hand_box: BoxOut
+    hold_s: float  # how long the hand was still
     sam_object_ids: list[str]
-    intervals: list[IntervalOut]
-    best_t: float | None
-    box_at_best: BoxOut | None
     mean_conf: float | None
+    turn_id: str | None  # the transcript line it belongs to
 
 
 # POST /api/projects/{project_id}/walks
@@ -311,11 +318,12 @@ class EvidenceOut(Schema):
     crop_url: str  # 4:3 crop with outlines, for rows and thumbnails
     width: int  # pixel size of image_url/raw_url; SVG paths and boxes use it
     height: int
-    tape_svg: str | None  # SVG path `d`
-    defect_svg: str | None
-    tape_box: BoxOut | None
+    defect_svg: str | None  # SVG path `d` of the defect outline (red)
     defect_box: BoxOut | None
-    crop_box: BoxOut | None
+    crop_box: BoxOut | None  # region of the frame used for crop_url
+    pointer: XYOut | None  # "pointed here" marker (small blue dot); null for voice-only items
+    pointing_frame: str | None  # URL: the frame where the hand points, hand outlined (blue)
+    hand_box: BoxOut | None  # the hand in pointing_frame (same pixel size as image_url)
     grounding: Grounding
     sam_concept: str | None
 
@@ -370,7 +378,7 @@ class ItemOut(Schema):
     project_id: str
     number: int
     origin_walk_id: str
-    mark_id: str | None  # null for voice-only items
+    point_id: str | None  # null for voice-only items
     turn_ids: list[str]
     title: str
     description: str  # the AI summary
@@ -464,29 +472,31 @@ class ShareItemOut(Schema):
     walked_at: datetime | None
 
 
-# GET /api/walks/{walk_id}  (walk + transcript + marks + items)
+# GET /api/walks/{walk_id}  (walk + transcript + pointing events + items)
 #   items: for an initial walk, the items it created; for a re-walk, the items it checked.
 class WalkDetailOut(Schema):
     walk: WalkOut
     turns: list[TurnOut]
-    marks: list[MarkOut]
+    points: list[PointOut]  # in time order
     items: list[ItemOut]
 
 
 # =========================================================================== overlay
 
 
-class OverlayMarkOut(Schema):
-    mark_id: str
-    item_id: str | None
-    number: int | None
+class OverlayHandOut(Schema):
+    """The inspector's hand in one overlay frame, around a pointing event."""
+
+    point_id: str
+    number: int | None  # the item's number, for the number tab at the fingertip; null if no item
     box: BoxOut
-    svg: str  # simplified outline path `d`
+    svg: str  # simplified hand outline path `d`
+    fingertip: XYOut | None  # set while the hand is held still (pointing), else null
 
 
 class OverlayFrameOut(Schema):
     t: float
-    marks: list[OverlayMarkOut]
+    hands: list[OverlayHandOut]
 
 
 class OverlayEventOut(Schema):
@@ -496,8 +506,8 @@ class OverlayEventOut(Schema):
 
 
 # GET /api/walks/{walk_id}/overlay
-#   Sampled at `fps` (10). Only frames with at least one visible mark are listed: no frame within
-#   1/fps of the current time means no outlines. Coordinates in width x height (display pixels).
+#   Sampled at `fps` (10). Only frames with a hand on screen (around a pointing event) are listed: no
+#   frame within 1/fps of the current time means no outlines. Coordinates in width x height (display px).
 class OverlayOut(Schema):
     walk_id: str
     fps: float
@@ -659,7 +669,7 @@ class ProcessingStepOut(Schema):
     title: str  # STAGE_TITLE[stage]
     model_label: str | None  # null for in-app stages
     provider: Provider | None
-    detail: str  # "11 marks followed across the whole video"
+    detail: str  # "11 points found across the whole video"
     duration_ms: int
     calls: int
     fallback_calls: int  # calls served by meta-fallback

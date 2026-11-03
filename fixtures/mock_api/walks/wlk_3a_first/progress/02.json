@@ -32,8 +32,8 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
-      "stage": "track_tape",
-      "label": "Finding tape",
+      "stage": "track_hands",
+      "label": "Following your hand (SAM 3.1)",
       "status": "pending",
       "started_at": null,
       "finished_at": null,
@@ -44,8 +44,8 @@
       "model_label": "SAM 3.1"
     },
     {
-      "stage": "merge_marks",
-      "label": "Following each strip of tape",
+      "stage": "find_points",
+      "label": "Finding where you pointed",
       "status": "pending",
       "started_at": null,
       "finished_at": null,
@@ -69,7 +69,7 @@
     },
     {
       "stage": "fuse",
-      "label": "Matching what was said to each mark",
+      "label": "Matching what was said to each point",
       "status": "pending",
       "started_at": null,
       "finished_at": null,

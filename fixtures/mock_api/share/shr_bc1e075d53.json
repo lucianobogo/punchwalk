@@ -3,45 +3,49 @@
   "project_name": "Unit 2B final punch",
   "project_address": "418 Alder Street, Unit 2B",
   "number": 12,
-  "title": "Tape with no description",
-  "description": "A strip of tape on the bedroom wall, but nobody said what's wrong here.",
-  "action": "Describe the problem or dismiss this item",
+  "title": "Dent in closet door",
+  "description": "The bedroom closet door has a dent near the bottom.",
+  "action": "Repair the dent and touch up the door",
   "trade": "general",
   "company": "Northfield Builders",
   "room": "Bedroom",
-  "location_detail": "Bedroom wall",
+  "location_detail": "Bottom of the closet door",
   "severity": "cosmetic",
   "status": "needs_review",
-  "quote": null,
-  "quote_start_s": null,
-  "quote_end_s": null,
+  "quote": "Closet door's got a dent down at the bottom.",
+  "quote_start_s": 119.0,
+  "quote_end_s": 122.0,
   "video_url": "/media/walks/wlk_2b_first/display.mp4",
-  "video_start_s": 117.9,
-  "video_end_s": 123.1,
+  "video_start_s": 117.0,
+  "video_end_s": 123.0,
   "evidence": {
-    "t": 120.5,
+    "t": 120.75,
     "image_url": "/media/items/itm_2b_12/evidence.jpg",
     "raw_url": "/media/items/itm_2b_12/frame.jpg",
     "crop_url": "/media/items/itm_2b_12/crop.jpg",
     "width": 1080,
     "height": 1920,
-    "tape_svg": "M421 936 L706 926 L710 1018 L424 1028 Z",
     "defect_svg": null,
-    "tape_box": {
-      "x1": 420.5,
-      "y1": 926.1,
-      "x2": 709.6,
-      "y2": 1028.0
-    },
     "defect_box": null,
     "crop_box": {
-      "x1": 285.1,
-      "y1": 767.1,
-      "x2": 845.1,
-      "y2": 1187.1
+      "x1": 128.2,
+      "y1": 1075.6,
+      "x2": 968.2,
+      "y2": 1705.6
     },
-    "grounding": "tape_only",
-    "sam_concept": null
+    "pointer": {
+      "x": 568.2,
+      "y": 1450.6
+    },
+    "pointing_frame": "/media/items/itm_2b_12/pointing.jpg",
+    "hand_box": {
+      "x1": 525.1,
+      "y1": 1437.7,
+      "x2": 833.1,
+      "y2": 1920.0
+    },
+    "grounding": "pointed_only",
+    "sam_concept": "door dent"
   },
   "closure": null,
   "walked_at": "2026-11-03T15:12:00Z"

@@ -1,7 +1,7 @@
 """SQLModel tables for the Punchwalk domain (CLAUDE.md "Domain model").
 
 Conventions:
-- Ids are strings with a type prefix (`prj_`, `wlk_`, `trn_`, `mrk_`, `itm_`, `dsp_`, `mc_`, `job_`);
+- Ids are strings with a type prefix (`prj_`, `wlk_`, `trn_`, `pnt_`, `itm_`, `dsp_`, `mc_`, `job_`);
   use `new_id(prefix)`.
 - Enums are stored by **value** (`"meta-fallback"`, not the member name) in VARCHAR columns.
 - Lists and nested objects are JSON columns. Their shapes are the small Pydantic models below
@@ -161,21 +161,29 @@ class Box(_Shape):
     y2: float
 
 
+class XY(_Shape):
+    """A pixel position, e.g. the fingertip or the "pointed here" marker."""
+
+    x: float
+    y: float
+
+
 class Evidence(_Shape):
-    """Evidence frame for an item (`Item.evidence`). Paths relative to DATA_DIR."""
+    """Evidence frame for an item (`Item.evidence`). Paths relative to DATA_DIR; coordinates in `image` pixels."""
 
     t: float  # seconds into the walk
-    image: str  # full frame with tape (blue) + defect (red, 30% fill) outlines, no text
+    image: str  # full frame: defect outline (red, 30% fill) + a small blue dot at `pointer`, no text
     raw: str  # the same frame without outlines (for the "Outlines on" toggle)
-    crop: str  # 4:3 crop centered on tape + defect, outlines drawn
+    crop: str  # 4:3 crop centered on the pointer + defect, outlines drawn
     width: int
     height: int
-    tape_svg: str | None = None  # SVG path `d`, frame pixels
-    defect_svg: str | None = None
-    tape_box: Box | None = None
+    defect_svg: str | None = None  # SVG path `d`, frame pixels
     defect_box: Box | None = None
     crop_box: Box | None = None  # region of the frame used for `crop`
-    grounding: Grounding = Grounding.tape_only
+    pointer: XY | None = None  # where the finger pointed, mapped into this frame; None for voice-only items
+    pointing_frame: str | None = None  # the frame where the hand points, hand outlined (blue)
+    hand_box: Box | None = None  # the hand in `pointing_frame` (same pixel size as `image`)
+    grounding: Grounding = Grounding.none
     sam_concept: str | None = None  # noun phrase Spark Open asked SAM to outline
 
 
@@ -274,18 +282,26 @@ class Turn(SQLModel, table=True):
     created_at: datetime = _created_at()
 
 
-class Mark(SQLModel, table=True):
-    """One physical strip of tape, merged from one or more SAM tracks."""
+class Point(SQLModel, table=True):
+    """One pointing event: the inspector's hand held still (~2 s) while pointing at a defect (PLAN 1.3).
 
-    __tablename__ = "marks"
+    Found from the SAM 3.1 hand track; the fingertip is where the defect is. Display pixels.
+    """
 
-    id: str = Field(default_factory=lambda: new_id("mrk"), primary_key=True)
+    __tablename__ = "points"
+
+    id: str = Field(default_factory=lambda: new_id("pnt"), primary_key=True)
     walk_id: str = Field(foreign_key="walks.id", index=True)
+    number: int  # 1-based, in time order within the walk
+    t: float  # seconds on the display timeline (middle of the hold)
+    frame: int  # sam.mp4 frame index at `t`
+    fingertip_x: float
+    fingertip_y: float
+    hand_box: dict[str, Any] = _json_dict()  # Box, display pixels
+    hold_s: float  # how long the hand was still
     sam_object_ids: list[str] = _json_list()  # "<clip>:<sam id>", e.g. "a:3" (ids reset per clip)
-    intervals: list[list[float]] = _json_list()  # visible [[start_s, end_s], ...] in walk seconds
-    best_t: float | None = None
-    box_at_best: dict[str, Any] | None = _json_optional()  # Box, display pixels
     mean_conf: float | None = None
+    turn_id: str | None = None  # Turn.id of the mention it belongs to (no FK: stages persist independently)
     created_at: datetime = _created_at()
 
 
@@ -295,9 +311,9 @@ class Item(SQLModel, table=True):
 
     id: str = Field(default_factory=lambda: new_id("itm"), primary_key=True)
     project_id: str = Field(foreign_key="projects.id", index=True)
-    number: int  # project-scoped; shown as "#014" in reports, "14" on the tape tab
+    number: int  # project-scoped; shown as "#014" in reports, "14" on the number tab
     origin_walk_id: str = Field(foreign_key="walks.id", index=True)
-    mark_id: str | None = Field(default=None, foreign_key="marks.id")  # None for voice-only items
+    point_id: str | None = Field(default=None, foreign_key="points.id")  # None for voice-only items
     turn_ids: list[str] = _json_list()
     title: str
     description: str = ""
@@ -387,4 +403,4 @@ class Job(SQLModel, table=True):
     updated_at: datetime = _updated_at()
 
 
-ALL_TABLES: tuple[type[SQLModel], ...] = (Project, Walk, Turn, Mark, Item, Dispatch, ModelCall, Job)
+ALL_TABLES: tuple[type[SQLModel], ...] = (Project, Walk, Turn, Point, Item, Dispatch, ModelCall, Job)

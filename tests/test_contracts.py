@@ -6,6 +6,8 @@
 - web/src/api/types.ts mirrors schemas.py (same interfaces, fields, types, nullability) and enums.py
   (same enum values and *_LABEL maps).
 - Every SQLModel table round-trips through SQLite.
+- The contract describes the pointing-hand product: no tape or mark fields anywhere, four grounding values,
+  and every pointed item in the mocks has its Point and a "pointed here" marker.
 
 Offline and fast: no network, no ffmpeg needed (the video probe test skips without ffprobe).
 """
@@ -147,7 +149,7 @@ def test_media_formats() -> None:
             w, h = im.size
             if f.name in ("crop.jpg", "after.jpg"):
                 assert (w, h) == (800, 600), f"{f}: crops are 4:3 800x600"
-            if f.name in ("evidence.jpg", "frame.jpg", "after_frame.jpg"):
+            if f.name in ("evidence.jpg", "frame.jpg", "after_frame.jpg", "pointing.jpg"):
                 assert (w, h) in ((1080, 1920), (1920, 1080)), f"{f}: full frames are the walk's pixel size"
     for f in MEDIA.rglob("*.mp4"):
         assert f.stat().st_size < 2_000_000, f"{f} is over 2 MB"
@@ -196,15 +198,19 @@ def test_scenario_has_what_every_screen_needs() -> None:
     for it in by_status[E.ItemStatus.closed]:
         assert it.closure and it.closure.before_image_url and it.closure.after_image_url
     reasons = {i.review_reason for i in by_status[E.ItemStatus.needs_review]}
-    assert {E.REVIEW_NO_DESCRIPTION, E.REVIEW_FALSE_FIX} <= reasons
+    assert {E.REVIEW_NOT_IN_FRAME, E.REVIEW_FALSE_FIX} <= reasons
+    not_in_frame = next(i for i in items if i.review_reason == E.REVIEW_NOT_IN_FRAME)
+    assert not_in_frame.verification and not not_in_frame.verification.consistent
+    assert not_in_frame.quote and not_in_frame.point_id, "a described, pointed defect the frame doesn't show"
     false_fix = next(i for i in items if i.review_reason == E.REVIEW_FALSE_FIX)
     assert false_fix.closure and false_fix.closure.voice_status == E.VoiceStatus.fixed
     assert false_fix.closure.vision_status == E.VisionStatus.still_visible
     assert by_status[E.ItemStatus.dispatched] and by_status[E.ItemStatus.open]
     assert any(i.severity == E.Severity.safety for i in items)
-    voice_only = [i for i in items if i.mark_id is None]
+    voice_only = [i for i in items if i.point_id is None]
     assert voice_only and all(
-        i.evidence and i.evidence.grounding == E.Grounding.tape_only for i in voice_only
+        i.evidence and i.evidence.grounding == E.Grounding.none and i.evidence.pointer is None
+        for i in voice_only
     )
     assert any(i.dispatch and i.history for i in by_status[E.ItemStatus.dispatched])
     assert any(h.actor == E.HistoryActor.human for i in items for h in i.history), "need a human override"
@@ -223,11 +229,14 @@ def test_scenario_has_what_every_screen_needs() -> None:
     assert w2.walk.rewalk_of == W1
     assert len(w1.walk.clips) == 2 and w1.walk.clips[1].offset_s == w1.walk.clips[0].duration_s
     assert w1.walk.orientation == E.Orientation.portrait and (w1.walk.width, w1.walk.height) == (1080, 1920)
-    assert w1.turns and w1.marks
+    assert w1.turns and w1.points and w2.points
+    assert w1.walk.counts.points == len(w1.points) and w2.walk.counts.points == len(w2.points)
     assert any(t.kind == E.TurnKind.status_update and t.claimed for t in w2.turns)
 
     overlay: S.OverlayOut = parsed(f"walks/{W1}/overlay.json")
-    assert overlay.fps == 10 and len({m.mark_id for f in overlay.frames for m in f.marks}) >= 3
+    assert overlay.fps == 10 and len({h.point_id for f in overlay.frames for h in f.hands}) >= 3
+    assert any(h.fingertip for f in overlay.frames for h in f.hands), "fingertip is set while pointing"
+    assert any(h.fingertip is None for f in overlay.frames for h in f.hands), "and null while moving"
 
     proc: S.ProcessingSummaryOut = parsed(f"walks/{W1}/processing.json")
     labels = {c.model_label for c in proc.calls}
@@ -253,10 +262,12 @@ def test_overlay_and_moments_are_consistent() -> None:
         assert ts == sorted(ts) and len(ts) == len(set(ts))
         for f in ov.frames:
             assert abs(f.t * ov.fps - round(f.t * ov.fps)) < 1e-6, "frames sit on the fps grid"
-            for m in f.marks:
-                b = m.box
+            for h in f.hands:
+                b = h.box
                 assert 0 <= b.x1 < b.x2 <= ov.width and 0 <= b.y1 < b.y2 <= ov.height
-                assert m.svg.startswith("M") and m.svg.endswith("Z")
+                assert h.svg.startswith("M") and h.svg.endswith("Z")
+                if h.fingertip:
+                    assert b.x1 - 1 <= h.fingertip.x <= b.x2 + 1 and b.y1 - 1 <= h.fingertip.y <= b.y2 + 1
         for e in ov.events:
             assert 0 <= e.t <= ov.duration_s
     for p in sorted((MOCK / "items").glob("*.json")):
@@ -292,8 +303,9 @@ def test_cross_references_resolve() -> None:
             assert set(it.turn_ids) <= turn_ids or it.origin_walk_id != wid
         for t in detail.turns:
             assert set(t.item_ids) <= set(item_files)
-        for m in detail.marks:
-            assert m.item_id in item_files
+        for pt in detail.points:
+            assert pt.item_id is None or pt.item_id in item_files
+            assert pt.turn_id is None or pt.turn_id in turn_ids
         for c in parsed(f"walks/{wid}/model-calls.json").calls:
             assert c.item_id is None or c.item_id in item_files
         for p in [
@@ -313,6 +325,108 @@ def test_cross_references_resolve() -> None:
     for it in item_files.values():
         if it.dispatch:
             assert it.dispatch.dispatch_id.startswith("dsp_")
+
+
+# =========================================================================== pointing-hand contract
+
+# Words from the tape-era contract that must not come back (the UI's "tape tab" component name and the
+# DESIGN color names are UI-only and never appear in the API).
+BANNED_KEY = re.compile(r"tape|mark", re.I)
+
+
+def _keys(node: Any) -> list[str]:
+    if isinstance(node, dict):
+        return [k for k in node] + [k2 for v in node.values() for k2 in _keys(v)]
+    if isinstance(node, list):
+        return [k for v in node for k in _keys(v)]
+    return []
+
+
+def test_grounding_has_exactly_four_values() -> None:
+    assert [g.value for g in E.Grounding] == ["sam_concept", "sam_box", "pointed_only", "none"]
+
+
+def test_no_tape_or_marks_in_the_contract() -> None:
+    problems = []
+    for cls in _schema_classes():
+        if BANNED_KEY.search(cls.__name__):
+            problems.append(f"schema {cls.__name__}")
+        for name, f in cls.model_fields.items():
+            if BANNED_KEY.search(f.alias or name):
+                problems.append(f"{cls.__name__}.{f.alias or name}")
+    for table in M.ALL_TABLES:
+        if BANNED_KEY.search(table.__tablename__):
+            problems.append(f"table {table.__tablename__}")
+        problems += [f"{table.__name__}.{n}" for n in table.model_fields if BANNED_KEY.search(n)]
+    for shape in (M.Evidence, M.Closure, M.Verification):
+        problems += [f"{shape.__name__}.{n}" for n in shape.model_fields if BANNED_KEY.search(n)]
+    for cls in _enum_classes():
+        problems += [f"{cls.__name__}.{m.value}" for m in cls if BANNED_KEY.search(m.value)]
+    for name, mapping in vars(E).items():
+        if name.endswith(("_LABEL", "_TITLE")) and isinstance(mapping, dict):
+            problems += [f"{name}[{k}]" for k, v in mapping.items() if "tape" in v.lower()]
+    problems += [f"enums.{n}" for n, v in vars(E).items() if isinstance(v, str) and "tape" in v.lower()]
+    ts = _ts()
+    problems += [f"types.ts line {i + 1}" for i, line in enumerate(ts.splitlines()) if "tape" in line.lower()]
+    problems += [f"types.ts: {w}" for w in ("mark_id", "marks:", "MarkOut", "IntervalOut") if w in ts]
+    assert not problems, "tape-era names left in the contract:\n" + "\n".join(problems)
+
+
+def test_no_tape_or_marks_in_the_mocks() -> None:
+    problems = []
+    for p in mock_files():
+        data = json.loads(p.read_text())
+        problems += [f"{rel(p)}: key {k!r}" for k in _keys(data) if BANNED_KEY.search(k)]
+        problems += [f"{rel(p)}: {v[:60]!r}" for v in _strings(data) if "tape" in v.lower()]
+    readme = (MOCK / "README.md").read_text().lower()
+    if "tape" in readme or "mrk_" in readme:
+        problems.append("README.md still describes tape marks")
+    assert not problems, "\n".join(problems[:20])
+
+
+def test_every_pointed_item_has_a_point_and_a_pointer() -> None:
+    points: dict[str, tuple[str, S.PointOut]] = {}
+    for p in sorted((MOCK / "walks").glob("*.json")):
+        detail = S.WalkDetailOut.model_validate_json(p.read_text())
+        ts = [pt.t for pt in detail.points]
+        assert ts == sorted(ts), f"{p.stem}: points are listed in time order"
+        assert [pt.number for pt in detail.points] == list(range(1, len(ts) + 1)), "numbered 1.. by time"
+        for pt in detail.points:
+            assert pt.id.startswith("pnt_") and pt.walk_id == p.stem
+            b = pt.hand_box
+            assert b.x1 - 1 <= pt.fingertip_x <= b.x2 + 1 and b.y1 - 1 <= pt.fingertip_y <= b.y2 + 1
+            assert 0.4 <= pt.hold_s <= 3.0 and pt.frame == round(pt.t * 10)
+            points[pt.id] = (p.stem, pt)
+
+    pointed = 0
+    for p in sorted((MOCK / "items").glob("*.json")):
+        it = S.ItemOut.model_validate_json(p.read_text())
+        ev = it.evidence
+        assert ev is not None
+        if it.point_id is None:  # voice-only: no marker, no pointing frame, no outline from a point
+            assert ev.grounding == E.Grounding.none, it.id
+            assert ev.pointer is None and ev.pointing_frame is None and ev.hand_box is None, it.id
+            continue
+        pointed += 1
+        assert it.point_id in points, f"{it.id}: point {it.point_id} is in no walk detail"
+        walk_id, pt = points[it.point_id]
+        assert walk_id == it.origin_walk_id and pt.item_id in (it.id, None)
+        assert ev.grounding != E.Grounding.none, it.id
+        assert ev.pointer is not None, f"{it.id}: a pointed item needs the 'pointed here' marker"
+        assert 0 <= ev.pointer.x <= ev.width and 0 <= ev.pointer.y <= ev.height
+        assert ev.pointing_frame and ev.pointing_frame.endswith("/pointing.jpg"), it.id
+        assert ev.hand_box is not None, it.id
+        assert abs(ev.t - pt.t) <= 1.5, f"{it.id}: the evidence frame is within 1.5 s of the point (PLAN 1.6)"
+        if ev.grounding == E.Grounding.pointed_only:
+            assert ev.defect_svg is None and ev.defect_box is None, it.id
+        else:
+            assert ev.defect_svg and ev.defect_box, it.id
+    assert pointed >= 10
+
+    for wid in (W1, W2):  # every hand in the overlay belongs to a listed point of that walk
+        ov: S.OverlayOut = parsed(f"walks/{wid}/overlay.json")
+        ids = {h.point_id for f in ov.frames for h in f.hands}
+        assert ids == {pid for pid, (w, _) in points.items() if w == wid}, wid
 
 
 # =========================================================================== labels
@@ -460,12 +574,12 @@ def test_types_ts_mirrors_every_enum_and_label() -> None:
         "MODEL_SAM",
         "MODEL_SPARK_OPEN",
         "MODEL_SPARK_HOSTED",
-        "REVIEW_NO_DESCRIPTION",
+        "REVIEW_NOT_IN_FRAME",
         "REVIEW_FALSE_FIX",
         "NOT_CHECKED_ON_REWALK",
     ):
-        m = re.search(rf"export const {const} = '([^']*)';", _ts())
-        assert m and m.group(1) == getattr(E, const), f"{const} differs"
+        m = re.search(rf"export const {const} = (['\"])(.*?)\1;", _ts())
+        assert m and m.group(2) == getattr(E, const), f"{const} differs"
 
 
 # =========================================================================== SQLite round trip
@@ -520,23 +634,31 @@ def test_sqlite_round_trip(tmp_path: Path) -> None:
         room="Kitchen",
         defects=["missing knob"],
     )
-    mark = M.Mark(
-        id="mrk_t",
+    point = M.Point(
+        id="pnt_t",
         walk_id="wlk_t",
+        number=1,
+        t=14.5,
+        frame=145,
+        fingertip_x=619.8,
+        fingertip_y=1032.3,
+        hand_box=M.Box(x1=544, y1=1031, x2=886, y2=1920).model_dump(),
+        hold_s=1.8,
         sam_object_ids=["a:1"],
-        intervals=[[9.3, 18.4]],
-        best_t=14.6,
-        box_at_best=M.Box(x1=1, y1=2, x2=3, y2=4).model_dump(),
-        mean_conf=0.81,
+        mean_conf=0.86,
+        turn_id="trn_t",
     )
     evidence = M.Evidence(
-        t=14.6,
+        t=15.85,
         image="items/itm_t/evidence.jpg",
         raw="items/itm_t/frame.jpg",
         crop="items/itm_t/crop.jpg",
         width=1080,
         height=1920,
-        tape_svg="M0 0 L1 1 Z",
+        defect_svg="M0 0 L1 1 Z",
+        pointer=M.XY(x=590.9, y=1043.5),
+        pointing_frame="items/itm_t/pointing.jpg",
+        hand_box=M.Box(x1=544, y1=1031, x2=886, y2=1920),
         grounding=E.Grounding.sam_concept,
         sam_concept="cabinet knob hole",
     )
@@ -555,7 +677,7 @@ def test_sqlite_round_trip(tmp_path: Path) -> None:
         project_id="prj_t",
         number=14,
         origin_walk_id="wlk_t",
-        mark_id="mrk_t",
+        point_id="pnt_t",
         turn_ids=["trn_t"],
         title="Missing cabinet knob",
         trade=E.Trade.carpentry_millwork,
@@ -601,7 +723,7 @@ def test_sqlite_round_trip(tmp_path: Path) -> None:
     )
 
     with Session(engine) as s:
-        s.add_all([project, walk, turn, mark, item, dispatch, call, job])
+        s.add_all([project, walk, turn, point, item, dispatch, call, job])
         s.commit()
 
     with Session(engine) as s:
@@ -616,7 +738,10 @@ def test_sqlite_round_trip(tmp_path: Path) -> None:
             got_walk and got_walk.clips[0]["offset_s"] == 0 and got_walk.orientation == E.Orientation.portrait
         )
         assert M.StageState.model_validate(got_walk.stages["transcribe"]).counts == {"lines": 20}
-        assert s.get(M.Mark, "mrk_t").intervals == [[9.3, 18.4]]  # type: ignore[union-attr]
+        got_point = s.get(M.Point, "pnt_t")
+        assert got_point and got_point.hold_s == 1.8 and got_point.turn_id == "trn_t"
+        assert M.Box.model_validate(got_point.hand_box).x2 == 886
+        assert s.get(M.Item, "itm_t").point_id == "pnt_t"  # type: ignore[union-attr]
         assert s.get(M.Turn, "trn_t").kind == E.TurnKind.defect  # type: ignore[union-attr]
         assert s.get(M.Dispatch, "dsp_t").payload == {"text": "hi"}  # type: ignore[union-attr]
         assert s.get(M.Job, "job_t").progress["counts"]["written"] == 7  # type: ignore[union-attr]

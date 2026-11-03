@@ -63,11 +63,17 @@ class TurnKind(StrEnum):
 
 
 class Grounding(StrEnum):
-    """How the defect outline was found (PLAN 2.2). `tape_only` = no defect outline."""
+    """How the defect was located in the evidence frame (PLAN 2.2).
+
+    `sam_concept` / `sam_box`: SAM 3.1 outlined the defect (concept prompt, else box prompt).
+    `pointed_only`: no defect outline, only the "pointed here" marker from the fingertip.
+    `none`: a voice-only item (nobody pointed), so no outline and no marker.
+    """
 
     sam_concept = "sam_concept"
     sam_box = "sam_box"
-    tape_only = "tape_only"
+    pointed_only = "pointed_only"
+    none = "none"
 
 
 class Channel(StrEnum):
@@ -115,8 +121,8 @@ class Stage(StrEnum):
 
     ingest = "ingest"
     transcribe = "transcribe"
-    track_tape = "track_tape"
-    merge_marks = "merge_marks"
+    track_hands = "track_hands"
+    find_points = "find_points"
     classify_turns = "classify_turns"
     fuse = "fuse"
     pick_evidence = "pick_evidence"
@@ -196,8 +202,8 @@ class ClosureDecision(StrEnum):
 STAGES_INITIAL: tuple[Stage, ...] = (
     Stage.ingest,
     Stage.transcribe,
-    Stage.track_tape,
-    Stage.merge_marks,
+    Stage.track_hands,
+    Stage.find_points,
     Stage.classify_turns,
     Stage.fuse,
     Stage.pick_evidence,
@@ -209,8 +215,8 @@ STAGES_INITIAL: tuple[Stage, ...] = (
 STAGES_REWALK: tuple[Stage, ...] = (
     Stage.ingest,
     Stage.transcribe,
-    Stage.track_tape,
-    Stage.merge_marks,
+    Stage.track_hands,
+    Stage.find_points,
     Stage.classify_turns,
     Stage.fuse,
     Stage.pick_evidence,
@@ -227,7 +233,7 @@ MODEL_SPARK_HOSTED = "muse-spark-1.3"
 
 # --------------------------------------------------------------------------- fixed review reasons
 
-REVIEW_NO_DESCRIPTION = "Tape mark with no description"
+REVIEW_NOT_IN_FRAME = "The frame doesn't show the defect described."  # verify (PLAN 2.3) disagreed
 REVIEW_FALSE_FIX = "Marked fixed on the re-walk, but the defect is still visible."
 NOT_CHECKED_ON_REWALK = "Not checked on re-walk"
 
@@ -266,10 +272,10 @@ TRADE_LABEL: dict[Trade, str] = {
 STAGE_LABEL: dict[Stage, str] = {
     Stage.ingest: "Preparing the video",
     Stage.transcribe: "Listening to the walk",
-    Stage.track_tape: "Finding tape",
-    Stage.merge_marks: "Following each strip of tape",
+    Stage.track_hands: "Following your hand (SAM 3.1)",
+    Stage.find_points: "Finding where you pointed",
     Stage.classify_turns: "Sorting what was said",
-    Stage.fuse: "Matching what was said to each mark",
+    Stage.fuse: "Matching what was said to each point",
     Stage.pick_evidence: "Picking the clearest photo",
     Stage.write_items: "Writing items",
     Stage.ground_defects: "Outlining each defect",
@@ -315,10 +321,10 @@ PROVIDER_LABEL: dict[Provider, str] = {
 STAGE_TITLE: dict[Stage, str] = {
     Stage.ingest: "Prepare the video",
     Stage.transcribe: "Transcribe the narration",
-    Stage.track_tape: "Track every strip of tape",
-    Stage.merge_marks: "Join sightings of the same tape",
+    Stage.track_hands: "Follow the hand to each defect",
+    Stage.find_points: "Find where you pointed",
     Stage.classify_turns: "Sort what was said",
-    Stage.fuse: "Match each sentence to its tape",
+    Stage.fuse: "Match each sentence to where you pointed",
     Stage.pick_evidence: "Pick the clearest photo",
     Stage.write_items: "Write each item",
     Stage.ground_defects: "Outline the defect",
@@ -336,6 +342,6 @@ def model_label(model: str) -> str:
 def format_item_number(number: int) -> str:
     """Project-scoped item number as written in reports and the API: 14 -> '#014'.
 
-    The tape tab in the UI shows the bare number ('14'), per DESIGN.md.
+    The number tab in the UI (the "tape tab" component) shows the bare number ('14'), per DESIGN.md.
     """
     return f"#{number:03d}"

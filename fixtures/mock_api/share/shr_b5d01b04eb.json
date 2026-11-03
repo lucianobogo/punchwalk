@@ -16,29 +16,38 @@
   "quote_start_s": 53.0,
   "quote_end_s": 56.8,
   "video_url": "/media/walks/wlk_3a_first/display.mp4",
-  "video_start_s": 50.0,
+  "video_start_s": 51.0,
   "video_end_s": 57.8,
   "evidence": {
-    "t": 54.4,
+    "t": 54.95,
     "image_url": "/media/items/itm_3a_04/evidence.jpg",
     "raw_url": "/media/items/itm_3a_04/frame.jpg",
     "crop_url": "/media/items/itm_3a_04/crop.jpg",
     "width": 1920,
     "height": 1080,
-    "tape_svg": null,
-    "defect_svg": "M908 284 L998 284 L998 419 L908 419 Z",
-    "tape_box": null,
+    "defect_svg": "M922 277 L1012 277 L1012 412 L922 412 Z",
     "defect_box": {
-      "x1": 908.3,
-      "y1": 283.7,
-      "x2": 998.3,
-      "y2": 418.7
+      "x1": 921.8,
+      "y1": 277.2,
+      "x2": 1011.8,
+      "y2": 412.2
     },
     "crop_box": {
-      "x1": 673.3,
-      "y1": 141.2,
-      "x2": 1233.3,
-      "y2": 561.2
+      "x1": 727.1,
+      "y1": 181.8,
+      "x2": 1287.1,
+      "y2": 601.8
+    },
+    "pointer": {
+      "x": 1022.3,
+      "y": 436.3
+    },
+    "pointing_frame": "/media/items/itm_3a_04/pointing.jpg",
+    "hand_box": {
+      "x1": 983.1,
+      "y1": 448.2,
+      "x2": 1463.5,
+      "y2": 1080.0
     },
     "grounding": "sam_concept",
     "sam_concept": "cabinet door edge"

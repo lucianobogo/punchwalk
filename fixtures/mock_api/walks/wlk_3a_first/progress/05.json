@@ -36,39 +36,42 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
-      "stage": "track_tape",
-      "label": "Finding tape",
+      "stage": "track_hands",
+      "label": "Following your hand (SAM 3.1)",
       "status": "done",
       "started_at": "2026-11-04T14:52:18.300000Z",
       "finished_at": "2026-11-04T14:52:47.900000Z",
       "duration_ms": 29600,
       "counts": {
-        "marks": 0
+        "frames": 780,
+        "hands": 4
       },
       "progress": null,
-      "detail": "SAM 3.1 found no tape",
+      "detail": "4 points found",
       "model_label": "SAM 3.1"
     },
     {
-      "stage": "merge_marks",
-      "label": "Following each strip of tape",
+      "stage": "find_points",
+      "label": "Finding where you pointed",
       "status": "done",
       "started_at": "2026-11-04T14:52:47.900000Z",
-      "finished_at": "2026-11-04T14:52:48.100000Z",
-      "duration_ms": 200,
+      "finished_at": "2026-11-04T14:52:48.300000Z",
+      "duration_ms": 400,
       "counts": {
-        "marks": 0
+        "points": 4,
+        "mentions": 4,
+        "voice_only": 0
       },
       "progress": null,
-      "detail": "No tape to follow",
+      "detail": "4 places you pointed",
       "model_label": null
     },
     {
       "stage": "classify_turns",
       "label": "Sorting what was said",
       "status": "done",
-      "started_at": "2026-11-04T14:52:48.100000Z",
-      "finished_at": "2026-11-04T14:52:52Z",
+      "started_at": "2026-11-04T14:52:48.300000Z",
+      "finished_at": "2026-11-04T14:52:52.200000Z",
       "duration_ms": 3900,
       "counts": {
         "lines": 10
@@ -79,26 +82,26 @@
     },
     {
       "stage": "fuse",
-      "label": "Matching what was said to each mark",
+      "label": "Matching what was said to each point",
       "status": "done",
-      "started_at": "2026-11-04T14:52:52Z",
-      "finished_at": "2026-11-04T14:52:52.100000Z",
+      "started_at": "2026-11-04T14:52:52.200000Z",
+      "finished_at": "2026-11-04T14:52:52.300000Z",
       "duration_ms": 100,
       "counts": {
-        "matched": 0,
-        "unnarrated": 0,
-        "voice_only": 4
+        "items": 4,
+        "pointed": 4,
+        "voice_only": 0
       },
       "progress": null,
-      "detail": "4 described with no tape",
+      "detail": "4 matched to where you pointed",
       "model_label": null
     },
     {
       "stage": "pick_evidence",
       "label": "Picking the clearest photo",
       "status": "done",
-      "started_at": "2026-11-04T14:52:52.100000Z",
-      "finished_at": "2026-11-04T14:52:55.400000Z",
+      "started_at": "2026-11-04T14:52:52.300000Z",
+      "finished_at": "2026-11-04T14:52:55.600000Z",
       "duration_ms": 3300,
       "counts": {
         "photos": 4
@@ -111,7 +114,7 @@
       "stage": "write_items",
       "label": "Writing items",
       "status": "running",
-      "started_at": "2026-11-04T14:52:55.400000Z",
+      "started_at": "2026-11-04T14:52:55.600000Z",
       "finished_at": null,
       "duration_ms": null,
       "counts": {
@@ -180,5 +183,5 @@
   "created_at": "2026-11-04T14:52:00Z",
   "started_at": "2026-11-04T14:52:05Z",
   "finished_at": null,
-  "updated_at": "2026-11-04T14:53:03Z"
+  "updated_at": "2026-11-04T14:53:03.200000Z"
 }

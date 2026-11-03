@@ -2,12 +2,12 @@
 
 Turn a construction punch walk into a verified, dispatched punch list.
 
-An inspector walks a space wearing Ray-Ban Meta glasses (or holding a phone), puts a strip of blue painter's tape next to each defect, and describes it out loud. Punchwalk:
+An inspector walks a space wearing Ray-Ban Meta glasses (or holding a phone), points at each defect with an index finger for about 2 seconds, and describes it out loud. Nothing is staged or stuck on the wall. Punchwalk:
 
 1. transcribes the narration with timestamps (**Muse Voice Transcribe**),
-2. tracks every tape mark through the video (**SAM 3.1**),
-3. pairs each spoken description with the tape it refers to,
-4. writes a punch item for each one: an AI summary of the problem, the action needed, trade, room and severity, plus an evidence frame with the tape and the actual defect outlined (**Muse Spark Open** on Baseten names the target, **SAM 3.1** draws the pixel-precise outline),
+2. tracks the inspector's hand through the video (**SAM 3.1**); where the hand holds still, the fingertip marks the defect's location (a **pointing event**),
+3. pairs each spoken description with the pointing event it belongs to (a description with no pointing becomes a voice-only item),
+4. writes a punch item for each one: an AI summary of the problem, the action needed, trade, room and severity, plus an evidence frame with the defect outlined and a dot where the finger pointed (**Muse Spark Open** on Baseten names the target, **SAM 3.1** draws the pixel-precise outline),
 5. checks every item against its own evidence and the original quote (**Muse Spark Open**),
 6. sends each trade its list (Slack, email, or the in-app outbox),
 7. on a re-walk, signs off fixed items with before/after proof, re-sends open ones, and flags anything "marked fixed, but the defect is still visible".
@@ -44,6 +44,7 @@ Tagline: *The voice says what. SAM proves where. Spark Open writes it up and che
 
 - **Ray-Ban Meta glasses** are the hero form factor: hands-free and at eye level, with the camera pointing where the inspector looks. Their video is portrait, clips are at most 3 minutes, and they reach us via the Meta AI app → phone → upload.
 - A phone works too, in landscape or portrait.
+- **How to point:** look straight at the spot, point at the defect with an index finger and hold it still for ~2 s while saying what's wrong. Keep the defect itself uncovered (point at its edge). A defect described without pointing still becomes an item (voice-only).
 - A walk can be uploaded as **several clips in order**. The pipeline concatenates them and records clip boundaries; SAM tracks never merge across a boundary.
 - Respect rotation metadata. Never letterbox portrait video into a landscape frame.
 
@@ -129,8 +130,8 @@ Base `https://api.meta.ai/v1`, header `Authorization: Bearer $MODEL_API_KEY`.
 - **Project:** id, name, address, trades `[{trade, company, contact, email, phone, slack_webhook?}]`, keywords[], rooms[].
 - **Walk:** id, project_id, kind `initial | rewalk`, status `uploaded → processing → ready | failed`, clips[] (order, filename, duration_s, offset_s), stage progress + timings, media paths, duration_s, fps, size, orientation, error.
 - **Turn:** id, walk_id, start_ms, end_ms, text, kind `location | defect | status_update | other`, room.
-- **Mark** (one physical strip of tape): id, walk_id, sam_object_ids[], visible intervals, best_t, box_at_best, mean_conf.
-- **Item:** project-scoped number (`#014`), origin_walk_id, mark_id?, turn_ids[], title, description, action, trade, room, location_detail, severity `cosmetic | functional | safety`, status `open | dispatched | closed | needs_review`, review_reason?, video_start_s, video_end_s, evidence {t, image, crop, tape_svg, defect_svg, grounding `sam_concept | sam_box | tape_only`}, verification {consistent, note, provider}, closure {rewalk_id, after_image, voice_status, vision_status, decision}, history[].
+- **Point** (one pointing event: the hand held still at a defect): id (`pnt_`), walk_id, number (1-based by time), t, frame (sam.mp4 index), fingertip_x/fingertip_y, hand_box, hold_s, sam_object_ids[], mean_conf, turn_id?. Display pixels.
+- **Item:** project-scoped number (`#014`), origin_walk_id, point_id? (null = voice-only), turn_ids[], title, description, action, trade, room, location_detail, severity `cosmetic | functional | safety`, status `open | dispatched | closed | needs_review`, review_reason?, video_start_s, video_end_s, evidence {t, image, raw, crop, defect_svg, defect_box, crop_box, pointer {x, y}? (the "pointed here" marker in the evidence frame), pointing_frame? (the frame with the hand, outlined), hand_box?, grounding `sam_concept | sam_box | pointed_only | none`}, verification {consistent, note, provider}, closure {rewalk_id, after_image, voice_status, vision_status, decision}, history[]. `pointed_only` = pointed but no defect outline; `none` = voice-only, no marker.
 - **Dispatch:** id, project_id, trade, item_ids[], channel `slack | email | outbox`, sent_at, payload.
 - **ModelCall:** id, walk_id, stage, model, provider, latency_ms, tokens_in/out?, frames?, est_cost_usd, cached, ok, error?.
 - **Trades enum:** electrical, plumbing, drywall, painting, carpentry_millwork, doors_hardware, flooring, windows_glazing, hvac, appliances, cleaning, general.
@@ -141,7 +142,9 @@ Base `https://api.meta.ai/v1`, header `Authorization: Bearer $MODEL_API_KEY`.
 
 ## Pipeline overview (details and thresholds in PLAN.md)
 
-`ingest → transcribe → track tape → merge marks → classify turns → fuse speech↔marks → pick evidence → write items (Spark Open) → ground defect (SAM) → verify (Spark Open) → [rewalk: resolve closures] → persist`
+`ingest → transcribe → track hands (SAM) → find points → classify turns → fuse speech↔points → pick evidence → write items (Spark Open) → ground defect (SAM) → verify (Spark Open) → [rewalk: resolve closures] → persist`
+
+Stage ids: `ingest, transcribe, track_hands, find_points, classify_turns, fuse, pick_evidence, write_items, ground_defects, verify, resolve_closures, persist`.
 
 Every stage is idempotent, resumable, cached and timed, and writes a `ModelCall` row for each external call.
 
@@ -165,6 +168,6 @@ demo/  scripts/  tests/  docs/  .verify/ (scratch, gitignored)
 
 - **Phone first.** The iPhone 15 Pro viewport (393×852) is the primary target; desktop shows the app in a centered column, plus a landing page with the live app inside a phone frame.
 - **Match the renders.** `docs/design/*.png` are reviewed renders of every key screen. Open them before building a screen.
-- **The punch list is home.** Nobody should have to watch a full video. It's a list of compact rows: a thumbnail with its tape tab, the title, a short AI summary, and a play button that jumps to the exact second. Item detail adds the big photo, the action needed, and the inspector's original quote as the source.
-- Every finding shows its proof. The tape is outlined in blue `#2F86E0`, the defect in red `#D93B30`. Tape tabs are light painter's-tape blue `#5AA2EA` with the number in graphite.
-- Where judges look (processing screen, "How this walk was processed"), name the Meta models plainly: "Muse Voice Transcribe", "SAM 3.1", "Muse Spark Open on Baseten".
+- **The punch list is home.** Nobody should have to watch a full video. It's a list of compact rows: a thumbnail with its number tab, the title, a short AI summary, and a play button that jumps to the exact second. Item detail adds the big photo, the action needed, and the inspector's original quote as the source.
+- Every finding shows its proof: the defect outlined in red `#D93B30`, plus a small blue dot `#2F86E0` where the finger pointed. In video, the hand is outlined in blue while it points. The numbered tabs keep the light painter's-tape blue look `#5AA2EA` with the number in graphite (the component is still called the "tape tab"; it no longer stands for physical tape).
+- Where judges look (processing screen, "How this walk was processed"), name the Meta models plainly: "Muse Voice Transcribe", "SAM 3.1", "Muse Spark Open on Baseten". The SAM step reads "Following your hand (SAM 3.1): N points found".

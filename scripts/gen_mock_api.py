@@ -9,7 +9,9 @@ construction; `tests/test_contracts.py` re-validates it. The scenario follows FO
 "Unit 2B final punch", a first walk (glasses, 2 clips, 12 items), a re-walk (6 signed off, 3 still open,
 1 false "fixed" claim), plus project "Unit 3A turnover" with a walk still processing.
 
-Media is drawn with Pillow (beige walls, blue tape, simple defects; no text) and encoded with ffmpeg.
+The inspector points at each defect with an index finger and holds it ~2 s while describing it. Media is
+drawn with Pillow (beige walls, simple defects, a skin-colored hand that comes in from the frame edge,
+holds, and leaves; no text) and encoded with ffmpeg.
 File names match what Phase 3 (`scripts/build_mock_api.py`) will write from real pipeline outputs, so
 real frames can replace these in place. See fixtures/mock_api/README.md.
 """
@@ -44,7 +46,7 @@ from punchwalk.core.enums import (  # noqa: E402
     MODEL_SPARK_OPEN,
     NOT_CHECKED_ON_REWALK,
     REVIEW_FALSE_FIX,
-    REVIEW_NO_DESCRIPTION,
+    REVIEW_NOT_IN_FRAME,
     STAGE_LABEL,
     STAGE_TITLE,
     STAGES_INITIAL,
@@ -94,11 +96,12 @@ COUNTER = (186, 178, 163)
 TILE = (229, 233, 234)
 GROUT = (205, 211, 213)
 FLOOR = (186, 152, 116)
-TAPE_FILL = (79, 151, 227)
-TAPE_EDGE = (58, 126, 204)
-TAPE_OUTLINE = (47, 134, 224)  # DESIGN "Tape" #2F86E0
+SKIN = (221, 170, 136)
+SKIN_EDGE = (184, 134, 103)
+BLUE = (47, 134, 224)  # DESIGN "Tape" #2F86E0: the "pointed here" dot and hand outlines
 REDLINE = (217, 59, 48)  # DESIGN "Redline" #D93B30
 WHITE = (255, 255, 255)
+POINTER_R = 8  # "pointed here" dot radius at full frame (white halo around it)
 
 Pt = tuple[float, float]
 Poly = list[Pt]
@@ -378,10 +381,15 @@ def draw_outlet(c: Canvas, W: float, H: float, state: str) -> None:
         c.line([(462, 872), (505, 930), (496, 985), (540, 1040), (560, 1090)], (90, 86, 80), 4)
 
 
-def draw_plain(c: Canvas, W: float, H: float, state: str) -> None:
+def draw_closet(c: Canvas, W: float, H: float, state: str) -> None:
+    """A closet door with nothing wrong on it (item #12: the photo doesn't show the dent described)."""
     c.fill(WALL)
     c.rect(-400, 1700, W + 400, 1760, TRIM)
-    c.rect(-400, -400, 80, H + 400, TRIM, TRIM_EDGE, 6)
+    c.rect(230, 160, 850, 1720, TRIM, TRIM_EDGE, 8)
+    c.rect(262, 192, 818, 1720, (238, 235, 228), (205, 198, 186), 4)
+    c.rect(320, 260, 760, 860, (233, 229, 221), (210, 203, 192), 3)
+    c.rect(320, 960, 760, 1620, (233, 229, 221), (210, 203, 192), 3)
+    c.circle(770, 920, 20, (150, 140, 124))
 
 
 # Landscape kinds (walk3, 1920x1080).
@@ -448,14 +456,157 @@ KINDS: dict[str, Kind] = {
     "window": Kind(draw_window, rect_poly(245, 315, 835, 1285)),
     "debris": Kind(draw_debris, ellipse_poly(520, 1360, 165, 110)),
     "outlet": Kind(draw_outlet, rect_poly(440, 850, 640, 1150), (380, 780, 700, 1220)),
-    "plain": Kind(draw_plain, None),
+    "closet": Kind(draw_closet, None, (330, 1180, 750, 1600)),
     "grout": Kind(draw_grout, rect_poly(1160, 370, 1230, 704)),
     "baseboard": Kind(draw_baseboard, rect_poly(680, 925, 1320, 970)),
     "drip": Kind(draw_drip, ellipse_poly(870, 545, 42, 92)),
     "cabinet": Kind(draw_cabinet, rect_poly(905, 285, 995, 420)),
 }
 
-TAPE_PAD = 18  # tape outline sits this far outside the strip
+# --------------------------------------------------------------------------- the pointing hand
+
+# A simple right-hand silhouette in local coordinates: the index fingertip at (0, 0), the arm running
+# along +x back to (and past) the frame edge, the thumb on the -y side. Walk pixels.
+HAND_LOCAL: Poly = (
+    [(23 + 23 * math.cos(math.radians(a)), 23 * math.sin(math.radians(a))) for a in range(90, 271, 15)]
+    + [(150, -24), (176, -50), (202, -80), (218, -104), (250, -130), (286, -132), (302, -114), (294, -92)]
+    + [(322, -88), (382, -84), (432, -72), (2400, -84), (2400, 84), (432, 74), (372, 100), (302, 106)]
+    + [(236, 98), (186, 72), (160, 42), (150, 24)]
+)
+ENTER_S = 0.7  # the hand moves in from the frame edge
+LEAVE_S = 0.35  # ... and back out after the hold
+EVIDENCE_AFTER_S = 0.45  # evidence frame = this long after the hold ends (the hand is gone by then)
+HOLD_LEAD_S = 0.4  # the hold starts this long before the description starts
+MIN_HAND_AREA = 1500.0  # px^2 of the hand inside the frame for SAM to "see" it
+
+
+def unit(dx: float, dy: float) -> Pt:
+    n = math.hypot(dx, dy)
+    return dx / n, dy / n
+
+
+def poly_area(poly: Poly) -> float:
+    pairs = zip(poly, poly[1:] + poly[:1], strict=True)
+    return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in pairs)) / 2
+
+
+def clip_to_frame(poly: Poly, w: float, h: float) -> Poly:
+    """Sutherland-Hodgman clip of `poly` to the frame [0, w] x [0, h]."""
+
+    def clip(pts: Poly, inside: Callable[[Pt], bool], cross: Callable[[Pt, Pt], Pt]) -> Poly:
+        out: Poly = []
+        for i, cur in enumerate(pts):
+            prev = pts[i - 1]
+            if inside(cur):
+                if not inside(prev):
+                    out.append(cross(prev, cur))
+                out.append(cur)
+            elif inside(prev):
+                out.append(cross(prev, cur))
+        return out
+
+    def at_x(x: float) -> Callable[[Pt, Pt], Pt]:
+        return lambda a, b: (x, a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]))
+
+    def at_y(y: float) -> Callable[[Pt, Pt], Pt]:
+        return lambda a, b: (a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]), y)
+
+    pts = list(poly)
+    for inside, cross in (
+        (lambda p: p[0] >= 0, at_x(0)),
+        (lambda p: p[0] <= w, at_x(w)),
+        (lambda p: p[1] >= 0, at_y(0)),
+        (lambda p: p[1] <= h, at_y(h)),
+    ):
+        if not pts:
+            break
+        pts = clip(pts, inside, cross)
+    return pts
+
+
+@dataclass
+class Pointing:
+    """One pointing event in scene coordinates: the finger comes in, holds still at `tip`, leaves."""
+
+    tip: Pt  # fingertip, scene coords (next to the defect, not covering it)
+    arm: Pt  # unit vector from the fingertip back toward where the arm enters the frame
+    hold_start: float
+    hold_s: float
+    travel: float  # how far the hand slides in along `arm` (fully out of frame at the start)
+    point_id: str
+    sam_ids: list[str]
+
+    @property
+    def hold_end(self) -> float:
+        return self.hold_start + self.hold_s
+
+    @property
+    def t(self) -> float:
+        """The pointing event's time: the middle of the hold."""
+        return round(self.hold_start + self.hold_s / 2, 1)
+
+    @property
+    def evidence_t(self) -> float:
+        return round(self.hold_end + EVIDENCE_AFTER_S, 2)
+
+    def holding(self, t: float) -> bool:
+        return self.hold_start <= t <= self.hold_end
+
+    def slide(self, t: float) -> float | None:
+        """Distance the fingertip is from `tip` along `arm` at time t; None when the hand is out of view."""
+        if t < self.hold_start - ENTER_S or t > self.hold_end + LEAVE_S:
+            return None
+        if t < self.hold_start:
+            p = (t - (self.hold_start - ENTER_S)) / ENTER_S
+            return self.travel * (1 - p) ** 2
+        if t <= self.hold_end:
+            return 0.0
+        p = (t - self.hold_end) / LEAVE_S
+        return self.travel * p * p
+
+    def tip_at(self, t: float) -> Pt | None:
+        d = self.slide(t)
+        if d is None:
+            return None
+        jx = 2.0 * math.sin(2 * math.pi * 1.3 * t) if d == 0 else 0.0  # a little tremor while holding
+        jy = 1.5 * math.cos(2 * math.pi * 1.1 * t) if d == 0 else 0.0
+        return (self.tip[0] + self.arm[0] * d + jx, self.tip[1] + self.arm[1] * d + jy)
+
+    def hand_scene(self, t: float) -> Poly | None:
+        tip = self.tip_at(t)
+        if tip is None:
+            return None
+        ux, uy = self.arm
+        vx, vy = -uy, ux  # the thumb (local -y) on the left: a right hand seen from behind
+        return [(tip[0] + ux * x - vx * y, tip[1] + uy * x - vy * y) for x, y in HAND_LOCAL]
+
+
+def make_pointing(
+    kind: Kind,
+    W: int,
+    H: int,
+    hold_start: float,
+    hold_s: float,
+    point_id: str,
+    sam_ids: list[str],
+    tip: Pt | None = None,
+) -> Pointing:
+    """The hand enters from the bottom-right and the fingertip stops just outside the defect's edge."""
+    entry = (W * 0.8, H + 240)
+    if tip is None:
+        assert kind.defect, "a pointed scene needs a defect polygon or an explicit tip"
+        cx = sum(x for x, _ in kind.defect) / len(kind.defect)
+        cy = sum(y for _, y in kind.defect) / len(kind.defect)
+        v = unit(entry[0] - cx, entry[1] - cy)
+        reach = max((x - cx) * v[0] + (y - cy) * v[1] for x, y in kind.defect)
+        tip = (cx + v[0] * (reach + 26), cy + v[1] * (reach + 26))
+    assert 40 <= tip[0] <= W - 40 and 40 <= tip[1] <= H - 40, f"{point_id}: fingertip {tip} is off-frame"
+    arm = unit(entry[0] - tip[0], entry[1] - tip[1])
+    exits = [
+        (W - tip[0]) / arm[0] if arm[0] > 0 else (-tip[0] / arm[0] if arm[0] < 0 else math.inf),
+        (H - tip[1]) / arm[1] if arm[1] > 0 else (-tip[1] / arm[1] if arm[1] < 0 else math.inf),
+    ]
+    return Pointing(tip, arm, hold_start, hold_s, min(exits) + 90, point_id, sam_ids)
 
 
 # --------------------------------------------------------------------------- scenario tables
@@ -469,13 +620,10 @@ class Scene:
     start: float
     end: float
     state: str = "before"
-    tape: tuple[float, float, float, float, float] | None = None  # cx, cy, length, thick, angle
-    tape_intervals: list[tuple[float, float]] | None = None  # when SAM saw it (default: whole scene)
+    pointing: Pointing | None = None  # None: described without pointing (voice-only)
     pan: Pt = (0.0, 0.0)
-    mark_id: str | None = None
     item_id: str | None = None
     number: int | None = None
-    frame_tape: tuple[float, float, float, float, float] | None = None  # original tape, for crop framing
 
     def offset(self, t: float) -> Pt:
         tm = (self.start + self.end) / 2
@@ -483,20 +631,20 @@ class Scene:
         oy = self.pan[1] * (t - tm) + 4 * math.sin(2 * math.pi * 0.3 * (t - self.start))
         return ox, oy
 
-    def tape_poly(self, pad: float = 0.0) -> Poly | None:
-        if not self.tape:
+    def hand_display(self, t: float, w: int, h: int) -> Poly | None:
+        """The hand outline in display pixels (clipped to the frame), or None when it isn't in view."""
+        if not self.pointing or not (self.start <= t < self.end):
             return None
-        cx, cy, length, thick, angle = self.tape
-        return rot_rect(cx, cy, length + 2 * pad, thick + 2 * pad, angle)
+        hand = self.pointing.hand_scene(t)
+        if hand is None:
+            return None
+        ox, oy = self.offset(t)
+        clipped = clip_to_frame(shift(hand, ox, oy), w, h)
+        return clipped if len(clipped) >= 3 and poly_area(clipped) >= MIN_HAND_AREA else None
 
-    def sam_visible(self, t: float) -> bool:
-        if not self.tape:
-            return False
-        spans = self.tape_intervals or [(self.start + 0.3, self.end - 0.3)]
-        return any(a <= t <= b for a, b in spans)
-
-    def intervals(self) -> list[tuple[float, float]]:
-        return self.tape_intervals or [(round(self.start + 0.3, 1), round(self.end - 0.3, 1))]
+    def to_display(self, p: Pt, t: float) -> Pt:
+        ox, oy = self.offset(t)
+        return (p[0] + ox, p[1] + oy)
 
 
 PANS: list[Pt] = [(-14, 6), (12, -5), (-10, -7), (9, 8)]
@@ -528,12 +676,12 @@ class ItemRow:
     grounding: Grounding
     sam_concept: str | None
     scene: tuple[float, float]
-    tape: tuple[float, float, float, float, float] | None
-    turn_idx: int | None  # index into the walk's turns (None: unnarrated)
-    evidence_dt: float = 0.6  # evidence frame = quote start + dt (or scene middle)
+    hold_s: float | None  # how long the finger is held still; None: described without pointing
+    turn_idx: int  # index into the walk's turns (the description)
+    evidence_dt: float = 0.6  # voice-only items: evidence frame = quote start + dt
     confidence: float | None = 0.9
-    tape_intervals: list[tuple[float, float]] | None = None
-    sam_ids: list[str] = field(default_factory=list)
+    sam_ids: list[str] = field(default_factory=list)  # SAM hand-track ids ("<clip>:<id>")
+    tip: Pt | None = None  # explicit fingertip (scene coords) when the kind has no defect polygon
 
 
 @dataclass
@@ -636,6 +784,14 @@ TURNS_W1 = [
         "Bedroom",
         item_key="2b_11",
     ),
+    TurnRow(
+        119.0,
+        122.0,
+        "Closet door's got a dent down at the bottom.",
+        TurnKind.defect,
+        "Bedroom",
+        item_key="2b_12",
+    ),
     TurnRow(124.0, 124.8, "Hallway.", TurnKind.location, "Hallway"),
     TurnRow(
         127.5,
@@ -680,7 +836,7 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "cabinet knob hole",
         (9.0, 18.7),
-        (752, 838, 280, 62, -8),
+        1.8,
         2,
         confidence=0.93,
         sam_ids=["a:1"],
@@ -699,11 +855,10 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "coffee stain",
         (22.0, 31.9),
-        (760, 1380, 260, 58, 0),
+        1.6,
         4,
         confidence=0.91,
-        tape_intervals=[(22.3, 24.6), (25.4, 31.6)],
-        sam_ids=["a:2", "a:3"],
+        sam_ids=["a:2"],
     ),
     ItemRow(
         "2b_03",
@@ -719,10 +874,10 @@ ITEMS_2B = [
         Grounding.sam_box,
         "ceiling light fixture",
         (34.5, 44.0),
-        (820, 600, 240, 56, 12),
+        2.0,
         5,
         confidence=0.88,
-        sam_ids=["a:4"],
+        sam_ids=["a:3"],
     ),
     ItemRow(
         "2b_04",
@@ -738,10 +893,10 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "towel bar",
         (52.0, 62.1),
-        (540, 1080, 260, 56, -3),
+        1.7,
         7,
         confidence=0.86,
-        sam_ids=["a:5"],
+        sam_ids=["a:4"],
     ),
     ItemRow(
         "2b_05",
@@ -757,10 +912,10 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "toothpaste splatter",
         (64.5, 74.3),
-        (300, 1230, 250, 54, 2),
+        1.9,
         8,
         confidence=0.92,
-        sam_ids=["a:6"],
+        sam_ids=["a:5"],
     ),
     ItemRow(
         "2b_06",
@@ -776,7 +931,7 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "door strike plate",
         (87.0, 96.9),
-        (720, 890, 230, 54, -4),
+        2.0,
         11,
         confidence=0.9,
         sam_ids=["b:1"],
@@ -795,7 +950,7 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "wall scuff mark",
         (99.0, 108.3),
-        (420, 860, 250, 56, -6),
+        1.8,
         12,
         confidence=0.94,
         sam_ids=["b:2"],
@@ -814,10 +969,10 @@ ITEMS_2B = [
         Grounding.sam_concept,
         "light switch plate",
         (124.6, 132.0),
-        (770, 900, 240, 54, 0),
-        15,
+        2.0,
+        16,
         confidence=0.95,
-        sam_ids=["b:5"],
+        sam_ids=["b:4"],
     ),
     ItemRow(
         "2b_09",
@@ -833,10 +988,10 @@ ITEMS_2B = [
         Grounding.sam_box,
         "window",
         (136.2, 143.7),
-        (540, 1420, 260, 56, 0),
-        17,
+        1.6,
+        18,
         confidence=0.87,
-        sam_ids=["b:6"],
+        sam_ids=["b:5"],
     ),
     ItemRow(
         "2b_10",
@@ -849,13 +1004,13 @@ ITEMS_2B = [
         Trade.cleaning,
         "Floor by the window",
         Severity.cosmetic,
-        Grounding.tape_only,
+        Grounding.pointed_only,
         "sawdust",
         (144.0, 152.5),
-        (790, 1250, 240, 56, 14),
-        18,
+        1.9,
+        19,
         confidence=0.83,
-        sam_ids=["b:7"],
+        sam_ids=["b:6"],
     ),
     ItemRow(
         "2b_11",
@@ -868,7 +1023,7 @@ ITEMS_2B = [
         Trade.electrical,
         "Left of the bed",
         Severity.safety,
-        Grounding.tape_only,
+        Grounding.none,
         "outlet cover plate",
         (108.5, 117.2),
         None,
@@ -879,21 +1034,22 @@ ITEMS_2B = [
     ItemRow(
         "2b_12",
         12,
-        "plain",
+        "closet",
         "Bedroom",
-        "Tape with no description",
-        "A strip of tape on the bedroom wall, but nobody said what's wrong here.",
-        "Describe the problem or dismiss this item",
+        "Dent in closet door",
+        "The bedroom closet door has a dent near the bottom.",
+        "Repair the dent and touch up the door",
         Trade.general,
-        "Bedroom wall",
+        "Bottom of the closet door",
         Severity.cosmetic,
-        Grounding.tape_only,
-        None,
+        Grounding.pointed_only,
+        "door dent",
         (117.6, 123.4),
-        (560, 980, 250, 56, -2),
-        None,
-        confidence=None,
-        sam_ids=["b:3", "b:4"],
+        1.7,
+        14,
+        confidence=0.41,
+        sam_ids=["b:3"],
+        tip=(560.0, 1450.0),
     ),
 ]
 
@@ -1042,10 +1198,10 @@ ITEMS_3A = [
         Grounding.sam_concept,
         "tile grout line",
         (5.5, 14.0),
-        None,
+        1.8,
         2,
-        evidence_dt=1.2,
         confidence=0.82,
+        sam_ids=["a:1"],
     ),
     ItemRow(
         "3a_02",
@@ -1061,10 +1217,11 @@ ITEMS_3A = [
         Grounding.sam_concept,
         "baseboard",
         (19.0, 27.5),
-        None,
+        2.0,
         4,
-        evidence_dt=1.0,
         confidence=0.85,
+        sam_ids=["a:2"],
+        tip=(1180.0, 900.0),  # on the baseboard just above the gap (the computed spot is off-frame)
     ),
     ItemRow(
         "3a_03",
@@ -1080,10 +1237,10 @@ ITEMS_3A = [
         Grounding.sam_concept,
         "paint drip",
         (34.0, 42.0),
-        None,
+        1.7,
         6,
-        evidence_dt=1.0,
         confidence=0.8,
+        sam_ids=["a:3"],
     ),
     ItemRow(
         "3a_04",
@@ -1099,13 +1256,16 @@ ITEMS_3A = [
         Grounding.sam_concept,
         "cabinet door edge",
         (49.5, 58.5),
-        None,
+        1.9,
         8,
-        evidence_dt=1.4,
         confidence=0.81,
+        sam_ids=["a:4"],
     ),
 ]
 W3_ITEMS_WRITTEN = 2  # walk3 is mid-run: items 1-2 written so far
+
+# Items whose evidence frame doesn't support the description (verify flags them, PLAN 2.3): key -> issue.
+NOT_IN_FRAME: dict[str, str] = {"2b_12": "No dent is visible on the closet door where the inspector pointed."}
 
 TRADES_2B: list[S.TradeContactIn] = [
     S.TradeContactIn(
@@ -1279,7 +1439,26 @@ def r2(x: float) -> float:
 # --------------------------------------------------------------------------- walks
 
 
+def pointing_for(
+    it: ItemRow, walk: WalkSpec, point_id: str, turn: TurnRow, hold_s: float, sam_ids: list[str]
+) -> Pointing:
+    """The hold starts just before the description starts (PLAN 1.3 looks in [start - 2 s, end + 1 s])."""
+    return make_pointing(
+        KINDS[it.kind], walk.W, walk.H, turn.start - HOLD_LEAD_S, hold_s, point_id, sam_ids, it.tip
+    )
+
+
+def point_ids(prefix: str, rows: list[ItemRow], turns: list[TurnRow]) -> dict[str, str]:
+    """Point ids for the pointed rows, numbered in time order (Point.number)."""
+    pointed = sorted((it for it in rows if it.hold_s), key=lambda it: turns[it.turn_idx].start)
+    return {it.key: f"pnt_{prefix}_{n + 1:02d}" for n, it in enumerate(pointed)}
+
+
 def build_walks() -> dict[str, WalkSpec]:
+    for rows, turns in ((ITEMS_2B, TURNS_W1), (ITEMS_3A, TURNS_W3)):
+        for it in rows:
+            assert turns[it.turn_idx].item_key == it.key, f"{it.key}: turn_idx points at the wrong line"
+
     w1 = WalkSpec(
         W1,
         PRJ_2B,
@@ -1294,20 +1473,14 @@ def build_walks() -> dict[str, WalkSpec]:
         TURNS_W1,
         job_id="job_2b_first",
     )
+    ids = point_ids("2b1", ITEMS_2B, TURNS_W1)
     for i, it in enumerate(ITEMS_2B):
-        mark = f"mrk_2b1_{i + 1:02d}" if it.tape else None
+        pointing = None
+        if it.hold_s:
+            pointing = pointing_for(it, w1, ids[it.key], TURNS_W1[it.turn_idx], it.hold_s, it.sam_ids)
         w1.scenes.append(
             Scene(
-                it.kind,
-                it.scene[0],
-                it.scene[1],
-                "before",
-                it.tape,
-                it.tape_intervals,
-                PANS[i % 4],
-                mark,
-                item_id(it.key),
-                it.number,
+                it.kind, it.scene[0], it.scene[1], "before", pointing, PANS[i % 4], item_id(it.key), it.number
             )
         )
     w1.scenes.sort(key=lambda s: s.start)
@@ -1328,26 +1501,23 @@ def build_walks() -> dict[str, WalkSpec]:
         job_id="job_2b_rewalk",
     )
     by_key = {it.key: it for it in ITEMS_2B}
-    mark_n = 0
-    for i, (key, (s, e, fixed)) in enumerate(REWALK_SCENES.items()):
+    for k, (key, (s, e, fixed)) in enumerate(REWALK_SCENES.items()):
         it = by_key[key]
-        mark = None
-        if not fixed:
-            mark_n += 1
-            mark = f"mrk_2b2_{mark_n:02d}"
+        turn = next(tr for tr in TURNS_W2 if tr.item_key == key)
+        # On the re-walk the inspector points at the same spot again and says its status.
+        pointing = pointing_for(
+            it, w2, f"pnt_2b2_{k + 1:02d}", turn, round(1.6 + 0.1 * (k % 5), 1), [f"a:{k + 1}"]
+        )
         w2.scenes.append(
             Scene(
                 it.kind,
                 s,
                 e,
                 "fixed" if fixed else "still",
-                None if fixed else it.tape,
-                None,
-                PANS[(i + 1) % 4],
-                mark,
+                pointing,
+                PANS[(k + 1) % 4],
                 item_id(key),
                 it.number,
-                frame_tape=it.tape,
             )
         )
 
@@ -1366,17 +1536,18 @@ def build_walks() -> dict[str, WalkSpec]:
         job_id="job_3a_first",
         transit=(222, 216, 206),
     )
+    ids = point_ids("3a1", ITEMS_3A, TURNS_W3)
     for i, it in enumerate(ITEMS_3A):
+        assert it.hold_s
+        pointing = pointing_for(it, w3, ids[it.key], TURNS_W3[it.turn_idx], it.hold_s, it.sam_ids)
         w3.scenes.append(
             Scene(
                 it.kind,
                 it.scene[0],
                 it.scene[1],
                 "before",
-                None,
-                None,
+                pointing,
                 PANS[(i + 2) % 4],
-                None,
                 item_id(it.key),
                 it.number,
             )
@@ -1385,6 +1556,18 @@ def build_walks() -> dict[str, WalkSpec]:
     for w in (w1, w2, w3):
         for a, b in zip(w.scenes, w.scenes[1:], strict=False):
             assert a.end <= b.start, f"{w.id}: scenes overlap at {a.end} > {b.start}"
+        for sc in w.scenes:
+            pt = sc.pointing
+            if pt is None:
+                continue
+            assert sc.start + 0.1 <= pt.hold_start - ENTER_S, (
+                f"{w.id} {sc.item_id}: hand enters before the scene"
+            )
+            assert pt.evidence_t <= sc.end - 0.1, f"{w.id} {sc.item_id}: evidence frame after the scene"
+            assert abs(pt.evidence_t - pt.t) <= 1.5, (
+                f"{w.id} {sc.item_id}: evidence frame too far from the point"
+            )
+            assert 1.5 <= pt.hold_s <= 2.5
     return {w.id: w for w in (w1, w2, w3)}
 
 
@@ -1406,35 +1589,42 @@ def render_frame(walk: WalkSpec, t: float, scale: float, scene: Scene | None = N
         return img
     c = Canvas(img, scale, scene.offset(t))
     KINDS[scene.kind].draw(c, walk.W, walk.H, scene.state)
-    tape = scene.tape_poly()
-    if tape:
-        c.poly(tape, TAPE_FILL, TAPE_EDGE, 3)
+    hand = scene.pointing.hand_scene(t) if scene.pointing else None
+    if hand:
+        c.poly(hand, SKIN, SKIN_EDGE, 3)
     return img
 
 
-def draw_outlines(img: Image.Image, tape: Poly | None, defect: Poly | None) -> Image.Image:
+def draw_outlines(
+    img: Image.Image, defect: Poly | None, pointer: Pt | None = None, hand: Poly | None = None
+) -> Image.Image:
+    """Defect outline (red, 30% fill), hand outline (blue) and the "pointed here" dot, each on a white halo."""
     base = img.convert("RGBA")
     if defect:
         over = Image.new("RGBA", img.size, (0, 0, 0, 0))
         ImageDraw.Draw(over).polygon(defect, fill=(*REDLINE, 77))
         base = Image.alpha_composite(base, over)
     d = ImageDraw.Draw(base)
-    for poly, color in ((tape, TAPE_OUTLINE), (defect, REDLINE)):
+    for poly, color in ((hand, BLUE), (defect, REDLINE)):
         if poly:
             closed = poly + [poly[0]]
             d.line(closed, fill=WHITE, width=14, joint="curve")
             d.line(closed, fill=color, width=7, joint="curve")
+    if pointer:
+        x, y = pointer
+        halo, r = POINTER_R + 4, POINTER_R
+        d.ellipse((x - halo, y - halo, x + halo, y + halo), fill=WHITE)
+        d.ellipse((x - r, y - r, x + r, y + r), fill=BLUE)
     return base.convert("RGB")
 
 
 def crop_box_for(walk: WalkSpec, scene: Scene, t: float) -> tuple[float, float, float, float]:
-    """4:3 box centered on tape + defect (same framing before and after)."""
+    """4:3 box centered on where the finger pointed + the defect (same framing before and after)."""
     kind = KINDS[scene.kind]
     pts: list[Pt] = []
-    tape_geom = scene.tape or scene.frame_tape
-    if tape_geom:
-        cx0, cy0, length, thick, angle = tape_geom
-        pts += rot_rect(cx0, cy0, length + 2 * TAPE_PAD, thick + 2 * TAPE_PAD, angle)
+    if scene.pointing:
+        tx, ty = scene.pointing.tip
+        pts += rect_poly(tx - 70, ty - 70, tx + 70, ty + 70)
     if kind.defect:
         pts += kind.defect
     if kind.focus:
@@ -1457,22 +1647,32 @@ class Shot:
     raw: Image.Image
     outlined: Image.Image
     crop: Image.Image
-    tape: Poly | None
     defect: Poly | None
+    pointer: Pt | None  # "pointed here" marker in this frame (display pixels)
     crop_box: tuple[float, float, float, float]
 
 
 def shoot(walk: WalkSpec, scene: Scene, t: float, show_defect: bool) -> Shot:
+    """An evidence (or re-walk) frame after the hand has left: defect outline + "pointed here" dot."""
+    assert scene.hand_display(t, walk.W, walk.H) is None, f"{scene.item_id}: the hand is still in view at {t}"
     raw = render_frame(walk, t, 1.0, scene)
     ox, oy = scene.offset(t)
-    tape_p = scene.tape_poly(TAPE_PAD)
-    tape = shift(tape_p, ox, oy) if tape_p else None
     kind = KINDS[scene.kind]
     defect = shift(kind.defect, ox, oy) if (show_defect and kind.defect and scene.state != "fixed") else None
-    outlined = draw_outlines(raw, tape, defect)
+    pointer = scene.to_display(scene.pointing.tip, t) if scene.pointing else None
+    outlined = draw_outlines(raw, defect, pointer)
     cb = crop_box_for(walk, scene, t)
     crop = outlined.crop(tuple(round(v) for v in cb)).resize((800, 600), Image.Resampling.LANCZOS)
-    return Shot(raw, outlined, crop, tape, defect, cb)
+    return Shot(raw, outlined, crop, defect, pointer, cb)
+
+
+def shoot_pointing(walk: WalkSpec, scene: Scene) -> tuple[Image.Image, Poly]:
+    """The frame in the middle of the hold, with the hand outlined in blue (`Evidence.pointing_frame`)."""
+    assert scene.pointing
+    t = scene.pointing.t
+    hand = scene.hand_display(t, walk.W, walk.H)
+    assert hand, f"{scene.item_id}: no hand in view at the pointing time {t}"
+    return draw_outlines(render_frame(walk, t, 1.0, scene), None, None, hand), hand
 
 
 def save_jpeg(img: Image.Image, url: str, quality: int = 85) -> None:
@@ -1506,7 +1706,7 @@ def encode_video(walk: WalkSpec, url: str) -> None:
         "-t",
         f"{walk.duration_s}",
         "-i",
-        "anullsrc=r=44100:cl=mono",
+        "anullsrc=r=16000:cl=mono",
         "-map",
         "0:v",
         "-map",
@@ -1518,19 +1718,19 @@ def encode_video(walk: WalkSpec, url: str) -> None:
         "-crf",
         "30",
         "-maxrate",
-        "90k",
+        "75k",
         "-bufsize",
-        "360k",
+        "300k",
         "-pix_fmt",
         "yuv420p",
         "-threads",
         "4",
         "-g",
-        str(VIDEO_FPS * 2),
+        str(VIDEO_FPS * 4),  # a keyframe every 4 s keeps seeking quick and the file small
         "-c:a",
         "aac",
         "-b:a",
-        "16k",
+        "8k",  # the mock audio is silence; keep it small
         "-shortest",
         "-movflags",
         "+faststart",
@@ -1636,21 +1836,21 @@ def sam_img(key: str, latency: int, off: int) -> CallSpec:
 STAGE_MS_W1: dict[Stage, int] = {
     Stage.ingest: 9200,
     Stage.transcribe: 7100,
-    Stage.track_tape: 44400,
-    Stage.merge_marks: 2400,
+    Stage.track_hands: 44400,
+    Stage.find_points: 1100,
     Stage.classify_turns: 4800,
     Stage.fuse: 100,
     Stage.pick_evidence: 3900,
     Stage.write_items: 16200,
-    Stage.ground_defects: 8700,
+    Stage.ground_defects: 9600,
     Stage.verify: 14600,
     Stage.persist: 600,
 }
 STAGE_MS_W2: dict[Stage, int] = {
     Stage.ingest: 6100,
     Stage.transcribe: 5200,
-    Stage.track_tape: 31800,
-    Stage.merge_marks: 900,
+    Stage.track_hands: 31800,
+    Stage.find_points: 700,
     Stage.classify_turns: 4100,
     Stage.fuse: 100,
     Stage.pick_evidence: 2900,
@@ -1660,8 +1860,8 @@ STAGE_MS_W2: dict[Stage, int] = {
 STAGE_MS_W3: dict[Stage, int] = {
     Stage.ingest: 7400,
     Stage.transcribe: 5900,
-    Stage.track_tape: 29600,
-    Stage.merge_marks: 200,
+    Stage.track_hands: 29600,
+    Stage.find_points: 400,
     Stage.classify_turns: 3900,
     Stage.fuse: 100,
     Stage.pick_evidence: 3300,
@@ -1675,12 +1875,12 @@ STAGE_MS_W3: dict[Stage, int] = {
 def calls_w1() -> list[CallSpec]:
     calls = [
         CallSpec(Stage.transcribe, MODEL_ASR, Provider.meta, 6900, audio_s=153.5, offset_ms=100),
-        CallSpec(Stage.track_tape, MODEL_SAM, Provider.meta, 41800, frames=824, offset_ms=300),
-        CallSpec(Stage.track_tape, MODEL_SAM, Provider.meta, 36900, frames=711, offset_ms=450),
-        spark(Stage.merge_marks, 2100, 2200, 90, "2b_02", 200),
+        # one SAM 3.1 hand-tracking request per clip (ids reset per clip)
+        CallSpec(Stage.track_hands, MODEL_SAM, Provider.meta, 41800, frames=824, offset_ms=300),
+        CallSpec(Stage.track_hands, MODEL_SAM, Provider.meta, 36900, frames=711, offset_ms=450),
         spark(Stage.classify_turns, 4600, 3100, 1450, None, 100),
     ]
-    written = [it for it in ITEMS_2B if it.turn_idx is not None]
+    written = ITEMS_2B
     for i, it in enumerate(written):
         calls.append(
             spark(
@@ -1696,7 +1896,7 @@ def calls_w1() -> list[CallSpec]:
     for it in written:
         # concept prompt first; on a miss, a box prompt from Spark Open's defect_box (PLAN 2.2)
         calls.append(sam_img(it.key, 1350 if it.grounding == Grounding.sam_concept else 1280, off))
-        if it.grounding == Grounding.sam_box or (it.grounding == Grounding.tape_only and it.tape):
+        if it.grounding != Grounding.sam_concept:
             calls.append(sam_img(it.key, 1190, off + 1300))
         off += 600
     for i, it in enumerate(written):
@@ -1717,7 +1917,7 @@ def calls_w1() -> list[CallSpec]:
 def calls_w2() -> list[CallSpec]:
     calls = [
         CallSpec(Stage.transcribe, MODEL_ASR, Provider.meta, 5000, audio_s=104.0, offset_ms=100),
-        CallSpec(Stage.track_tape, MODEL_SAM, Provider.meta, 31400, frames=1040, offset_ms=200),
+        CallSpec(Stage.track_hands, MODEL_SAM, Provider.meta, 31400, frames=1040, offset_ms=200),
         spark(Stage.classify_turns, 3900, 2600, 1180, None, 100),
         spark(Stage.resolve_closures, 4300, 3800, 900, None, 100),
     ]
@@ -1738,7 +1938,7 @@ def calls_w2() -> list[CallSpec]:
 def calls_w3(written: int) -> list[CallSpec]:
     calls = [
         CallSpec(Stage.transcribe, MODEL_ASR, Provider.meta, 5700, audio_s=78.0, offset_ms=100),
-        CallSpec(Stage.track_tape, MODEL_SAM, Provider.meta, 29200, frames=780, offset_ms=200),
+        CallSpec(Stage.track_hands, MODEL_SAM, Provider.meta, 29200, frames=780, offset_ms=200),
         spark(Stage.classify_turns, 3700, 1900, 820, None, 100),
     ]
     for i, it in enumerate(ITEMS_3A[:written]):
@@ -1840,23 +2040,27 @@ class Gen:
             walk = self.walks[walk_id]
             for it in rows:
                 scene = next(s for s in walk.scenes if s.item_id == item_id(it.key))
-                if it.turn_idx is not None:
-                    t = walk.turns[it.turn_idx].start + it.evidence_dt
-                else:
-                    t = (scene.start + scene.end) / 2
-                show_defect = it.grounding != Grounding.tape_only
-                shot = shoot(walk, scene, t, show_defect)
                 base = f"items/{item_id(it.key)}"
+                g: dict[str, Any] = {"walk": walk, "hand_box": None}
+                if scene.pointing:  # evidence = a sharp frame just after the hand leaves (PLAN 1.6)
+                    t = scene.pointing.evidence_t
+                    pointing_img, hand = shoot_pointing(walk, scene)
+                    save_jpeg(pointing_img, media_url(base, "pointing.jpg"))
+                    g["hand_box"] = box_out(bbox(hand), walk.W, walk.H)
+                else:  # voice-only: a frame from the description window, no marker
+                    t = walk.turns[it.turn_idx].start + it.evidence_dt
+                show_defect = it.grounding in (Grounding.sam_concept, Grounding.sam_box)
+                shot = shoot(walk, scene, t, show_defect)
                 save_jpeg(shot.raw, media_url(base, "frame.jpg"))
                 save_jpeg(shot.outlined, media_url(base, "evidence.jpg"))
                 save_jpeg(shot.crop, media_url(base, "crop.jpg"))
-                geo[it.key] = {"t": r2(t), "shot": shot, "walk": walk}
+                geo[it.key] = {**g, "t": r2(t), "shot": shot}
 
         w2 = self.walks[W2]
         for key in REWALK_SCENES:
             scene = next(s for s in w2.scenes if s.item_id == item_id(key))
-            turn = next(tr for tr in w2.turns if tr.item_key == key)
-            t = turn.start + 0.6
+            assert scene.pointing
+            t = scene.pointing.evidence_t  # re-walk frame after the inspector points at the spot again
             shot = shoot(w2, scene, t, show_defect=True)
             base = f"items/{item_id(key)}"
             save_jpeg(shot.crop, media_url(base, "after.jpg"))
@@ -1881,7 +2085,7 @@ class Gen:
             for iid in d.item_ids:
                 sends_by_item.setdefault(iid, []).append(d)
         for project_id, walk_id, rows, spacing_ms in (
-            (PRJ_2B, W1, ITEMS_2B, 1400),
+            (PRJ_2B, W1, ITEMS_2B, 1300),
             (PRJ_3A, W3, ITEMS_3A, 3400),
         ):
             for n_in_walk, it in enumerate(rows):
@@ -1910,16 +2114,13 @@ class Gen:
         shot: Shot = g["shot"]
         scene = next(s for s in walk.scenes if s.item_id == iid)
 
-        if it.turn_idx is not None:
-            turn = walk.turns[it.turn_idx]
-            quote, qs, qe = turn.text, turn.start, turn.end
-            turn_ids = [self.turn_id(walk.id, it.turn_idx)]
-            v_start, v_end = max(0.0, qs - 3.0), min(walk.duration_s, qe + 1.0)
-        else:  # unnarrated tape: the moment is when the tape was in view
-            quote, qs, qe, turn_ids = None, None, None, []
-            v_start, v_end = scene.intervals()[0]
+        turn = walk.turns[it.turn_idx]
+        quote, qs, qe = turn.text, turn.start, turn.end
+        turn_ids = [self.turn_id(walk.id, it.turn_idx)]
+        v_start, v_end = max(0.0, qs - 2.0), min(walk.duration_s, qe + 1.0)  # PLAN 1.5
 
         base = f"items/{iid}"
+        pointer = S.XYOut(x=r1(shot.pointer[0]), y=r1(shot.pointer[1])) if shot.pointer else None
         evidence = S.EvidenceOut(
             t=g["t"],
             image_url=media_url(base, "evidence.jpg"),
@@ -1927,11 +2128,12 @@ class Gen:
             crop_url=media_url(base, "crop.jpg"),
             width=walk.W,
             height=walk.H,
-            tape_svg=svg_path(shot.tape) if shot.tape else None,
             defect_svg=svg_path(shot.defect) if shot.defect else None,
-            tape_box=box_out(bbox(shot.tape), walk.W, walk.H) if shot.tape else None,
             defect_box=box_out(bbox(shot.defect), walk.W, walk.H) if shot.defect else None,
             crop_box=box_out(shot.crop_box, walk.W, walk.H),
+            pointer=pointer,
+            pointing_frame=media_url(base, "pointing.jpg") if scene.pointing else None,
+            hand_box=g["hand_box"],
             grounding=it.grounding,
             sam_concept=it.sam_concept,
         )
@@ -1956,35 +2158,41 @@ class Gen:
         review_reason: str | None = None
         verification: S.VerificationOut | None = None
         trade = it.trade
-        if it.turn_idx is None:
-            created_at = win[Stage.fuse][1] + timedelta(milliseconds=50)
-            status, review_reason = ItemStatus.needs_review, REVIEW_NO_DESCRIPTION
-            log(
-                created_at,
-                HistoryActor.system,
-                HistoryAction.created,
-                "Tape was in view for 5 seconds, but nobody described it.",
-                "status",
-                None,
-                status.value,
-            )
-        else:
-            created_at = win[Stage.write_items][0] + timedelta(milliseconds=spacing_ms * (n_in_walk + 1))
-            log(
-                created_at,
-                HistoryActor.model,
-                HistoryAction.created,
-                "Written by Muse Spark Open on Baseten.",
-                "status",
-                None,
-                status.value,
-            )
-            # walk3 is mid-run: its first items are written but not checked yet. Items 3-4 show the
-            # state after the run finishes (they appear in the progress replay, not the list).
-            pending_check = project_id == PRJ_3A and n_in_walk < W3_ITEMS_WRITTEN
-            if not pending_check:
-                checked_at = win[Stage.verify][0] + timedelta(milliseconds=1300 * (n_in_walk + 1))
-                provider = Provider.meta_fallback if it.key == "2b_09" else Provider.baseten
+        created_at = win[Stage.write_items][0] + timedelta(milliseconds=spacing_ms * (n_in_walk + 1))
+        log(
+            created_at,
+            HistoryActor.model,
+            HistoryAction.created,
+            "Written by Muse Spark Open on Baseten.",
+            "status",
+            None,
+            status.value,
+        )
+        # walk3 is mid-run: its first items are written but not checked yet. Items 3-4 show the
+        # state after the run finishes (they appear in the progress replay, not the list).
+        pending_check = project_id == PRJ_3A and n_in_walk < W3_ITEMS_WRITTEN
+        if not pending_check:
+            checked_at = win[Stage.verify][0] + timedelta(milliseconds=1150 * (n_in_walk + 1))
+            provider = Provider.meta_fallback if it.key == "2b_09" else Provider.baseten
+            if it.key in NOT_IN_FRAME:  # PLAN 2.3: the frame doesn't support the description
+                verification = S.VerificationOut(
+                    consistent=False,
+                    note=REVIEW_NOT_IN_FRAME,
+                    issues=[NOT_IN_FRAME[it.key]],
+                    provider=provider,
+                    checked_at=checked_at,
+                )
+                status, review_reason = ItemStatus.needs_review, REVIEW_NOT_IN_FRAME
+                log(
+                    checked_at,
+                    HistoryActor.model,
+                    HistoryAction.flagged,
+                    f"{REVIEW_NOT_IN_FRAME} {NOT_IN_FRAME[it.key]}",
+                    "status",
+                    ItemStatus.open.value,
+                    status.value,
+                )
+            else:
                 verification = S.VerificationOut(
                     consistent=True, note=MATCH_NOTE, issues=[], provider=provider, checked_at=checked_at
                 )
@@ -1996,13 +2204,13 @@ class Gen:
                     if provider == Provider.baseten
                     else MATCH_NOTE + " Checked by Muse Spark 1.3 after Baseten timed out.",
                 )
-                if it.key == "2b_09":
-                    log(
-                        checked_at + timedelta(seconds=40),
-                        HistoryActor.system,
-                        HistoryAction.noted,
-                        "Not sent automatically: no email or Slack on file for Clearview Glass.",
-                    )
+            if it.key == "2b_09":
+                log(
+                    checked_at + timedelta(seconds=40),
+                    HistoryActor.system,
+                    HistoryAction.noted,
+                    "Not sent automatically: no email or Slack on file for Clearview Glass.",
+                )
 
         # ---- everything after, in time order: sends, the PM's edit, the re-walk check
         events: list[tuple[datetime, str, Any]] = [(d.sent_at, "send", d) for d in sends]
@@ -2112,7 +2320,7 @@ class Gen:
             project_id=project_id,
             number=it.number,
             origin_walk_id=walk.id,
-            mark_id=scene.mark_id,
+            point_id=scene.pointing.point_id if scene.pointing else None,
             turn_ids=turn_ids,
             title=it.title,
             description=it.description,
@@ -2149,7 +2357,7 @@ class Gen:
         decided = self.windows[W2][Stage.resolve_closures][0] + timedelta(milliseconds=4600 + 1700 * (k + 1))
         if fixed:
             voice, vision, decision = VoiceStatus.fixed, VisionStatus.fixed, ClosureDecision.signed_off
-            note, new_status = "The defect is gone and the tape is off.", ItemStatus.closed
+            note, new_status = "The defect is gone where the inspector pointed.", ItemStatus.closed
             check_note = "Marked fixed on the re-walk, and the defect is gone."
         elif turn.claimed == ClaimedStatus.fixed:
             voice, vision, decision = (
@@ -2157,7 +2365,8 @@ class Gen:
                 VisionStatus.still_visible,
                 ClosureDecision.needs_review,
             )
-            note, new_status = "Coffee drips are still visible next to the tape.", ItemStatus.needs_review
+            note = "Coffee drips are still visible where the inspector pointed."
+            new_status = ItemStatus.needs_review
             check_note = "Marked fixed on the re-walk, but the coffee drips are still visible."
         else:
             voice, vision, decision = (
@@ -2294,8 +2503,8 @@ class Gen:
         """(counts, plain detail line, progress 0..1) for one checklist row."""
         rows = ITEMS_2B if walk.project_id == PRJ_2B else ITEMS_3A
         n_items = len(rows) if walk.kind == WalkKind.initial else len(REWALK_SCENES)
-        n_written = len([r for r in rows if r.turn_idx is not None])  # Spark Open writes narrated items
-        n_marks = len([s for s in walk.scenes if s.tape])
+        n_written = len(rows)  # Spark Open writes every described defect
+        n_points = len([s for s in walk.scenes if s.pointing])
         n_lines = len(walk.turns)
         label = STAGE_MODEL.get(st)
 
@@ -2315,7 +2524,7 @@ class Gen:
             running = {
                 Stage.ingest: "Joining clips and preparing the video",
                 Stage.transcribe: "Muse Voice Transcribe, listening",
-                Stage.track_tape: f"SAM 3.1, {round(frames * f)} of {frames} frames",
+                Stage.track_hands: f"SAM 3.1, {round(frames * f)} of {frames} frames",
                 Stage.ground_defects: "SAM 3.1, outlining each defect",
             }.get(st, f"{label}, working" if label else "Working")
             return {}, running, r2(f)
@@ -2326,28 +2535,29 @@ class Gen:
             return {"clips": n}, f"{n} {'clip' if n == 1 else 'clips'}, {mins} min {secs} s", None
         if st == Stage.transcribe:
             return {"lines": n_lines}, f"Muse Voice Transcribe found {n_lines} lines", None
-        if st == Stage.track_tape:
-            if n_marks == 0:
-                return {"marks": 0}, "SAM 3.1 found no tape", None
-            return {"marks": n_marks}, f"SAM 3.1 found {n_marks} tape marks", None
-        if st == Stage.merge_marks:
-            if n_marks == 0:
-                return {"marks": 0}, "No tape to follow", None
-            return {"marks": n_marks}, f"{n_marks} marks after joining repeat sightings", None
+        if st == Stage.track_hands:
+            frames = round(walk.duration_s * 10)
+            counts = {"frames": frames, "hands": n_points}
+            if n_points == 0:
+                return counts, "No pointing found", None
+            return counts, f"{n_points} {'point' if n_points == 1 else 'points'} found", None
+        if st == Stage.find_points:
+            n_mentions = n_items
+            voice = n_mentions - n_points if walk.kind == WalkKind.initial else 0
+            counts = {"points": n_points, "mentions": n_mentions, "voice_only": voice}
+            tail = f", {voice} described without pointing" if voice else ""
+            return counts, f"{n_points} places you pointed{tail}", None
         if st == Stage.classify_turns:
             return {"lines": n_lines}, f"Muse Spark Open on Baseten sorted {n_lines} lines", None
         if st == Stage.fuse:
             if walk.kind == WalkKind.rewalk:
                 return {"status_updates": n_items}, f"{n_items} status updates", None
-            paired = len([r for r in rows if r.tape and r.turn_idx is not None])
-            unnarrated = len([r for r in rows if r.turn_idx is None])
-            voice = len([r for r in rows if not r.tape])
-            parts = [f"{paired} matched"] if paired else []
-            if unnarrated:
-                parts.append(f"{unnarrated} mark with no description")
+            pointed = len([r for r in rows if r.hold_s])
+            voice = len(rows) - pointed
+            parts = [f"{pointed} matched to where you pointed"] if pointed else []
             if voice:
-                parts.append(f"{voice} described with no tape")
-            return {"matched": paired, "unnarrated": unnarrated, "voice_only": voice}, ", ".join(parts), None
+                parts.append(f"{voice} described without pointing")
+            return {"items": len(rows), "pointed": pointed, "voice_only": voice}, ", ".join(parts), None
         if st == Stage.pick_evidence:
             return {"photos": n_items}, f"{n_items} photos picked", None
         if st == Stage.write_items:
@@ -2357,13 +2567,15 @@ class Gen:
                 None,
             )
         if st == Stage.ground_defects:
-            outlined = len([r for r in rows if r.grounding != Grounding.tape_only])
+            outlined = len([r for r in rows if r.grounding in (Grounding.sam_concept, Grounding.sam_box)])
             return {"outlined": outlined}, f"SAM 3.1 outlined {outlined} defects", None
         if st == Stage.verify:
-            extra = ", 1 tape with no description" if any(r.turn_idx is None for r in rows) else ""
+            flagged = len([r for r in rows if r.key in NOT_IN_FRAME])
+            matched = n_written - flagged
+            extra = f", {flagged} needs a look" if flagged else ""
             return (
-                {"checked": n_written, "matched": n_written, "total": n_written},
-                f"{n_written} match the photo and what was said{extra}",
+                {"checked": n_written, "matched": matched, "total": n_written},
+                f"{matched} match the photo and what was said{extra}",
                 None,
             )
         if st == Stage.resolve_closures:
@@ -2394,7 +2606,7 @@ class Gen:
             dec = [i.closure.decision for i in checked if i.closure]
             counts = S.WalkCountsOut(
                 items=len(checked),
-                marks=len([s for s in walk.scenes if s.tape]),
+                points=len([s for s in walk.scenes if s.pointing]),
                 turns=len(walk.turns),
                 needs_review=dec.count(ClosureDecision.needs_review),
                 signed_off=dec.count(ClosureDecision.signed_off),
@@ -2413,7 +2625,7 @@ class Gen:
             st = [i.status for i in items]
             counts = S.WalkCountsOut(
                 items=len(items),
-                marks=len([s for s in walk.scenes if s.tape]),
+                points=len([s for s in walk.scenes if s.pointing]),
                 turns=len(walk.turns),
                 needs_review=st.count(ItemStatus.needs_review),
                 signed_off=st.count(ItemStatus.closed),
@@ -2526,7 +2738,7 @@ class Gen:
             updated_at=now,
         )
 
-    # ---------------------------------------------------------------- turns / marks / overlay
+    # ---------------------------------------------------------------- turns / points / overlay
 
     def turns_out(self, walk: WalkSpec) -> list[S.TurnOut]:
         out = []
@@ -2553,33 +2765,40 @@ class Gen:
             )
         return out
 
-    def marks_out(self, walk: WalkSpec, geo: dict[str, dict[str, Any]]) -> list[S.MarkOut]:
+    def points_out(self, walk: WalkSpec) -> list[S.PointOut]:
+        """The walk's pointing events in time order (`Point` rows)."""
+        written = {item_id(r.key) for r in ITEMS_3A[:W3_ITEMS_WRITTEN]}
         out = []
-        rows = {item_id(r.key): r for r in ITEMS_2B}
-        for k, s in enumerate(sc for sc in walk.scenes if sc.tape):
-            assert s.mark_id and s.item_id
-            row = rows[s.item_id]
-            if walk.id == W1:
-                best_t = geo[row.key]["t"]
-                sam_ids = row.sam_ids
-            else:
-                best_t = geo[row.key]["after_t"]
-                sam_ids = [f"a:{k + 1}"]
-            ox, oy = s.offset(best_t)
-            tape = shift(s.tape_poly(TAPE_PAD) or [], ox, oy)
+        pointed = sorted((sc for sc in walk.scenes if sc.pointing), key=lambda sc: sc.pointing.t)  # type: ignore[union-attr]
+        for n, sc in enumerate(pointed):
+            pt = sc.pointing
+            assert pt and sc.item_id
+            hand = sc.hand_display(pt.t, walk.W, walk.H)
+            assert hand
+            tip = sc.to_display(pt.tip_at(pt.t) or pt.tip, pt.t)  # where the fingertip actually is then
+            has_item = walk.id != W3 or sc.item_id in written  # walk3 is mid-run
+            turn_idx = next(
+                i for i, tr in enumerate(walk.turns) if tr.item_key and item_id(tr.item_key) == sc.item_id
+            )
             out.append(
-                S.MarkOut(
-                    id=s.mark_id,
+                S.PointOut(
+                    id=pt.point_id,
                     walk_id=walk.id,
-                    item_id=s.item_id,
-                    number=s.number,
-                    sam_object_ids=sam_ids,
-                    intervals=[S.IntervalOut(start_s=a, end_s=b) for a, b in s.intervals()],
-                    best_t=best_t,
-                    box_at_best=box_out(bbox(tape), walk.W, walk.H),
-                    mean_conf=round(0.78 + 0.015 * (k % 10), 3),
+                    item_id=sc.item_id if has_item else None,
+                    item_number=sc.number if has_item else None,
+                    number=n + 1,
+                    t=pt.t,
+                    frame=round(pt.t * OVERLAY_FPS),
+                    fingertip_x=r1(tip[0]),
+                    fingertip_y=r1(tip[1]),
+                    hand_box=box_out(bbox(hand), walk.W, walk.H),
+                    hold_s=pt.hold_s,
+                    sam_object_ids=pt.sam_ids,
+                    mean_conf=round(0.86 + 0.01 * (n % 9), 3),
+                    turn_id=self.turn_id(walk.id, turn_idx),
                 )
             )
+            assert pt.point_id.endswith(f"_{n + 1:02d}"), "point ids are numbered in time order"
         return out
 
     def overlay_out(self, walk: WalkSpec) -> S.OverlayOut:
@@ -2587,39 +2806,31 @@ class Gen:
         n = int(walk.duration_s * OVERLAY_FPS)
         for i in range(n + 1):
             t = r1(i / OVERLAY_FPS)
-            marks = []
-            for s in walk.scenes:
-                if s.start <= t < s.end and s.sam_visible(t):
-                    assert s.mark_id
-                    ox, oy = s.offset(t)
-                    poly = shift(s.tape_poly(TAPE_PAD) or [], ox, oy)
-                    marks.append(
-                        S.OverlayMarkOut(
-                            mark_id=s.mark_id,
-                            item_id=s.item_id,
-                            number=s.number,
-                            box=box_out(bbox(poly), walk.W, walk.H),
-                            svg=svg_path(poly),
-                        )
+            hands = []
+            for sc in walk.scenes:
+                hand = sc.hand_display(t, walk.W, walk.H)
+                if hand is None:
+                    continue
+                pt = sc.pointing
+                assert pt
+                tip = sc.to_display(pt.tip_at(t) or pt.tip, t)
+                holding = pt.holding(t) and 0 <= tip[0] <= walk.W and 0 <= tip[1] <= walk.H
+                hands.append(
+                    S.OverlayHandOut(
+                        point_id=pt.point_id,
+                        number=sc.number,
+                        box=box_out(bbox(hand), walk.W, walk.H),
+                        svg=svg_path(hand),
+                        fingertip=S.XYOut(x=r1(tip[0]), y=r1(tip[1])) if holding else None,
                     )
-            if marks:
-                frames.append(S.OverlayFrameOut(t=t, marks=marks))
+                )
+            if hands:
+                frames.append(S.OverlayFrameOut(t=t, hands=hands))
         events = []
         for tr in walk.turns:
             if tr.item_key:
                 it = self.items[item_id(tr.item_key)]
                 events.append(S.OverlayEventOut(t=tr.start, item_id=it.id, number=it.number))
-        unnarrated = [
-            s
-            for s in walk.scenes
-            if s.item_id
-            and walk.kind == WalkKind.initial
-            and s.tape
-            and not any(tr.item_key and item_id(tr.item_key) == s.item_id for tr in walk.turns)
-        ]
-        for s in unnarrated:
-            assert s.item_id and s.number
-            events.append(S.OverlayEventOut(t=s.intervals()[0][0], item_id=s.item_id, number=s.number))
         events.sort(key=lambda e: e.t)
         return S.OverlayOut(
             walk_id=walk.id,
@@ -2904,28 +3115,31 @@ class Gen:
     def summary_detail(self, walk: WalkSpec, st: Stage, row: S.StageProgressOut) -> str:
         if row.status != StageStatus.done:
             return row.detail or ""
-        n_marks = len([s for s in walk.scenes if s.tape])
+        n_points = len([s for s in walk.scenes if s.pointing])
         rows = ITEMS_2B if walk.project_id == PRJ_2B else ITEMS_3A
         if st == Stage.transcribe:
             return f"{len(walk.turns)} lines with start and end times"
-        if st == Stage.track_tape:
-            return f"{n_marks} marks followed across the whole video" if n_marks else "No tape in this walk"
+        if st == Stage.track_hands:
+            if not n_points:
+                return "No pointing in this walk"
+            return f"{n_points} points found across the whole video"
         if st == Stage.fuse:
             return f"Timing and position, computed in the app. {row.detail}."
         if st == Stage.write_items:
-            n = len([r for r in rows if r.turn_idx is not None])
-            return f"Summary, action, trade, room and severity for {n} items"
+            return f"Summary, action, trade, room and severity for {len(rows)} items"
         if st == Stage.ground_defects:
-            n = len([r for r in rows if r.grounding != Grounding.tape_only])
-            return f"Spark Open names what to outline, SAM draws it. {n} outlined."
+            n = len([r for r in rows if r.grounding in (Grounding.sam_concept, Grounding.sam_box)])
+            return f"Spark Open names what to outline near your fingertip, SAM draws it. {n} outlined."
         if st == Stage.verify:
-            n = len([r for r in rows if r.turn_idx is not None])
+            flagged = len([r for r in rows if r.key in NOT_IN_FRAME])
+            n = len(rows) - flagged
+            flag = f" {flagged} needs a look: the photo doesn't show the defect described." if flagged else ""
             tail = " One check ran on Muse Spark 1.3 after Baseten timed out." if walk.id == W1 else ""
-            return f"{n} match the photo and what was said.{tail}"
+            return f"{n} match the photo and what was said.{flag}{tail}"
         if st == Stage.classify_turns:
             return f"{len(REWALK_SCENES)} status updates found in {len(walk.turns)} lines"
         if st == Stage.resolve_closures:
-            return "Each update matched to its item, then the new frame compared with the original photo"
+            return "Each update matched to its item, then the spot you pointed at compared with the original photo"
         return row.detail or ""
 
     # ---------------------------------------------------------------- share
@@ -3028,7 +3242,7 @@ class Gen:
                 S.WalkDetailOut(
                     walk=wo,
                     turns=self.turns_out(walk),
-                    marks=self.marks_out(walk, geo) if walk.id != W3 else [],
+                    points=self.points_out(walk),
                     items=items,
                 ),
             )
@@ -3095,7 +3309,7 @@ class Gen:
 
 STAGE_MODEL: dict[Stage, str] = {
     Stage.transcribe: "Muse Voice Transcribe",
-    Stage.track_tape: "SAM 3.1",
+    Stage.track_hands: "SAM 3.1",
     Stage.classify_turns: "Muse Spark Open on Baseten",
     Stage.write_items: "Muse Spark Open on Baseten",
     Stage.ground_defects: "SAM 3.1",
@@ -3104,13 +3318,13 @@ STAGE_MODEL: dict[Stage, str] = {
 }
 HEADLINE_STEPS_INITIAL = (
     Stage.transcribe,
-    Stage.track_tape,
+    Stage.track_hands,
     Stage.fuse,
     Stage.write_items,
     Stage.ground_defects,
     Stage.verify,
 )
-HEADLINE_STEPS_REWALK = (Stage.transcribe, Stage.track_tape, Stage.classify_turns, Stage.resolve_closures)
+HEADLINE_STEPS_REWALK = (Stage.transcribe, Stage.track_hands, Stage.classify_turns, Stage.resolve_closures)
 
 
 def main() -> None:

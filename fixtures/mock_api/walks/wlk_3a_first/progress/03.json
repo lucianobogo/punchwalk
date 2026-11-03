@@ -5,7 +5,7 @@
   "status": "running",
   "walk_status": "processing",
   "attempts": 1,
-  "stage": "track_tape",
+  "stage": "track_hands",
   "stages": [
     {
       "stage": "ingest",
@@ -36,8 +36,8 @@
       "model_label": "Muse Voice Transcribe"
     },
     {
-      "stage": "track_tape",
-      "label": "Finding tape",
+      "stage": "track_hands",
+      "label": "Following your hand (SAM 3.1)",
       "status": "running",
       "started_at": "2026-11-04T14:52:18.300000Z",
       "finished_at": null,
@@ -48,8 +48,8 @@
       "model_label": "SAM 3.1"
     },
     {
-      "stage": "merge_marks",
-      "label": "Following each strip of tape",
+      "stage": "find_points",
+      "label": "Finding where you pointed",
       "status": "pending",
       "started_at": null,
       "finished_at": null,
@@ -73,7 +73,7 @@
     },
     {
       "stage": "fuse",
-      "label": "Matching what was said to each mark",
+      "label": "Matching what was said to each point",
       "status": "pending",
       "started_at": null,
       "finished_at": null,

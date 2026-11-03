@@ -57,7 +57,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - ASR on 5 s of audio
   - Spark Open with one image + `json_schema`
 
-  Print latency and cost; save outputs to `fixtures/probe/`. Also try 2–3 phrasings for the tape concept (e.g. `blue tape`, `strip of blue painter's tape`) on the same frame and keep the best one in config. **AC:** all four calls succeed, or the exact error is logged under Needs human / Blocked and that client is mocked.
+  Print latency and cost; save outputs to `fixtures/probe/`. *(Done on Nov 3 with the tape concept; superseded by the pointing-hand change — the hand phrasing comparison moved to 0.6.)* Also try 2–3 phrasings for the tape concept (e.g. `blue tape`, `strip of blue painter's tape`) on the same frame and keep the best one in config. **AC:** all four calls succeed, or the exact error is logged under Needs human / Blocked and that client is mocked.
 - [x] **0.4 Mask coordinate check.** Render a decoded SAM mask + box over its frame, confirm the mapping, write helper `mask_to_frame_svg()`, and record the finding in DECISIONS.md. **AC:** a PNG in `fixtures/probe/` where the outline sits on the tape (open it and look).
 - [x] **0.5 Ingest.** A walk is 1..N clips in order (`walkN.*`, or parts `walkN_a.*`, `walkN_b.*`, …). Normalize each clip (apply rotation metadata; portrait stays portrait), then concatenate in order. Produce:
   - `display.mp4`: H.264, ≤ 1080 px on the short side, yuv420p, AAC, `+faststart`
@@ -66,7 +66,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - `meta.json`: duration, fps, sizes, orientation, frame counts, scale factors, clip offsets
 
   Handle iPhone HEVC. If HDR is detected, make a best-effort tonemap to SDR.
-- [ ] **0.6 `make record`.** Run ingest + transcribe + SAM tape tracking live once for every walk in `footage/`; store cache + fixtures. If a walk has parts, run SAM per part (ids reset per part) and offset frame indices by each part's start. **AC:** fixtures exist for walk1 and walk2 (and walk3 if present).
+- [ ] **0.6 `make record`.** Run ingest + transcribe + SAM hand tracking live once for every walk in `footage/`; store cache + fixtures. If a walk has parts, run SAM per part (ids reset per part) and offset frame indices by each part's start. Also compare the hand phrasings ("hand", "index finger", "pointing hand") on real pointing frames and keep whichever tracks best in config. **AC:** fixtures exist for walk1 and walk2 (and walk3 if present).
 - [x] **0.7 Contracts.** These let Track B start right away:
   - SQLModel domain models (`punchwalk/core/models.py`) and API response schemas (`punchwalk/api/schemas.py`)
   - the same types in TypeScript (`web/src/api/types.ts`)
@@ -77,14 +77,8 @@ Track ownership and paths are in the orchestrator's instructions.
 ## Phase 1: Perception & fusion (Track A)
 
 - [ ] **1.1 Transcribe.** ENDPOINTING mode. Keywords = ~80-term base construction vocabulary in `punchwalk/vocab.py` (trades, fixtures, "cover plate", "strike plate", "escutcheon", "caulk", "baseboard", "casing", "drywall", "GWB", "touch-up", "reveal", room names, unit numbers) + project keywords.
-- [ ] **1.2 Track tape.** SAM concept tracking on `sam.mp4` with the concept from config. Store raw text + per-frame records (box, confidence, SVG in SAM-frame coordinates).
-- [ ] **1.3 Merge tracks into Marks.**
-  - Drop tracks shorter than 5 frames or with mean confidence < 0.35 (tune in Phase 3).
-  - Tape strips all look the same, so **never match on the tape's own appearance**.
-  - Merge fragments of the same strip when either:
-    - the temporal gap is ≤ 3 s and the box motion is continuous, or
-    - **the surroundings match:** ORB features on the region around the tape (box ×3) give ≥ 15 good matches after the ratio test.
-  - Ambiguous pairs → Spark Open "same spot?" check with two context crops (cap: 10 calls per walk).
+- [ ] **1.2 Track hands.** SAM 3.1 concept tracking on `sam.mp4` with the hand concept from config (`SAM_HAND_CONCEPT`, default "hand"). Store raw text + per-frame records (box, confidence, SVG in SAM-frame coordinates) in `stages/track_hands.json`.
+- [ ] **1.3 Pointing events.** Within each defect turn window `[turn.start − 2.0 s, turn.end + 1.0 s]`, find frames where a hand is extended into the frame and roughly still for ≥ 0.4 s. Fingertip = the hand-mask point farthest from where the hand enters the frame. One pointing event per mention: `{t, fingertip_xy, hand_box, hold_s}` → `Point` rows, numbered by time. No hand in the window → the mention takes the voice-only path.
 - [ ] **1.4 Classify turns.** One batched Spark Open call covering all turns, with structured output per turn:
   - `kind`
   - `room` (if mentioned)
@@ -92,45 +86,37 @@ Track ownership and paths are in the orchestrator's instructions.
   - `status_update` `{target, claimed: fixed | not_fixed | unclear}`
 
   A room state machine carries the last-mentioned room forward.
-- [ ] **1.5 Fuse.**
-  - For each defect mention, candidates are marks visible in `[turn.start − 3.0 s, turn.end + 1.0 s]`.
-  - Score = visible overlap (s) × (1 − normalized center distance) × √(box area fraction).
-  - Hungarian assignment (`linear_sum_assignment`, cost = −score, reject below threshold τ).
-  - Outputs:
-    - **paired items**
-    - **voice-only items** (a mention with no mark)
-    - **unnarrated marks**: visible ≥ 1.5 s, never inside a defect window, not a re-sighting → item with `needs_review` "Tape mark with no description"
-  - Each item gets `video_start_s = turn.start − 3.0` and `video_end_s = turn.end + 1.0` (clamped).
+- [ ] **1.5 Fuse.** Each defect mention becomes exactly one item, with its pointing event if any (several candidates → the longest hold, then the closest to the mention's start). Mentions without a pointing event are **voice-only items**. There is no tape-track merging and there are no "unnarrated mark" items. Each item gets `video_start_s = turn.start − 2.0` and `video_end_s = turn.end + 1.0` (clamped).
 - [ ] **1.6 Evidence frames.**
-  - Candidates = frames where the mark is visible ∩ the turn window.
-  - Score = Laplacian variance (sharpness) of the context crop × box size × centrality.
-  - Extract the chosen frame from `display.mp4` at full resolution, plus two context frames at ±0.7 s.
-  - Voice-only items: sample 5 frames across the turn window and pick the sharpest.
+  - Candidates = sharp frames within ±1.5 s of the pointing event where the hand mask does **not** cover the area around the fingertip (prefer frames after the hand withdraws).
+  - Score = Laplacian variance (sharpness) of the context crop around the fingertip.
+  - Map the fingertip into the chosen frame as the "pointed here" marker (`evidence.pointer`). Extract that frame from `display.mp4` at full resolution, plus the pointing frame and two context frames at ±0.7 s.
+  - Voice-only items: sample 5 frames across the turn window and pick the sharpest (no marker).
   - Scale SAM coordinates → display coordinates using `meta.json`.
 - [ ] **1.7 Tests.** Synthetic tracks/turns for merge, fusion and evidence selection, plus a fixture-driven integration test. **AC:** `make test` green offline.
 
 ## Phase 2: Items, defect grounding, verification (Track A)
 
 - [ ] **2.1 Item writer** (Spark Open, `reasoning_effort=low`).
-  - **Inputs:** evidence frame with the tape box drawn on it, two context frames, the turn text(s), room, trades enum.
+  - **Inputs:** the evidence frame with the fingertip marked, the pointing frame, two context frames, the turn text(s), room, trades enum.
   - **Output schema:**
     - `title`: ≤ 60 chars, punch-list style
     - `description`: 1–2 sentences summarizing the problem, including location detail. This is the AI summary shown on the card, so make it clearer than the raw quote (no filler words, no "uh").
     - `action`: ≤ 80 chars, imperative, what the trade needs to do (e.g. "Install a matching knob"). Only what's evident from the narration and the frame; no specs, sizes or quantities.
     - `trade`, `room`, `location_detail`, `severity`
     - `sam_concept`: a short noun phrase naming the defective object or area, e.g. "cabinet door", "door strike plate", "wall scuff mark"
-    - `defect_box`: `{x1,y1,x2,y2}` in this image's pixels, or null
+    - `defect_box`: `{x1,y1,x2,y2}` in this image's pixels, near the marker, or null
     - `confidence`
     - `rationale`: ≤ 200 chars
   - **Prompt rules:** state only what the narration says and the frame shows; never invent quantities; if the frame doesn't show the defect, set `defect_box` to null and lower the confidence.
 - [ ] **2.2 Ground the defect** (SAM, image mode). Try these in order and record which one worked:
-  1. SAM concept prompt `sam_concept` on the evidence frame → pick the instance nearest the tape, within 3× the tape length.
+  1. SAM concept prompt `sam_concept` on the evidence frame → pick the instance nearest the fingertip marker, within ~25% of the frame width.
   2. SAM box prompt from `defect_box` (expanded 10%), if it lies within that radius.
-  3. Tape-only evidence.
+  3. Marker-only evidence (`grounding = pointed_only`; voice-only items without a marker: `none`).
 
-  Render the evidence JPEG: full frame, tape outline (blue), defect outline + 30% fill (red), no burned-in text (the UI draws the tape tab and captions). Also save a 4:3 crop centered on tape + defect for cards.
+  Render the evidence JPEG: full frame, defect outline + 30% fill (red), a small blue dot where the finger pointed, no burned-in text (the UI draws the number tab and captions). Also save a 4:3 crop centered on marker + defect for cards.
 - [ ] **2.3 Verify** (Spark Open, `reasoning_effort=medium`). Input: the rendered evidence + item JSON + the original quote. Check that the title, description and action match both what was said and what the frame shows. Output: `{consistent, issues[], suggested_fix?}`. If inconsistent → `needs_review` with the note. Never drop an item.
-- [ ] **2.4 Voice-only grounding.** `GROUNDING_MODE=tape+voice|voice_only`. Voice-only items (and every item in voice_only mode) go through the same 2.1–2.3 path using the sampled frame.
+- [ ] **2.4 Voice-only grounding.** `GROUNDING_MODE=point+voice|voice_only`. Voice-only items (and every item in voice_only mode) go through the same 2.1–2.3 path using the sampled frame.
 - [ ] **2.5 Job runner.** Stages run with per-stage timing, 2 retries, resumable state (a re-run skips completed stages unless `force=true`), and progress events (stage, counts) for the UI.
 
 ## Phase 3: Evaluation (Track A)
@@ -140,7 +126,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Hungarian assignment on match score.
   - If a row has a `clip` value, t_label = that part's offset in the concatenated walk + `time_mmss`.
 - [ ] **3.2 Metrics.**
-  - **Initial walks:** recall, precision, trade accuracy, room accuracy, grounding rate (anything other than tape-only), needs_review rate. The `UNNARRATED` label counts as found if a `needs_review` "no description" item matches it.
+  - **Initial walks:** recall, precision, trade accuracy, room accuracy, grounding rate for pointed items (`pointed=1` rows whose item is grounded by `sam_concept` or `sam_box`), needs_review rate.
   - **Re-walk** (for each walk1 label matched to a predicted item):
     - closure accuracy: predicted signed-off vs. `fixed_in_rewalk`
     - **false-claim catch**: rows with `claimed_fixed_in_rewalk=1` and `fixed_in_rewalk=0` must end `needs_review`
@@ -167,7 +153,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - model calls
   - report PDF
   - `/healthz`
-- [ ] **4.3 Overlay endpoint.** Per SAM frame (10 fps): `[{mark_id, number, box, svg}]` in display coordinates (simplified paths; payload < 3 MB for a 3-minute walk), plus item events `[{t, item_id}]`.
+- [ ] **4.3 Overlay endpoint.** Per SAM frame (10 fps): `[{point_id, number, box, svg, fingertip}]` (hand outlines while pointing) in display coordinates (simplified paths; payload < 3 MB for a 3-minute walk), plus item events `[{t, item_id}]`.
 - [ ] **4.4 Guards.** ≤ 2 concurrent jobs; per-IP upload limit in `DEMO_MODE`; readable errors.
 
 ## Phase 5: Web app (Track B; mobile first, follow DESIGN.md exactly)
@@ -192,7 +178,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - one status-dependent primary action plus a More sheet; edits logged as human overrides
 - [ ] **5.4 Play this moment** sheet per DESIGN.md: starts at `video_start_s`, caption of the quote, pauses at `video_end_s`, "Keep watching".
 - [ ] **5.5 Walks** list + walk detail (the demo's hero screen) per DESIGN.md and `docs/design/04-walk-detail.png`:
-  - portrait video with tape outlines and tape tabs
+  - portrait video with hand outlines and numbered tabs at the fingertip while pointing
   - the new-item card slides up over the video at its moment, then settles into the list
   - timeline with item markers
   - Items so far / Transcript tabs, tap to seek
@@ -212,11 +198,10 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 7: Re-walk loop (Track A, then B)
 
-- [ ] **7.1 Resolve status updates.** The re-walk runs stages 0–1.6. Then, for each `status_update` turn, Spark Open maps it to an open item, given the open items `[{id, title, room, description}]`, the utterance and the current room. Output: `{item_id | null, claimed, confidence}`.
+- [ ] **7.1 Resolve status updates.** The re-walk runs stages 0–1.6. Then, for each `status_update` turn, Spark Open maps it to an open item, given the open items `[{id, title, room, description, location_detail}]`, the utterance, the current room and the pointed location. Output: `{item_id | null, claimed, confidence}`.
 - [ ] **7.2 Visual check.**
-  - For each matched item, pick the sharpest re-walk frame in the turn window.
-  - Spark Open compares [original evidence crop, new frame] → `{defect_still_present: yes | no | unclear, tape_present: yes | no | unclear, note}`.
-  - SAM tape detections near that time also count as `tape_present` evidence.
+  - The re-walk runs the same pointing detection. For each matched item, use the evidence frame of its re-walk pointing event (else the sharpest frame in the turn window).
+  - Spark Open compares [original evidence crop, new crop around the pointed spot] → `{defect_still_present: yes | no | unclear, note}`. There is no tape check.
 - [ ] **7.3 Decision table.**
   - Claimed fixed + fixed on camera → **signed off**.
   - Said not fixed, or defect still visible → **open**, send again.
@@ -250,7 +235,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - eval table, including the holdout
   - cost and time per walk
   - how to run, limitations
-  - roadmap: live hands-free capture through Meta's Wearables Device Access Toolkit (glasses stream straight in, items are confirmed by voice, a trade looks at a tape and hears its item), Procore/Fieldwire sync, spec citations with Muse Spark 1.3's 1M context, live captions
+  - roadmap: live hands-free capture through Meta's Wearables Device Access Toolkit (glasses stream straight in, items are confirmed by voice, a trade looks at a defect and hears its item), Procore/Fieldwire sync, spec citations with Muse Spark 1.3's 1M context, live captions
   - **"Built during the Meta Global AI Developer Hackathon, Nov 3–4, 2026. Everything in this repo was created during the event."**, followed by a dated feature list
 - [ ] **9.3 `docs/DEMO_SCRIPT.md`.** Built from the shot list below, with the exact screens to capture on the iPhone for each beat.
 - [ ] **9.4 Final pass.** `make test`, `make eval`, `make screenshots` (all PASS), a fresh clone sets up cleanly, `docker build` works, no secrets anywhere in git history.
@@ -269,10 +254,10 @@ The app runs from the iPhone Home Screen (installed PWA, no Safari bar), capture
 
 | Time | Beat |
 |---|---|
-| 0:00–0:12 | **Hook:** 2 s of the inspector in Ray-Ban Metas taping a defect, then the glasses' view with tape marks lighting up. "The walk takes minutes. The write-up takes hours, and the final payment waits on it." |
+| 0:00–0:12 | **Hook:** 2 s of the inspector in Ray-Ban Metas pointing at a defect, then the glasses' view with pointing events lighting up. "The walk takes minutes. The write-up takes hours, and the final payment waits on it." |
 | 0:12–0:40 | **Record:** add the glasses clips → Upload walk → the processing checklist fills in, naming each Meta model as it works. |
 | 0:40–1:30 | **Punch list:** filter to Electrical and Functional; a card with its tape tab, outlines, AI summary and action; "Play this moment" jumps to the exact second. Walk detail with items sliding in as the video plays. |
-| 1:30–2:00 | **Trades:** "Send 3 items to Ace Electric" → the Slack message lands. The tape nobody described shows up as Needs a look. |
+| 1:30–2:00 | **Trades:** "Send 3 items to Ace Electric" → the Slack message lands. An item whose frame doesn't support the description shows up as Needs a look. |
 | 2:00–2:35 | **Re-walk summary:** items signed off with before/after; "Marked fixed on the re-walk, but the defect is still visible." |
 | 2:35–3:00 | **How this walk was processed** (models, time, cost) and eval numbers; "built Nov 3–4"; live URL and QR code. |
 

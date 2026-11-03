@@ -14,10 +14,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Best tape phrasing from `make probe` (fixtures/probe/tape_concept.json): "strip of blue
-# painter's tape" 0.95 vs "blue painter's tape" 0.91 vs "blue tape" 0.71 on one frame.
-# PROVISIONAL: measured on a synthetic frame; re-check on real footage in `make record`.
-DEFAULT_TAPE_CONCEPT = "strip of blue painter's tape"
+# SAM 3.1 concept for the inspector's pointing hand (PLAN 1.2). PROVISIONAL: `make record` compares
+# "hand", "index finger" and "pointing hand" on real pointing frames and keeps the best (PLAN 0.6).
+DEFAULT_HAND_CONCEPT = "hand"
 
 
 class Settings(BaseSettings):
@@ -60,9 +59,16 @@ class Settings(BaseSettings):
     FIXTURE_CACHE_DIR: Path = REPO_ROOT / "fixtures" / "cache"
 
     # Pipeline
-    GROUNDING_MODE: Literal["tape+voice", "voice_only"] = "tape+voice"
-    SAM_TAPE_CONCEPT: str = DEFAULT_TAPE_CONCEPT
+    # point+voice: pointed items use the fingertip; voice_only: every item takes the voice-only path
+    GROUNDING_MODE: Literal["point+voice", "voice_only"] = "point+voice"
+    SAM_HAND_CONCEPT: str = DEFAULT_HAND_CONCEPT
     COST_CAP_USD: float = Field(default=25.0, ge=0)
+
+    @field_validator("GROUNDING_MODE", mode="before")
+    @classmethod
+    def _legacy_grounding_mode(cls, v):
+        """A `.env` copied before the pointing change says `tape+voice`; it means `point+voice` now."""
+        return "point+voice" if isinstance(v, str) and v.strip() == "tape+voice" else v
 
     @field_validator("PUNCHWALK_CACHE_DIR", mode="before")
     @classmethod

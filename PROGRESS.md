@@ -20,3 +20,11 @@ One line per event, newest at the bottom:
 2026-11-03 16:45 ET | 0.1-0.4 | builder A | fix round 1 done: strict_schema keeps title fields, probe replay no longer touches fixtures, .env.example complete, cap estimate; 221 tests | report | re-verify
 2026-11-03 16:48 ET | 0.1-0.4 | verifier | PASS after fix round 1 (221 tests; probe replay $0; mask IoU 0.92) | report | commit ckpt-0.1..0.4
 2026-11-03 16:49 ET | 0.7 | verifier | PASS (130 contract tests; deterministic mocks; media all resolve; 221 py tests) | report | commit ckpt-0.7; start Tracks A and C
+2026-11-03 16:50 ET | 0.6+1.1-1.7 | builder (Track A) | briefed | STATE.md in-flight | verify per subphase
+2026-11-03 16:50 ET | 4.1-4.4 | builder (Track C) | briefed | STATE.md in-flight | verify per subphase
+2026-11-03 17:01 ET | CHANGE | human | tape → pointing hand; PLAN.md + DECISIONS.md updated; Tracks A/B/C re-briefed by message | DECISIONS.md | brief contract+docs builder
+2026-11-03 17:12 ET | 5.1 | ui-builder | done: shell, tokens, 22 components, router, data layer, PWA, 29-screen harness; web typecheck/test/build green; committed untagged pending verification (make test red only until mocks regenerate for Point) | report | verify after CHANGE-1; ui-builder continues with 5.2–5.4
+2026-11-03 17:23 ET | 4.1-4.4 | builder (Track C) | done: db+WAL, range media, SPA mount, all routes, streamed upload, 2-thread job worker, overlay (hands), guards; 44 API tests; smoke test ok | report | verifier
+2026-11-03 17:25 ET | 4.1-4.4 | orchestrator | committed as 4 untagged checkpoints pending verification (so 6.x edits stay separate) | git log | verifier running; Track C continues with 6.1–6.3 backend
+2026-11-03 17:27 ET | CHANGE-1 | builder | done: docs + contract (Mark→Point, Evidence.pointer, Grounding×4, stages) + mocks regenerated (208 files); 305 py tests pass | report | commit (untagged) + verify with 5.1
+2026-11-03 17:27 ET | 1.1-1.7 (+0.6 script) | builder (Track A) | partial: pipeline built to the pointing spec, 36 new tests, synth-walk integration fixture ($0.097 spent, total $0.143); 0.6 blocked on footage | report | commit per subphase (untagged) + verify; Track A continues with Phase 2
