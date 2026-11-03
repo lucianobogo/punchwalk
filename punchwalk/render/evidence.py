@@ -17,6 +17,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from punchwalk.pipeline import params as P
 from punchwalk.pipeline.frames import svg_polygons
 
 REDLINE = (0xD9, 0x3B, 0x30)
@@ -25,9 +26,7 @@ WHITE = (255, 255, 255)
 FILL_ALPHA = 0.30
 HAND_FILL_ALPHA = 0.15
 JPEG_QUALITY = 85
-CROP_ASPECT = 4 / 3
-CROP_MIN_FRAC = 0.45  # crop height at least this fraction of the frame's short side
-CROP_MARGIN = 1.8  # crop spans the pointer+defect extent times this
+CROP_ASPECT, CROP_MIN_FRAC, CROP_MARGIN = P.CROP_ASPECT, P.CROP_MIN_FRAC, P.CROP_MARGIN
 
 
 def line_width(w: int, h: int) -> int:
@@ -35,7 +34,8 @@ def line_width(w: int, h: int) -> int:
 
 
 def dot_radius(w: int, h: int) -> int:
-    return max(7, round(min(w, h) / 90))
+    lo, hi = P.DOT_RADIUS_PX
+    return int(min(hi, max(lo, round(min(w, h) / P.DOT_RADIUS_DIV))))
 
 
 def _polys(svg: str | None) -> list[list[tuple[float, float]]]:
@@ -94,6 +94,29 @@ def render_pointing(raw: Path, out: Path, *, hand_svg: str | None) -> Path:
     if polys:
         _outline(layer, polys, TAPE, line_width(w, h), HAND_FILL_ALPHA)
     return _save(Image.alpha_composite(base, layer), out)
+
+
+def wide_crop_box(image: Path) -> tuple[int, int, int, int]:
+    """Nothing located (voice-only, no outline): the widest 4:3 crop (full width, or full height in a
+    landscape frame), placed over the band with the most texture (Laplacian energy) so the described
+    defect is most likely in it; the frame center when the frame is flat."""
+    import cv2
+    import numpy as np
+
+    img = cv2.imread(str(image), cv2.IMREAD_GRAYSCALE)
+    h, w = img.shape[:2]
+    cw, ch = w, int(round(w / CROP_ASPECT))
+    if ch > h:
+        ch, cw = h, int(round(h * CROP_ASPECT))
+    energy = np.abs(cv2.Laplacian(img, cv2.CV_64F))
+    if energy.mean() < 1e-6:
+        x1, y1 = (w - cw) // 2, (h - ch) // 2
+        return x1, y1, x1 + cw, y1 + ch
+    rows = np.convolve(energy.sum(axis=1), np.ones(ch), mode="valid")  # sum over each ch-tall band
+    cols = np.convolve(energy.sum(axis=0), np.ones(cw), mode="valid")
+    y1 = int(np.argmax(rows)) if ch < h else 0
+    x1 = int(np.argmax(cols)) if cw < w else 0
+    return x1, y1, x1 + cw, y1 + ch
 
 
 def crop_box_for(

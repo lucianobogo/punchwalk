@@ -9,6 +9,8 @@ Per item, in order, recording which worked in `Evidence.grounding`:
      radius of the fingertip (or there is no pointer).
   3. `pointed_only` (a pointer, no outline) or `none` (voice-only, no outline, no dot).
 
+Items that are protected (sent, closed or edited by a person) keep their outline and renders.
+
 Renders (punchwalk/render/evidence.py, quality 85, no text): evidence.jpg (red outline + 30% fill and
 the blue "pointed here" dot), crop.jpg (4:3 around pointer + defect, outlines drawn), pointing.jpg
 (the pointing frame with the hand outlined in blue). Coordinates are display pixels.
@@ -29,8 +31,14 @@ from punchwalk.core.models import Box, Evidence
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, data_dir, rel_to_data
 from punchwalk.pipeline.frames import scale_svg_path
-from punchwalk.pipeline.items import walk_items
-from punchwalk.render.evidence import crop_box_for, render_crop, render_evidence, render_pointing
+from punchwalk.pipeline.items import is_protected, walk_items
+from punchwalk.render.evidence import (
+    crop_box_for,
+    render_crop,
+    render_evidence,
+    render_pointing,
+    wide_crop_box,
+)
 from punchwalk.render.masks import frame_box, mask_to_frame_raster, mask_to_frame_svg
 
 log = logging.getLogger(__name__)
@@ -122,6 +130,10 @@ def run(ctx: StageContext) -> StageOutcome:
     ctx.report({"outlined": 0, "total": len(items)})
     for n, item in enumerate(items, 1):
         ev = Evidence.model_validate(item.evidence)
+        if is_protected(item):  # sent, closed or edited by a person: keep its outline and renders
+            counts[ev.grounding.value] += 1
+            rows[item.id] = {"grounding": ev.grounding.value, "kept": True}
+            continue
         raw = root / ev.raw
         pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
         wrow = written.get(item.id) or {}
@@ -137,7 +149,10 @@ def run(ctx: StageContext) -> StageOutcome:
 
         out = ctx.item_dir(item.id)
         evidence_jpg = render_evidence(raw, out / "evidence.jpg", defect_svg=defect_svg, pointer=pointer)
-        cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+        if pointer is None and defect_box is None:  # nothing located: widest 4:3 crop over the busiest band
+            cb = wide_crop_box(raw)
+        else:
+            cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
         crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
         pointing_rel = ev.pointing_frame
         extra = extras.get(item.id, {})

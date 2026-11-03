@@ -43,6 +43,9 @@ VERIFY_DIR = ROOT / ".verify" / "probe"
 # Outputs go to fixtures/probe only when the run may make live calls (readwrite); readonly/off
 # replays write to .verify/probe so they never overwrite the recorded live results.
 OUT = PROBE_DIR
+# Historical (before the pointing change): step 2 compared tape phrasings on the synthetic tape frame.
+# The hand concept ("hand" / "index finger" / "pointing hand") is compared on real pointing frames by
+# scripts/record.py (fixtures/pipeline/<walk>/hand_concept.json).
 PHRASINGS = ["blue painter's tape", "blue tape", "strip of blue painter's tape"]
 NARRATION = "Kitchen. Upper cabinet left of the sink, knob missing."
 ERRORS: list[str] = []
@@ -374,7 +377,7 @@ def main() -> int:
         print(f"     {rec.provider}: {inst.model_dump()}")
 
     # 5. SAM concept on the 3 s video
-    concept = tape["best"] or s.SAM_HAND_CONCEPT
+    concept = s.SAM_HAND_CONCEPT  # the pipeline's concept (the probe clip has no hand: zero matches is valid)
     vres = timed(f"5 sam.concept_on_video {concept!r}", lambda: sam.concept_on_video(clip, concept))
     if vres:
         save("sam_video.txt", vres.raw_text)

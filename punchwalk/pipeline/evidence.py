@@ -12,6 +12,8 @@ similarity fit on the region around it, else by phase correlation (translation; 
 walls), with hand pixels masked out. When both fail the camera is assumed still (`aligned: false`
 in the stage output).
 
+Items that are protected (sent, closed or edited by a person) keep their photo, files and outlines.
+
 Voice-only items: 5 frames sampled across the turn window (inside its clip part), the sharpest wins,
 pointer null. Context frames never cross a clip boundary.
 With GROUNDING_MODE=voice_only every item takes this path (PLAN 2.4).
@@ -185,7 +187,7 @@ def sample_frames(start_s: float, end_s: float, fps: float, first: int, last: in
 
 def crop_box_4x3(x: float, y: float, w: int, h: int) -> tuple[int, int, int, int]:
     """4:3 card crop centered on (x, y) in display px, shifted to stay inside the frame."""
-    ch = int(round(P.CROP_FRAC_OF_SHORT_SIDE * min(w, h)))
+    ch = int(round(P.CROP_MIN_FRAC * min(w, h)))
     cw = int(round(ch * P.CROP_ASPECT))
     if cw > w:
         cw, ch = w, int(round(w / P.CROP_ASPECT))
@@ -204,6 +206,24 @@ def _hand_masks(records: list[dict[str, Any]], frames: set[int], w: int, h: int)
             m = rasterize_svg(r["svg"], w, h)
             masks[r["frame"]] = np.maximum(masks[r["frame"]], m) if r["frame"] in masks else m
     return masks
+
+
+def _protected_rows(ctx: StageContext) -> dict[str, dict[str, Any]]:
+    """Protected items (items.is_protected) that already have evidence: their previous stage row (or one
+    rebuilt from Item.evidence), so later stages see the same photo and nothing is re-rendered."""
+    from punchwalk.pipeline.context import read_stage_output
+    from punchwalk.pipeline.items import is_protected
+
+    try:
+        previous = read_stage_output(ctx.walk_dir, Stage.pick_evidence)["items"]
+    except Exception:  # noqa: BLE001 - first run
+        previous = {}
+    rows: dict[str, dict[str, Any]] = {}
+    with ctx.session() as s:
+        for item in s.exec(select(Item).where(Item.origin_walk_id == ctx.walk_id)).all():
+            if item.evidence and is_protected(item):
+                rows[item.id] = previous.get(item.id) or {"evidence": item.evidence, "kept": True}
+    return rows
 
 
 def _part_range(ctx: StageContext, frame: int) -> tuple[int, int]:
@@ -242,8 +262,12 @@ def run(ctx: StageContext) -> StageOutcome:
     results: dict[str, dict[str, Any]] = {}
     clear = 0
     display = ctx.walk_dir / meta.display.path
+    kept = _protected_rows(ctx)
     for d in drafts:
         item_id = d["item_id"]
+        if item_id in kept:  # sent, closed or edited by a person: its photo and outlines stay as they are
+            results[item_id] = kept[item_id]
+            continue
         got = {f: frames[f] for f in plans[item_id] if f in frames}
         if not got:
             log.warning("pick_evidence: no frames decoded for %s", item_id)
@@ -259,7 +283,7 @@ def run(ctx: StageContext) -> StageOutcome:
 
     with ctx.session() as s:
         for item in s.exec(select(Item).where(Item.origin_walk_id == ctx.walk_id)).all():
-            if item.id in results:
+            if item.id in results and item.id not in kept:
                 ev_doc = results[item.id]["evidence"]
                 item.evidence = models.Evidence.model_validate(ev_doc).model_dump(mode="json")
                 s.add(item)

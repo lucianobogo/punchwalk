@@ -107,6 +107,12 @@ def check_one(item, ev: Evidence) -> tuple[ItemCheck, str]:
     return result, rec.provider
 
 
+def configured_provider() -> Provider:
+    from punchwalk.config import get_settings
+
+    return Provider.baseten if get_settings().REASONING_PROVIDER == "baseten" else Provider.meta
+
+
 def run(ctx: StageContext) -> StageOutcome:
     with ctx.session() as s:
         items = walk_items(ctx, s)
@@ -130,7 +136,7 @@ def run(ctx: StageContext) -> StageOutcome:
             if check is None:
                 failed += 1
                 row.status, row.review_reason = ItemStatus.needs_review, REVIEW_CHECK_FAILED
-                row.verification = Verification(consistent=False, note=REVIEW_CHECK_FAILED, provider=Provider.baseten,
+                row.verification = Verification(consistent=False, note=REVIEW_CHECK_FAILED, provider=configured_provider(),
                                                 checked_at=utcnow()).model_dump(mode="json")
                 add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_CHECK_FAILED)
             else:

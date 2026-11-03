@@ -1,20 +1,20 @@
 {
- "key": "f45739da585263e660e737e593c66feea81ed56b7f4421c098c4fc6adf8b37c1",
+ "key": "f5de7efb904d0d57a6eb3b71ed9a767282490879458fec2f53bf58284ccf8c44",
  "provider": "baseten",
  "endpoint": "/chat/completions",
  "model": "meta-models/muse-spark-open",
  "description": "structured(ItemCheck) stage=verify format=json_schema",
- "created_at": "2026-11-03T22:36:48+00:00",
+ "created_at": "2026-11-03T23:08:52+00:00",
  "meta": {},
  "response": {
-  "id": "chatcmpl-027b5461105741a0b62b13b9cdda600f",
+  "id": "chatcmpl-3fe65b5d16424fe3b8a366ff434c43a3",
   "choices": [
    {
     "finish_reason": "stop",
     "index": 0,
     "logprobs": null,
     "message": {
-     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Item matches inspector's words about missing knob left of sink and photo shows empty mounting hole at the marked spot.\"}",
+     "content": "{\"consistent\": true,\"frame_shows_defect\": false,\"issues\": [\"Photo is too distant and low-resolution to verify the switch plate is crooked\"],\"suggested_fix\": null,\"rationale\": \"Item text matches inspector exactly but the photo is too far and blurry to confirm the plate is crooked.\"}",
      "refusal": null,
      "role": "assistant",
      "annotations": null,
@@ -24,7 +24,7 @@
     }
    }
   ],
-  "created": 1793745405,
+  "created": 1793747327,
   "model": "meta-models/muse-spark-open",
   "object": "chat.completion",
   "metadata": null,
@@ -32,20 +32,20 @@
   "service_tier": null,
   "system_fingerprint": null,
   "usage": {
-   "completion_tokens": 617,
-   "prompt_tokens": 1873,
-   "total_tokens": 2490,
+   "completion_tokens": 1127,
+   "prompt_tokens": 1872,
+   "total_tokens": 2999,
    "completion_tokens_details": {
-    "accepted_prediction_tokens": 428,
+    "accepted_prediction_tokens": 748,
     "audio_tokens": 0,
-    "reasoning_tokens": 560,
-    "rejected_prediction_tokens": 895,
+    "reasoning_tokens": 1052,
+    "rejected_prediction_tokens": 1905,
     "text_tokens": null
    },
    "prompt_tokens_details": {
     "audio_tokens": 0,
     "cache_write_tokens": null,
-    "cached_tokens": 0,
+    "cached_tokens": 256,
     "image_tokens": null,
     "text_tokens": null
    }

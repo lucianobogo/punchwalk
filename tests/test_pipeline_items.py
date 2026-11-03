@@ -234,15 +234,62 @@ def test_unbuilt_stage_is_skipped_not_done(monkeypatch, tmp_path):
         s.add(Walk(id="wlk_s", project_id="prj_s", kind=WalkKind.rewalk))
         s.commit()
     ok = runner.StageOutcome(counts={})
-    fns = {k: (lambda ctx: ok) for k in runner.STAGE_FUNCTIONS}
-    monkeypatch.setattr(runner, "STAGE_FUNCTIONS", fns)  # resolve_closures is not in it
+    fns = {k: (lambda ctx: ok) for k in runner.STAGE_FUNCTIONS if k != "resolve_closures"}
+    monkeypatch.setattr(runner, "STAGE_FUNCTIONS", fns)  # pretend resolve_closures is not built yet
     runner.run_walk("wlk_s", session_factory=factory)
     with factory() as s:
         stages = s.get(Walk, "wlk_s").stages
         assert stages["resolve_closures"]["status"] == "skipped"
         assert stages["persist"]["status"] == "done"
     ran = []
-    fns2 = {k: (lambda ctx, k=k: (ran.append(k), ok)[1]) for k in runner.STAGE_FUNCTIONS}
+    fns2 = {k: (lambda ctx, k=k: (ran.append(k), ok)[1]) for k in fns}
     monkeypatch.setattr(runner, "STAGE_FUNCTIONS", fns2)
     runner.run_walk("wlk_s", session_factory=factory)  # resume: the skipped stage (and what follows) runs again
     assert ran == ["persist"]
+
+
+def test_writer_text_cleaning():
+    from punchwalk.pipeline.write_items import clean_description, clean_text
+
+    assert clean_text("upper cabinet left of left of the sink") == "upper cabinet left of the sink"
+    assert clean_text("  the the knob  ") == "the knob"
+    assert clean_description("Knob missing on the upper cabinet. The knob is not clearly visible in the photos.") \
+        == "Knob missing on the upper cabinet."
+    assert clean_description("The door frame is cracked near the hinge.") == "The door frame is cracked near the hinge."
+
+
+def test_skipped_stage_event_and_orphan_note_once(monkeypatch, tmp_path):
+    from sqlmodel import Session, SQLModel, create_engine, select
+
+    from punchwalk.core.enums import WalkKind
+    from punchwalk.core.models import Project, Walk
+    from punchwalk.pipeline.context import StageContext
+    from punchwalk.pipeline.fuse import REVIEW_ORPHANED, save_items
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'o.sqlite3'}")
+    SQLModel.metadata.create_all(engine)
+
+    def factory():
+        return Session(engine, expire_on_commit=False)
+
+    with factory() as s:
+        s.add(Project(id="prj_o", name="o"))
+        s.add(Walk(id="wlk_o", project_id="prj_o", kind=WalkKind.rewalk))
+        s.add(Item(id="itm_o", project_id="prj_o", number=1, origin_walk_id="wlk_o", title="sent",
+                   status=ItemStatus.dispatched))
+        s.commit()
+    ctx = StageContext(walk_id="wlk_o", project_id="prj_o", kind=WalkKind.initial, walk_dir=tmp_path,
+                       session_factory=factory)
+    save_items(ctx, [])
+    save_items(ctx, [])
+    with factory() as s:
+        item = s.exec(select(Item)).one()
+        assert item.status == ItemStatus.dispatched  # protected: not flagged, not deleted
+        assert [h["note"] for h in item.history].count(REVIEW_ORPHANED) == 1
+
+    ok = runner.StageOutcome(counts={})
+    monkeypatch.setattr(runner, "STAGE_FUNCTIONS",
+                        {k: (lambda ctx: ok) for k in runner.STAGE_FUNCTIONS if k != "resolve_closures"})
+    events = []
+    runner.run_walk("wlk_o", session_factory=factory, progress=events.append)
+    assert [e.status for e in events if e.stage == Stage.resolve_closures] == ["running", "skipped"]

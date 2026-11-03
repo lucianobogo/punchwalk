@@ -212,12 +212,18 @@ def test_forced_rerun_keeps_human_edits_and_dispatch_state(db):
         s.add(b)
         s.commit()
         a_hist, b_hist = len(a.history), len(b.history)
+        data = Path(get_settings().DATA_DIR)
+        before = {i.id: (dict(i.evidence), (data / i.evidence["image"]).read_bytes()) for i in (a, b)}
     run_walk(walk_id, session_factory=db, force=True)
     with db() as s:
         a2, b2, c2 = s.exec(select(Item).where(Item.origin_walk_id == walk_id).order_by(Item.number)).all()
         assert a2.title == "Knob missing, kitchen upper cabinet (edited)" and len(a2.history) == a_hist
         assert b2.status == ItemStatus.dispatched and len(b2.history) == b_hist
         assert c2.status == ItemStatus.needs_review  # machine-managed item re-checked the same way
+        for item in (a2, b2):  # protected items keep their outline, grounding and rendered evidence
+            ev0, img0 = before[item.id]
+            assert item.evidence["grounding"] == ev0["grounding"] and item.evidence["defect_svg"] == ev0["defect_svg"]
+            assert item.evidence["defect_svg"] and (data / item.evidence["image"]).read_bytes() == img0
 
 
 def test_resume_skips_done_stages_and_failure_is_readable(db):

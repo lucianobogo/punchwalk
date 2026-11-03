@@ -66,7 +66,10 @@ Rules:
 - State only what the narration says and the photos show. Never invent quantities, sizes, specs, brands or causes.
 - title: punch-list style, at most 60 characters (for example "Cabinet knob missing, upper left of sink").
 - description: 1-2 plain sentences summarizing the problem and where it is. Clearer than the raw quote,
-  no filler words ("uh", "so", "okay").
+  no filler words ("uh", "so", "okay"), no repeated words. Describe the defect itself; never mention the
+  photos, the video, the blue dot or what is or isn't visible (that goes in rationale and confidence).
+- location_detail: where in the room, in a few clean words (for example "upper cabinet left of the sink"),
+  or null.
 - action: at most 80 characters, imperative, what the trade needs to do (for example "Install a matching knob").
 - trade: the one trade that fixes it, from the list given.
 - severity: "safety" if it could hurt someone (exposed wiring, trip hazard, broken glass), "functional" if
@@ -84,6 +87,26 @@ def _trim(text: str, limit: int) -> str:
     if len(clean) <= limit:
         return clean
     return clean[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:-") + "…"
+
+
+_REPEAT_RE = re.compile(r"\b((?:\w+\W+){1,3}?)\1+", re.IGNORECASE)
+_PHOTO_RE = re.compile(r"[^.]*\b(photos?|in the image|video|visible in|blue dot)\b[^.]*\.?\s*", re.IGNORECASE)
+
+
+def clean_text(text: str | None) -> str:
+    """Collapse whitespace and ASR stutters ("left of left of the sink" -> "left of the sink")."""
+    clean = re.sub(r"\s+", " ", text or "").strip()
+    prev = None
+    while prev != clean:
+        prev, clean = clean, _REPEAT_RE.sub(r"\1", clean)
+    return clean
+
+
+def clean_description(text: str | None) -> str:
+    """clean_text + drop sentences about the photos (the card summarizes the defect, not the evidence)."""
+    clean = clean_text(text)
+    kept = _PHOTO_RE.sub("", clean).strip()
+    return kept or clean
 
 
 def model_view(w: int, h: int) -> tuple[float, int, int]:
@@ -166,12 +189,12 @@ def write_one(ctx: StageContext, draft: dict[str, Any], ev: Evidence, extra: dic
 
 def apply_result(item, row: dict[str, Any], rooms: list[str]) -> None:
     r = row["result"]
-    item.title = _trim(r["title"], TITLE_MAX) or item.title
-    item.description = re.sub(r"\s+", " ", r["description"] or "").strip()
+    item.title = _trim(clean_text(r["title"]), TITLE_MAX) or item.title
+    item.description = clean_description(r["description"])
     item.action = _trim(r["action"], ACTION_MAX)
     item.trade = Trade(r["trade"])
     item.room = normalize_room(r.get("room"), rooms) or item.room
-    item.location_detail = (r.get("location_detail") or "").strip() or None
+    item.location_detail = clean_text(r.get("location_detail")) or None
     item.severity = Severity(r["severity"])
     item.confidence = round(min(1.0, max(0.0, float(r["confidence"]))), 3)
     ev = Evidence.model_validate(item.evidence) if item.evidence else None

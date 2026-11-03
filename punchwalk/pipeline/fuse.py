@@ -115,7 +115,9 @@ def save_items(ctx: StageContext, drafts: list[dict[str, Any]]) -> None:
             if item.origin_walk_id != ctx.walk_id or item.id in keep or item.review_reason == REVIEW_ORPHANED:
                 continue
             if is_protected(item):
-                add_history(item, HistoryActor.system, HistoryAction.noted, note=REVIEW_ORPHANED)
+                last = (item.history or [{}])[-1] or {}
+                if last.get("note") != REVIEW_ORPHANED:  # say it once, not on every re-run
+                    add_history(item, HistoryActor.system, HistoryAction.noted, note=REVIEW_ORPHANED)
             else:
                 item.status, item.review_reason = ItemStatus.needs_review, REVIEW_ORPHANED
                 add_history(item, HistoryActor.system, HistoryAction.flagged, note=REVIEW_ORPHANED)
