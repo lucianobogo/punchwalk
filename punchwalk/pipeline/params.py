@@ -46,8 +46,11 @@ ALIGN_MIN_PHASE_RESPONSE = 0.05  # phase-correlation peak needed to trust the sh
 ALIGN_MIN_TEXTURE_STD = 2.0  # gray-level std of the region below which there is nothing to align on
 ALIGN_MAX_SHIFT_FRAC = 0.25  # reject alignments that move the pointer further than this
 POSTER_WINDOW_S = (0.5, 1.5)  # poster.jpg: sharpest frame in this window
-CROP_ASPECT = 4 / 3  # card crop, width / height
-CROP_FRAC_OF_SHORT_SIDE = 0.6  # crop height as a fraction of the frame's short side
+CROP_ASPECT = 4 / 3  # card crop, width / height (pick_evidence's provisional crop and the rendered crop)
+CROP_MIN_FRAC = 0.45  # crop height at least this fraction of the frame's short side
+CROP_MARGIN = 1.8  # the crop spans the pointer + defect extent times this
+DOT_RADIUS_PX = (6, 8)  # DESIGN.md: the "pointed here" dot is 6-8 px at full frame
+DOT_RADIUS_DIV = 150  # radius = short side / this, clamped to DOT_RADIUS_PX
 EVIDENCE_JPEG_QUALITY = 2  # ffmpeg -q:v (2 = best)
 
 # --------------------------------------------------------------------------- 1.4 classify turns
@@ -65,3 +68,15 @@ GROUND_SVG_EPSILON_PX = 1.5  # outline simplification (display px)
 # --------------------------------------------------------------------------- 2.5 runner
 STAGE_RETRIES = 2  # SPEC: retries per stage for retryable errors (5xx, timeouts)
 STAGE_RETRY_BACKOFF_S = (2.0, 6.0)
+
+# --------------------------------------------------------------------------- 7.x re-walk
+CLOSURE_MAX_CALLS = 40  # SPEC: Spark Open calls per re-walk (matching + visual checks)
+CLOSURE_MIN_MATCH_CONF = 0.5  # a mention takes an item only at or above this match confidence
+CLOSURE_ALIGN_MIN_INLIERS = 25  # ORB matches needed to line up the first-walk and re-walk frames
+CLOSURE_ALIGN_MAX_SHIFT_FRAC = 0.35  # a phase-correlation shift larger than this share of the width is rejected
+PIXEL_RING_PX = 14  # ring around the defect used as "the surrounding surface"
+PIXEL_MIN_CONTRAST = 8.0  # the mark must stand out this much (gray levels) on the first walk to be measured
+PIXEL_STILL_RATIO = 0.5  # re-walk contrast >= this share of the first walk's = still there
+PIXEL_GONE_RATIO = 0.2  # <= this share = gone
+CLOSURE_ALIGN_MIN_NCC = 0.3  # a phase-correlation shift is kept only if the gradients then correlate this well
+# (a fixed defect removes some edges, so a correct shift on a plain wall can score only ~0.4)

@@ -15,8 +15,8 @@
   cache misses, the cost cap and missing inputs fail at once. Stages report running counts
   (`ctx.report({"written": 3, "total": 12})`), stored in Walk.stages and emitted as events.
 - walk.error is a plain sentence ("Hand tracking failed: ..."); StageState.error has the detail.
-- Stages not built yet (resolve_closures, until Phase 7) are saved as `skipped`, never `done`, so a
-  later resume runs them.
+- A stage without a function is saved as `skipped`, never `done`, so a later resume runs it.
+- persist on a re-walk sends each trade its still-open items again (dispatch.policy.resend_open_items).
 """
 
 from __future__ import annotations
@@ -43,6 +43,7 @@ from punchwalk.core.enums import (
 from punchwalk.core.models import ModelCall, Project, StageState, Walk, utcnow
 from punchwalk.pipeline import (
     classify,
+    closures,
     evidence,
     fuse,
     ground,
@@ -64,7 +65,7 @@ StageFn = Callable[[StageContext], StageOutcome]
 @dataclass
 class StageEvent:
     stage: Stage
-    status: Literal["running", "done", "failed"]
+    status: Literal["running", "done", "failed", "skipped"]
     counts: dict[str, int] = field(default_factory=dict)
     message: str | None = None
 
@@ -85,8 +86,22 @@ def _persist(ctx: StageContext) -> StageOutcome:
     with ctx.session() as s:
         items = walk_items(ctx, s)
     review = sum(1 for i in items if ItemStatus(i.status) == ItemStatus.needs_review)
-    return StageOutcome(counts={"items": len(items), "needs_review": review},
-                        message=f"{len(items)} items saved, {review} need a look")
+    counts = {"items": len(items), "needs_review": review}
+    if ctx.kind == WalkKind.rewalk:  # PLAN 7.4: send each trade its still-open items again, once
+        from punchwalk.dispatch.policy import resend_open_items
+        from punchwalk.pipeline.context import write_json
+
+        marker = ctx.walk_dir / "stages" / "resend.json"
+        if marker.is_file():  # resend_open_items would send them again: already done for this re-walk
+            counts["resent"] = 0
+        else:
+            with ctx.session() as s:
+                report = resend_open_items(s, ctx.project_id, ctx.walk_id)
+                s.commit()
+            counts["resent"] = sum(len(v) for v in report.sent.values())
+            counts["resend_failed"] = len(report.failed)
+            write_json(marker, {"sent": report.sent, "failed": report.failed})
+    return StageOutcome(counts=counts, message=f"{len(items)} items saved, {review} need a look")
 
 
 # Keyed by stage value so this module imports even while stage names are being renamed.
@@ -101,6 +116,7 @@ STAGE_FUNCTIONS: dict[str, StageFn] = {
     "write_items": write_items.run,
     "ground_defects": ground.run,
     "verify": verify.run,
+    "resolve_closures": closures.run,
     "persist": _persist,
 }
 
@@ -306,7 +322,7 @@ def _run_stage(ctx: StageContext, stage: Stage, buffer: _CallBuffer,
                 _set_stage(ctx.session_factory, ctx.walk_id, StageState(
                     stage=stage, status=StageStatus.skipped, started_at=started, finished_at=utcnow(),
                     duration_ms=int((time.monotonic() - t0) * 1000)))
-                _emit(progress, StageEvent(stage, "done", {}, "not built yet"))
+                _emit(progress, StageEvent(stage, "skipped", {}, "not built yet"))
                 return
             except Exception as err:
                 if attempt > P.STAGE_RETRIES or not is_retryable(err):
@@ -331,6 +347,6 @@ def _run_stage(ctx: StageContext, stage: Stage, buffer: _CallBuffer,
     buffer.flush(ctx.session_factory)
     _set_stage(ctx.session_factory, ctx.walk_id, StageState(
         stage=stage, status=StageStatus.done, started_at=started, finished_at=utcnow(),
-        duration_ms=int((time.monotonic() - t0) * 1000), counts=dict(outcome.counts),
+        duration_ms=int((time.monotonic() - t0) * 1000), counts=dict(outcome.counts), message=outcome.message,
     ))
     _emit(progress, StageEvent(stage, "done", dict(outcome.counts), outcome.message))

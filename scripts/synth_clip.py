@@ -10,7 +10,10 @@ narration converted to 16 kHz mono, or a quiet sine tone when `say` is unavailab
 
     uv run python scripts/synth_clip.py --out .verify/synth --duration 6 --portrait --parts 2 --rotate-meta 90
 
-Options: --landscape, --no-hand, --tape, --point-at SECONDS, --hold SECONDS, --hevc, --hdr (10-bit HEVC HLG / BT.2020, like an iPhone), --rotate-meta 90|180|270
+Presets: --fixture-walk (the 3-part first walk of fixtures/pipeline/synth_walk) and --rewalk (its
+re-walk: the kitchen scuff fixed, a false "fixed" claim for the hallway one, the bedroom one still there).
+
+Options: --landscape, --no-hand, --tape, --no-defect, --point-at SECONDS, --hold SECONDS, --hevc, --hdr (10-bit HEVC HLG / BT.2020, like an iPhone), --rotate-meta 90|180|270
 (pixels stored rotated + a display matrix, like a phone held upright), --parts N (walk_a.mp4, walk_b.mp4,
 …; each part lasts --duration seconds), --no-audio, --tone.
 
@@ -165,7 +168,7 @@ def _hand_x_expr(tip_x: int, slide: int, point_at: float, hold_s: float, move_s:
 
 
 def _scene_graph(
-    width: int, height: int, fps: int, duration_s: float, variant: int, *, tape: bool = False,
+    width: int, height: int, fps: int, duration_s: float, variant: int, *, tape: bool = False, defect: bool = True,
     hand: tuple[int, int] | None = None, point_at: float = 0.3, hold_s: float = 2.0,
 ) -> str:
     """filter_complex: wall canvas larger than the frame, features drawn on it, the hand overlaid
@@ -180,8 +183,9 @@ def _scene_graph(
         f"drawbox=x={int(cw * 0.06)}:y=0:w={int(cw * 0.05)}:h={ch - base_h}:color={CASING}:t=fill",
         f"drawbox=x={int(cw * 0.72)}:y={int(ch * 0.68)}:w={outlet_w}:h={outlet_h}:color={OUTLET}:t=fill",
         f"drawbox=x={int(cw * 0.72)}:y={int(ch * 0.68)}:w={outlet_w}:h={outlet_h}:color={OUTLET_EDGE}:t=3",
-        f"drawbox=x={sx}:y={sy}:w={size}:h={size}:color={SCUFF}:t=fill",
     ]
+    if defect:  # a fixed defect (re-walk) is simply not drawn
+        boxes.append(f"drawbox=x={sx}:y={sy}:w={size}:h={size}:color={SCUFF}:t=fill")
     if tape:
         tx, ty, tw, th = sc.tape
         boxes.append(f"drawbox=x={tx}:y={ty}:w={tw}:h={th}:color={TAPE}:t=fill")
@@ -226,6 +230,7 @@ def make_clip(
     tape: bool = False,
     point_at: float = 0.3,
     hold_s: float = 2.0,
+    defect: bool = True,
 ) -> Path:
     """Write one synthetic clip to `out_path` and return it.
 
@@ -235,6 +240,7 @@ def make_clip(
     audio: "auto" (say, else tone) | "say" | "tone" | "none".
     hand: draw the pointing hand (enters at `point_at` s, holds `hold_s` s, withdraws).
     tape: also draw the strip of blue painter's tape next to the scuff.
+    defect: draw the scuff (False = the defect was fixed, for a re-walk).
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -264,7 +270,7 @@ def make_clip(
             png = work / "hand.png"
             hand_xy = hand_png(png, _scene(width, height, variant))
             args += ["-loop", "1", "-framerate", str(fps), "-i", str(png)]
-        graph = _scene_graph(width, height, fps, duration_s, variant, tape=tape, hand=hand_xy,
+        graph = _scene_graph(width, height, fps, duration_s, variant, tape=tape, defect=defect, hand=hand_xy,
                              point_at=point_at, hold_s=hold_s)
         audio_index = 1 if hand else 0
         wav = None
@@ -331,6 +337,31 @@ def make_walk(
     ]
 
 
+# The synthetic first walk and re-walk used by the pipeline fixtures (fixtures/pipeline/synth_walk,
+# synth_rewalk): same three scenes. On the re-walk the kitchen scuff is gone (fixed), the hallway one
+# is still there but said to be fixed (a false claim), and the bedroom one is still there and said to be.
+WALK_PARTS = [
+    {"variant": 0, "hand": True, "text": "Kitchen. Upper cabinet left of the sink, knob missing."},
+    {"variant": 1, "hand": True, "text": "Hallway. Switch plate is crooked, needs to be straightened."},
+    {"variant": 2, "hand": False, "text": "Bedroom. Scuff marks on the wall by the door."},
+]
+REWALK_PARTS = [
+    {"variant": 0, "hand": True, "defect": False, "text": "Kitchen cabinet knob, fixed."},
+    {"variant": 1, "hand": True, "defect": True, "text": "Hallway switch plate, fixed."},
+    {"variant": 2, "hand": True, "defect": True, "text": "Bedroom scuff marks, still there."},
+]
+
+
+def make_fixture_walk(out_dir: Path, name: str = "walk1", *, rewalk: bool = False, duration_s: float = 7.0) -> list[Path]:
+    """The 3-part synthetic first walk (or, with rewalk=True, its re-walk) as <name>_a/b/c.mp4."""
+    parts = REWALK_PARTS if rewalk else WALK_PARTS
+    return [
+        make_clip(Path(out_dir) / f"{name}_{string.ascii_lowercase[i]}.mp4", duration_s, variant=p["variant"],
+                  hand=p["hand"], defect=p.get("defect", True), point_at=0.8, text=p["text"])
+        for i, p in enumerate(parts)
+    ]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate synthetic walk-like clips.")
     parser.add_argument("--out", required=True, type=Path, help="output directory")
@@ -349,6 +380,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tape", action="store_true", help="also draw a strip of blue painter's tape")
     parser.add_argument("--point-at", type=float, default=0.3, help="when the hand starts entering (s)")
     parser.add_argument("--hold", type=float, default=2.0, help="how long the hand holds still (s)")
+    parser.add_argument("--no-defect", action="store_true", help="leave the scuff out (a fixed defect)")
+    preset = parser.add_mutually_exclusive_group()
+    preset.add_argument("--fixture-walk", action="store_true",
+                        help="the 3-part fixture first walk (walk1_a/b/c; other scene options ignored)")
+    preset.add_argument("--rewalk", action="store_true",
+                        help="the 3-part fixture re-walk (walk2_a/b/c): knob fixed, a false 'fixed' claim for "
+                             "the switch plate, the bedroom scuff still there")
     audio = parser.add_mutually_exclusive_group()
     audio.add_argument("--no-audio", action="store_true")
     audio.add_argument("--tone", action="store_true", help="sine tone instead of `say`")
@@ -358,6 +396,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.size:
         w, _, h = args.size.lower().partition("x")
         size = (int(w), int(h))
+    if args.fixture_walk or args.rewalk:
+        paths = make_fixture_walk(args.out, "walk2" if args.rewalk else "walk1", rewalk=args.rewalk)
+        for p in paths:
+            print(p)
+        return 0
     paths = make_walk(
         args.out,
         args.duration,
@@ -374,6 +417,7 @@ def main(argv: list[str] | None = None) -> int:
         tape=args.tape,
         point_at=args.point_at,
         hold_s=args.hold,
+        defect=not args.no_defect,
     )
     for p in paths:
         info = media.probe(p)
