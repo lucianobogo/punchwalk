@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:43 ET
+Updated: 2026-11-03 18:45 ET
 Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 0.6 script (0228dab; real fixtures pending), 2.5 (94626ef; fix round 1 with Track A), 8.1 (7dc84f3 + fixes; verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.5, 0.7, 1.1–1.7, 2.1–2.4, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 9.1-image
 
@@ -14,7 +14,8 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
-| Track A: make record (walk1/2/3) + full runs (walk1, walk3) → 2.5 fixes → 7.1–7.4 → full run walk2 | builder (Track A, same agent) | 18:04 | punchwalk/pipeline/**, punchwalk/render/**, scripts/record.py, scripts/synth_clip.py, fixtures/pipeline/**, tests/test_pipeline_* | briefed by message |
+| 0.6 + 2.5 fixes + 7.1–7.4 + ingest fps verify (worktree .verify/wt-phase7 @ 0179d57) | verifier | 18:45 | read-only | commits untagged pending PASS |
+| Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
 | 5.y fixes + 6.1/7.4/8.2 fix round 1 (two 44 px targets + minors) → 5.8 live data + 8.4 polish | ui-builder (same agent) | 18:28 | web/** except types.ts | briefed by message |
 
 ## Needs human
@@ -37,14 +38,15 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
-- make test: Python 305 passed after CHANGE-1 (builder report, 17:28); web typecheck/test/build green at 5.1 (29 screens)
+- make test: 427 passed + 1 skipped (Pango) Python, 100 web (Track A report 18:45)
 - make eval: harness verified; real labels landed 18:42 → first real run on walk1/walk3 in progress; walk2 after Phase 7
 - make screenshots: 33/33 strict at 8.2 (ui-builder); verification of 6.1 UI/7.4 UI/8.2 running
-- Live API spend: $1.07 of $25 at 18:25 (probe + synthetic fixtures + real-walk recording in progress: data/record/walk1|walk2|walk3 exist)
+- Live API spend: $1.43 of $25 at 18:45 (real walks: record $0.44 + full runs $0.54; synthetic fixtures $0.45)
 - Deploy: image verified (1.08 GB; in-image tests 57 pass incl. PDF + HDR; smoke ok); fly.toml valid; NOT deployed — human runbook in Needs human / docs/DEPLOY.md
 - Live URL: none
 
 ## Key facts learned
+- Real footage results (Phase 1): walk1 14/16 turns got a pointing hold, hand conf 0.90; full run: 13 items (one duplicate from a missed continuation turn), 2 needs a look; re-walk: 6 signed off, 4 false-fix flags (#13 confirmed by eye), 2 re-sent, 1 not checked. Known issues for 3.4: hand still in the evidence frame on long holds; defect_box on the wrong object (#2 range hood); classify continuation duplicates.
 - Real footage (18:01): Ray-Ban Meta, HEVC, 120 fps, portrait, sizes vary per clip (1552×2064 … 1376×1840); walk1 = a–e (103 s), walk2 = a–e (77 s), walk3 = 15 s; 335 MB total (gitignored). Labels: template copies → Needs human.
 - **CHANGE REQUEST 17:01 ET (human): no blue tape.** The inspector points with an index finger (~2 s); SAM tracks the hand; fingertip = defect location. PLAN.md 0.6/1.2/1.3/1.5/1.6/2.x/3.2/4.3/5.5/7.x updated; contract renamed Mark→Point; evidence shows a red defect outline + a small blue dot; item numbers keep the tape-tab look.
 - SAM masks are box-local rasters (H×W stretches over [x1,x2+1)×[y1,y2+1)); helper `punchwalk/render/masks.py: mask_to_frame_svg()`; scale by frame/media size (verified on probe frame).
