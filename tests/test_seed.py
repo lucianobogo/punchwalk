@@ -199,3 +199,31 @@ def test_bad_snapshot_leaves_the_demo_project_alone(seed, api: TestClient, tmp_p
         seed.run(["--import", str(bad)])
     assert api.get("/api/projects/prj_demo/items").json() == before
     assert Path(get_settings().DATA_DIR, "walks", "wlk_demo_synth_walk", "display.mp4").is_file()
+
+
+def test_boot_recovery_closes_seed_jobs_and_requeues_the_rest(api: TestClient) -> None:
+    from punchwalk.core.enums import JobStatus, WalkStatus
+    from punchwalk.core.models import Job, Project, Walk
+    from punchwalk.db import session_factory
+
+    with session_factory() as s:  # a SIGKILLed seed (two ways to recognise it) next to a normal upload
+        s.add(Project(id="prj_x", name="X"))
+        s.flush()
+        for wid in ("wlk_demo_x", "wlk_marked", "wlk_upload"):
+            s.add(Walk(id=wid, project_id="prj_x", status=WalkStatus.processing))
+        s.flush()
+        s.add(Job(id="job_demo", walk_id="wlk_demo_x", status=JobStatus.running, attempts=1))
+        s.add(Job(id="job_marked", walk_id="wlk_marked", status=JobStatus.running, attempts=1,
+                  progress={"seed": True}))  # fmt: skip
+        s.add(Job(id="job_upload", walk_id="wlk_upload", status=JobStatus.running, attempts=1))
+        s.commit()
+
+    assert jobs.recover_interrupted_jobs() == 1  # only the upload goes back to the queue
+    with session_factory() as s:
+        for job_id, walk_id in (("job_demo", "wlk_demo_x"), ("job_marked", "wlk_marked")):
+            job, walk = s.get(Job, job_id), s.get(Walk, walk_id)
+            assert job.status == JobStatus.failed and job.error == "Seed interrupted; run scripts/seed.py again."
+            assert job.finished_at is not None and walk.status == WalkStatus.failed
+        assert s.get(Job, "job_upload").status == JobStatus.queued
+        assert s.get(Walk, "wlk_upload").status == WalkStatus.processing
+    assert jobs.claim_next_job() == "job_upload" and jobs.claim_next_job() is None

@@ -88,16 +88,39 @@ def active_job(session: Session, walk_id: str) -> Job | None:
     ).first()
 
 
+SEED_JOB_INTERRUPTED = "Seed interrupted; run scripts/seed.py again."
+
+
+def is_seed_job(job: Job) -> bool:
+    """A job `scripts/seed.py` created: a demo walk (`wlk_demo_*`) or one marked `progress.seed`."""
+    return (job.walk_id or "").startswith("wlk_demo_") or bool((job.progress or {}).get("seed"))
+
+
 def recover_interrupted_jobs() -> int:
-    """Jobs left `running` by a restart go back to the queue (the runner resumes them)."""
+    """Jobs left `running` by a restart go back to the queue (the runner resumes them).
+
+    Seed jobs are closed as failed instead: the seed replays from a readonly cache, and a replay by
+    this worker would use the app's readwrite cache and make live calls. Returns how many were re-queued.
+    """
+    requeued = 0
     with session_factory() as s:
         jobs = s.exec(select(Job).where(Job.status == JobStatus.running)).all()
         for job in jobs:
-            job.status = JobStatus.queued
-            job.progress = {**(job.progress or {}), "message": "Resuming after a restart"}
+            if is_seed_job(job):
+                job.status, job.error, job.finished_at = JobStatus.failed, SEED_JOB_INTERRUPTED, utcnow()
+                job.progress = {**(job.progress or {}), "seed": True, "message": None}
+                walk = s.get(Walk, job.walk_id) if job.walk_id else None
+                if walk is not None and walk.status != WalkStatus.ready:
+                    walk.status, walk.error = WalkStatus.failed, SEED_JOB_INTERRUPTED
+                    s.add(walk)
+                log.warning("job %s (walk %s): an interrupted seed run, closed as failed", job.id, job.walk_id)
+            else:
+                job.status = JobStatus.queued
+                job.progress = {**(job.progress or {}), "message": "Resuming after a restart"}
+                requeued += 1
             s.add(job)
         s.commit()
-        return len(jobs)
+        return requeued
 
 
 def claim_next_job() -> str | None:
