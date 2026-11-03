@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 16:37 ET
+Updated: 2026-11-03 16:48 ET
 Current phase: 0 (Foundation, probes, contracts) — target Tue 5:30 PM
-Last checkpoint: ckpt-0.5 (ingest)
+Last checkpoint: ckpt-0.4 (0.1–0.5 all committed; 0.7 verifying)
 
 ## Next actions
 1. Review reports from 0.1–0.4 (builder A), 0.7 (builder B), 0.5 (builder C); verify each; commit checkpoints.
@@ -13,8 +13,8 @@ Last checkpoint: ckpt-0.5 (ingest)
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| 0.1+0.2+0.3+0.4 scaffold, clients, probe, mask check | verifier | 16:12 (builder done ~17:00) | pyproject.toml, uv.lock, Makefile, punchwalk/__init__.py, punchwalk/config.py, punchwalk/clients/**, punchwalk/render/masks.py, scripts/probe.py, fixtures/probe/**, fixtures/clients/**, tests/conftest.py, tests/test_clients_*.py, tests/test_masks.py, .env.example, .gitignore | builder: 9/9 probe calls ok, $0.046 spent; verifying |
-| 0.7 contracts | builder B | 16:12 | punchwalk/core/**, punchwalk/api/schemas.py, punchwalk/api/__init__.py, web/src/api/types.ts, fixtures/mock_api/**, scripts/gen_mock_api.py, tests/test_contracts.py | synthetic placeholder media until 3.3 |
+| 5.1 design system & shell | ui-builder | 16:42 | web/** except web/src/api/types.ts (owned by 0.7) | started early; data layer wired once 0.7 lands |
+| 0.7 contracts | verifier | 16:12 (builder done 16:44) | punchwalk/core/**, punchwalk/api/schemas.py, punchwalk/api/__init__.py, web/src/api/types.ts, fixtures/mock_api/**, scripts/gen_mock_api.py, tests/test_contracts.py | builder done (130 tests); verifying |
 
 ## Needs human
 - none blocking. Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
@@ -25,7 +25,7 @@ Last checkpoint: ckpt-0.5 (ingest)
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
-- make test: not run yet
+- make test: 221 passed (verifier, Phase 0; offline, sockets blocked)
 - make eval: not run yet (targets in PLAN.md 3.4)
 - make screenshots: not run yet
 - Live API spend: $0.05 of $25 (probe, 11 ledger lines)

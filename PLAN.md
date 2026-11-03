@@ -42,23 +42,23 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 0: Foundation, probes, contracts
 
-- [ ] **0.1 Scaffold.**
+- [x] **0.1 Scaffold.**
   - Layout per CLAUDE.md; Makefile with every target listed there; uv + pnpm; ruff, pytest.
   - `.env.example` already exists; keep it current.
   - `.gitignore` already exists; extend it if needed.
-- [ ] **0.2 Clients.**
+- [x] **0.2 Clients.**
   - `cache.py`, `cost.py` (ledger + $25 cap), `meta_files.py`, `asr.py`.
   - `sam.py`: concept→video, concept→image, box→image, box→video; streamed; returns raw text + parsed records.
   - `llm.py`: Baseten primary, Meta fallback. Helper `structured(schema_model, messages, images)` with Pydantic validation and one repair retry.
   - Unit tests with recorded responses.
-- [ ] **0.3 `make probe`.** One live call each:
+- [x] **0.3 `make probe`.** One live call each:
   - Files upload (3-second clip)
   - SAM concept `blue painter's tape` on one frame
   - ASR on 5 s of audio
   - Spark Open with one image + `json_schema`
 
   Print latency and cost; save outputs to `fixtures/probe/`. Also try 2–3 phrasings for the tape concept (e.g. `blue tape`, `strip of blue painter's tape`) on the same frame and keep the best one in config. **AC:** all four calls succeed, or the exact error is logged under Needs human / Blocked and that client is mocked.
-- [ ] **0.4 Mask coordinate check.** Render a decoded SAM mask + box over its frame, confirm the mapping, write helper `mask_to_frame_svg()`, and record the finding in DECISIONS.md. **AC:** a PNG in `fixtures/probe/` where the outline sits on the tape (open it and look).
+- [x] **0.4 Mask coordinate check.** Render a decoded SAM mask + box over its frame, confirm the mapping, write helper `mask_to_frame_svg()`, and record the finding in DECISIONS.md. **AC:** a PNG in `fixtures/probe/` where the outline sits on the tape (open it and look).
 - [x] **0.5 Ingest.** A walk is 1..N clips in order (`walkN.*`, or parts `walkN_a.*`, `walkN_b.*`, …). Normalize each clip (apply rotation metadata; portrait stays portrait), then concatenate in order. Produce:
   - `display.mp4`: H.264, ≤ 1080 px on the short side, yuv420p, AAC, `+faststart`
   - `sam.mp4`: H.264, 10 fps, 720 px on the short side, no audio

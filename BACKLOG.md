@@ -7,3 +7,4 @@ Ideas and cut items. Nothing here gets built before every PLAN.md box is done.
 - Spec citations from the project spec book (Muse Spark 1.3, 1M context)
 - Offline mode for sites without signal
 - 24/25 fps clips lose up to 0.5 s at the end of each clip (frame_step trimming). Not an issue for iPhone/glasses (30/60 fps). Optional fix: resample to 30 fps instead of trimming.
+- LLM cost-cap estimate counts base64 image chars as tokens (~100× overestimate per image; safe but blocks early near the $25 cap). Fix: fixed ~1500-token budget per image part (punchwalk/clients/llm.py:349).

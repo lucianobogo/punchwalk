@@ -14,3 +14,8 @@ One line per event, newest at the bottom:
 2026-11-03 16:35 ET | 0.5 | builder C | fix round 1 done: portrait-if-any canvas, exact SAM-frame boundaries, INGEST_VERSION=2; 37 tests | report | re-verify
 2026-11-03 16:36 ET | 0.1-0.4 | builder A | done: scaffold, 7 client modules, probe 9/9 live calls ok ($0.046), mask check PNG, 53 tests; -1026 slug 404s (catalog slug works, auto-fallback) | fixtures/probe/, report | verifier
 2026-11-03 16:37 ET | 0.5 | verifier | PASS after fix round 1 (37 ingest tests; portrait canvas; 90 total tests) | .verify/mix/lp2_all.jpg | commit ckpt-0.5
+2026-11-03 16:41 ET | 0.1-0.4 | verifier | FAIL: strict_schema drops 'title' fields (llm.py:80); probe replay overwrote summary.json; .env.example missing 6 vars; all else pass (90 tests, mask IoU 0.92) | report | builder A fix round 1
+2026-11-03 16:42 ET | 5.1 | ui-builder | briefed early (design system, shell, screenshot harness); types.ts/mocks wired when 0.7 lands | STATE.md in-flight | verify on report
+2026-11-03 16:44 ET | 0.7 | builder B | done: 8 SQLModel tables, 55 schemas w/ routes, types.ts mirror, 118 mock JSON + 74 media (4.6 MB), 130 tests; make test 221 pass | report | verifier
+2026-11-03 16:45 ET | 0.1-0.4 | builder A | fix round 1 done: strict_schema keeps title fields, probe replay no longer touches fixtures, .env.example complete, cap estimate; 221 tests | report | re-verify
+2026-11-03 16:48 ET | 0.1-0.4 | verifier | PASS after fix round 1 (221 tests; probe replay $0; mask IoU 0.92) | report | commit ckpt-0.1..0.4
