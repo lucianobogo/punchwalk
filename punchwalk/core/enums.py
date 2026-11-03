@@ -122,9 +122,9 @@ class Stage(StrEnum):
 
     ingest = "ingest"
     transcribe = "transcribe"
+    classify_turns = "classify_turns"
     track_hands = "track_hands"
     find_points = "find_points"
-    classify_turns = "classify_turns"
     fuse = "fuse"
     pick_evidence = "pick_evidence"
     write_items = "write_items"
