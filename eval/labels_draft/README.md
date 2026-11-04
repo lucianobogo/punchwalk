@@ -3,7 +3,7 @@
 These files were written by `eval/draft_labels.py` from the pipeline's own output. **They are not ground
 truth.** Scoring the pipeline against them would only measure the pipeline against itself.
 
-To turn a draft into labels (format in FOOTAGE.md "Labels"):
+To turn a draft into labels (columns in eval/README.md, "Labels"):
 
 1. Watch the walk and fix every row: the room, a plain description of the defect, the trade, `time_mmss`
    (when you start describing it, within its clip part), `pointed` and `clip`.

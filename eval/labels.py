@@ -1,4 +1,4 @@
-"""Human labels (FOOTAGE.md "Labels"): CSV rows -> `Label`s grouped per walk.
+"""Human labels (columns in eval/README.md, "Labels"): CSV rows -> `Label`s grouped per walk.
 
 Format (eval/labels_template.csv):
 

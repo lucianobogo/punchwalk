@@ -1,4 +1,4 @@
-"""Eval harness end to end (PLAN 3.1-3.3) on the recorded synthetic walk, plus scripts/build_mock_api.py.
+"""Eval harness end to end on the recorded synthetic walk, plus scripts/build_mock_api.py.
 
 The synthetic walk (fixtures/pipeline/synth_walk, see tests/test_pipeline_integration.py) replays offline;
 its labels are fixtures/eval/labels_synth/synth_walk.csv: knob (Kitchen, part a, pointed), switch plate
@@ -96,7 +96,7 @@ def test_template_labels_are_refused(tmp_path, capsys):
         shutil.copyfile(run_eval.REPO_ROOT / "eval" / "labels_template.csv", labels / f"{name}.csv")
     assert run_eval.main(["--labels", str(labels), "--report", str(tmp_path / "r.md")]) == 0
     out = capsys.readouterr().out
-    assert "walk1.csv is still the template — fill it in per FOOTAGE.md" in out
+    assert "walk1.csv is still the template — fill it in (see eval/README.md for the columns)" in out
     assert "walk3.csv is still the template" in out and not (tmp_path / "r.md").exists()
     assert "nothing to score" in out
     assert run_eval.main(["--labels", str(labels), "--strict", "--report", str(tmp_path / "r.md")]) == 1
@@ -109,7 +109,7 @@ def test_one_template_file_doesnt_block_the_others(data_dir, tmp_path, capsys):
     report = tmp_path / "r.md"
     assert run_eval.main(["--labels", str(labels), "--data-dir", str(data_dir), "--report", str(report)]) == 0
     out = capsys.readouterr().out
-    assert "walk9.csv is still the template — fill it in per FOOTAGE.md (walk9 not scored)" in out
+    assert "walk9.csv is still the template — fill it in (see eval/README.md for the columns) (walk9 not scored)" in out
     assert "synth_walk  Recall" in out and "walk9" not in report.read_text()
     # --walks is applied before discovery: the unfilled file isn't even mentioned
     assert run_eval.main(["--labels", str(labels), "--walks", "synth_walk", "--data-dir", str(data_dir),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""`make eval` (PLAN 3.1-3.3): run the pipeline from the cache for every labeled walk and score it.
+"""`make eval`: run the pipeline from the cache for every labeled walk and score it.
 
     uv run python eval/run_eval.py                       # every walk in eval/labels/*.csv, readonly cache
     uv run python eval/run_eval.py --walks walk1 walk2   # a subset (a re-walk pulls in its first walk)
@@ -13,7 +13,7 @@ For each labeled walk, in natural order (walk1, walk2, walk3, ...), in one proje
    PUNCHWALK_CACHE=readonly unless --live. Walk ids are `wlk_eval_<walk>`; a re-walk (labels with
    fixed_in_rewalk / claimed_fixed_in_rewalk) runs with rewalk_of = the first walk before it.
 3. Match items to labels (eval/matching.py), compute metrics (eval/metrics.py), print the summary
-   table against PLAN 3.4 and write eval/report.md + eval/report.json (eval/report.py).
+   table against the targets (eval/metrics.py) and write eval/report.md + eval/report.json (eval/report.py).
 
 walk3 (--holdout) is reported separately and never used for tuning. Exit code is 0 unless --strict and
 a non-holdout target fails or a walk's pipeline errors. A failing walk never stops the others.
@@ -326,9 +326,9 @@ def load_labels(labels_dir: Path, only: list[str] | None) -> dict[str, list[Labe
             raise LabelError(f"no labels file for {', '.join(missing)} in {rel_repo(labels_dir)}/")
     for path, why in problems:
         if why == "template":
-            print(f"{rel_repo(path)} is still the template — fill it in per FOOTAGE.md ({path.stem} not scored)")
+            print(f"{rel_repo(path)} is still the template — fill it in (see eval/README.md for the columns) ({path.stem} not scored)")
         else:
-            print(f"{rel_repo(path)}: {why} — fix it per FOOTAGE.md ({path.stem} not scored)")
+            print(f"{rel_repo(path)}: {why} — fix it (see eval/README.md for the columns) ({path.stem} not scored)")
     return by_walk
 
 
@@ -428,7 +428,7 @@ def main(argv: list[str] | None = None) -> int:
     if not by_walk:
         if not any(Path(args.labels).glob("*.csv")):
             print(f"no labels in {rel_repo(args.labels)}/ (expected walk1.csv, walk2.csv, walk3.csv; "
-                  "format in eval/labels_template.csv and FOOTAGE.md)")
+                  "format in eval/labels_template.csv and eval/README.md)")
         else:
             print("nothing to score: every labels file asked for is still the template or needs fixing")
         return 1 if args.strict else 0

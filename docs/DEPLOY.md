@@ -11,7 +11,7 @@ the repo root. Nothing here prints a secret.
   - ffmpeg 7.1 (with zscale, for HDR)
   - Pango, HarfBuzz and Cairo, plus DejaVu fonts for WeasyPrint
   - `uv sync --frozen --no-dev` into `/app/.venv`
-  - the code, the static build, `scripts/`, `fixtures/cache`, `fixtures/pipeline`, `eval/`, and `demo/` (if it exists), so `scripts/seed.py` (PLAN 8.1) can run inside the container
+  - the code, the static build, `scripts/`, `fixtures/cache`, `fixtures/pipeline`, `eval/`, and `demo/` (if it exists), so `scripts/seed.py` (the seed step) can run inside the container
 - **Stage `test`**: `docker build --target test .` runs `tests/test_ingest.py`, `tests/test_report.py` and `tests/test_api_core.py` inside the image. This is the real check that ffmpeg and WeasyPrint work in production.
 - **Stage `runtime`** (the default, about 1.1 GB):
   - `scripts/entrypoint.sh` gives `/data` to the `punch` user (uid 1000), then drops root
@@ -87,7 +87,7 @@ curl -s -o /tmp/punch-report.pdf -w "%{http_code} %{content_type}\n" $APP/api/pr
 Then open `https://punchwalk.fly.dev` on an iPhone (or Playwright's `iPhone 15 Pro` profile) and check the
 punch list loads.
 
-## Seed the demo project (PLAN 8.1)
+## Seed the demo project (`make seed`)
 
 `scripts/seed.py` creates project `prj_demo` ("Unit 2B final punch", with a fictional trades directory),
 then replays the recorded walks through the real pipeline from the cache, at $0. It forces

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""`make seed` (PLAN 8.1): the demo project "Unit 2B final punch", loaded from recorded walks at $0.
+"""`make seed`: the demo project "Unit 2B final punch", loaded from recorded walks at $0.
 
     uv run python scripts/seed.py                         # walk1 (first walk), walk2 (re-walk), walk3 if present
     uv run python scripts/seed.py --walks synth_walk      # the synthetic recording in fixtures/pipeline

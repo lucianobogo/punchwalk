@@ -1,4 +1,4 @@
-"""Rendering: the terminal summary table, eval/report.md and eval/report.json (PLAN 3.3).
+"""Rendering: the terminal summary table, eval/report.md and eval/report.json.
 
 Everything here is a pure function of the `WalkEval` results, so the same DATA_DIR gives the same
 bytes (no "now" timestamps, ids sorted, floats rounded).
@@ -248,7 +248,8 @@ def render_markdown(run: EvalRun) -> str:
         "",
         f"Matching: an item matches a label when its quote starts within {MAX_DT_S:.0f} s of the label's time "
         f"and the rooms agree or the words overlap (token Jaccard >= {MIN_JACCARD}); one-to-one by Hungarian "
-        "assignment on time closeness + word overlap. Targets are PLAN 3.4.",
+        "assignment on time closeness + word overlap. Targets: recall ≥ 0.9, precision ≥ 0.9, trade ≥ 0.85, "
+        "room ≥ 0.9, closure ≥ 0.9, false-claim catch = 100%.",
         *sample_note(run.walks),
         "",
         "## Summary",

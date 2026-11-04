@@ -1,4 +1,4 @@
-"""`make seed` (PLAN 8.1) on the synthetic recording: offline, readonly cache, tmp DATA_DIR."""
+"""`make seed` on the synthetic recording: offline, readonly cache, tmp DATA_DIR."""
 
 from __future__ import annotations
 
