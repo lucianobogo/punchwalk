@@ -65,8 +65,8 @@ Clip parts: a at 00:00.0, b at 00:27.8, c at 00:39.7, d at 01:00.5, e at 01:08.0
 | 6 | 00:34.8 | yes | yes | #006 | closed | signed_off | yes | yes | - |
 | 7 | 00:41.7 | yes | yes | #007 | closed | signed_off | yes | yes | - |
 | 8 | 00:46.7 | yes | yes | #008 | closed | signed_off | yes | yes | - |
-| 9 | 00:53.7 | no | no | #009 | dispatched | still_open | no | yes | - |
-| 10 | 01:03.5 | no | no | #010 | dispatched | still_open | no | yes | - |
+| 9 | 00:53.7 | no | no | #009 | open | still_open | no | yes | - |
+| 10 | 01:03.5 | no | no | #010 | open | still_open | no | yes | - |
 | 11 | 01:10.0 | yes | yes | #011 | closed | signed_off | yes | yes | - |
 | 12 | 01:15.0 | yes | no | #012 | needs_review | needs_review | no | yes | yes |
 
@@ -83,12 +83,12 @@ Clip parts: a at 00:00.0, b at 00:27.8, c at 00:39.7, d at 01:00.5, e at 01:08.0
 
 | Walk | Pipeline time (this run) | Model calls | Cached | Failed | Fallback | Live cost (this run) | Est. live cost | Recorded latency |
 |---|---|---|---|---|---|---|---|---|
-| walk1 | 1 min 36 s | 54 | 54 | 0 | 0 | $0.0000 | $0.5168 | 0.0 s |
-| walk2 | 1 min 19 s | 43 | 43 | 0 | 0 | $0.0000 | $0.3914 | 0.0 s |
-| walk3 | 27.8 s | 11 | 11 | 0 | 0 | $0.0000 | $0.0861 | 0.0 s |
+| walk1 | 26.8 s | 54 | 54 | 0 | 0 | $0.0000 | $0.5168 | 0.0 s |
+| walk2 | 23.8 s | 43 | 43 | 0 | 0 | $0.0000 | $0.3914 | 0.0 s |
+| walk3 | 8.0 s | 11 | 11 | 0 | 0 | $0.0000 | $0.0861 | 0.0 s |
 
 Est. live cost prices SAM 3.1 frames/images and Muse Voice Transcribe seconds at list price; cached Muse Spark Open calls carry no token counts, so they are counted, not priced.
 
-- **walk1** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 1 min 8 s, find_points 1.0 s, fuse 0.0 s, pick_evidence 12.7 s, write_items 0.9 s, ground_defects 13.4 s, verify 0.3 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x25, Muse Voice Transcribe x1, SAM 3.1 x23, meta-files x5.
-- **walk2** stages: ingest 0.3 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 1 min 3 s, find_points 1.4 s, fuse 0.0 s, pick_evidence 0.0 s, resolve_closures 14.3 s, persist 0.2 s. Calls: Muse Spark Open on Baseten x32, Muse Voice Transcribe x1, SAM 3.1 x5, meta-files x5.
-- **walk3** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 20.2 s, find_points 0.4 s, fuse 0.0 s, pick_evidence 3.0 s, write_items 0.2 s, ground_defects 3.8 s, verify 0.0 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x5, Muse Voice Transcribe x1, SAM 3.1 x4, meta-files x1.
+- **walk1** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 17.5 s, find_points 1.0 s, fuse 0.0 s, pick_evidence 4.2 s, write_items 0.5 s, ground_defects 3.4 s, verify 0.2 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x25, Muse Voice Transcribe x1, SAM 3.1 x23, meta-files x5.
+- **walk2** stages: ingest 0.1 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 15.5 s, find_points 1.1 s, fuse 0.0 s, pick_evidence 0.0 s, resolve_closures 7.1 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x32, Muse Voice Transcribe x1, SAM 3.1 x5, meta-files x5.
+- **walk3** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 5.1 s, find_points 0.3 s, fuse 0.0 s, pick_evidence 1.2 s, write_items 0.1 s, ground_defects 1.1 s, verify 0.0 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x5, Muse Voice Transcribe x1, SAM 3.1 x4, meta-files x1.

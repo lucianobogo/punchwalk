@@ -12,7 +12,7 @@ from PIL import Image
 
 from punchwalk.config import reset_settings
 from punchwalk.core.enums import REVIEW_NOT_IN_FRAME, ItemStatus, Stage, WalkKind
-from punchwalk.core.models import Evidence, Item
+from punchwalk.core.models import Box, Evidence, Item
 from punchwalk.pipeline import frame_pick as fp
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline import verify
@@ -331,7 +331,7 @@ def test_closures_look_at_the_pinned_photo_and_outline(tmp_path, monkeypatch):
                    defect_box={"x1": 10, "y1": 10, "x2": 30, "y2": 30}, grounding="sam_box")
     fp.pin_before(idir, old.model_dump(mode="json"), root)
     new = old.model_copy(update={"t": 2.0, "defect_svg": "M50 40 L70 40 L70 55 Z",
-                                 "defect_box": {"x1": 50, "y1": 40, "x2": 70, "y2": 55}})
+                                 "defect_box": Box(x1=50, y1=40, x2=70, y2=55)})
     item = Item(id="itm", project_id="p", number=1, origin_walk_id="w1", title="t",
                 evidence=new.model_dump(mode="json"))
     before, shown = closures.closure_before(root, item)

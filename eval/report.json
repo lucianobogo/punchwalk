@@ -244,7 +244,7 @@
   ],
   "app_summary": {
     "source": "eval/report.md",
-    "updated_at": "2026-11-04T05:28:56.072582Z",
+    "updated_at": "2026-11-04T08:51:36.096731Z",
     "metrics": [
       {
         "key": "defects_found",

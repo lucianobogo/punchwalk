@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from punchwalk.api import schemas as S  # noqa: E402
-from punchwalk.api.views import ground_detail  # noqa: E402
+from punchwalk.api.views import STEP_MODEL_LABEL, ground_detail  # noqa: E402
 from punchwalk.core.enums import (  # noqa: E402
     CHANNEL_LABEL,
     MODEL_ASR,
@@ -3145,7 +3145,7 @@ class Gen:
                 S.ProcessingStepOut(
                     stage=st,
                     title=STAGE_TITLE[st],
-                    model_label=STAGE_MODEL.get(st) if st != Stage.fuse else None,
+                    model_label=STEP_MODEL_LABEL.get(st, STAGE_MODEL.get(st)) if st != Stage.fuse else None,
                     provider=providers[0] if providers else None,
                     detail=self.summary_detail(walk, st, row),
                     duration_ms=row.duration_ms or round((e - s).total_seconds() * 1000),

@@ -29,6 +29,9 @@ uv run python eval/run_eval.py --labels fixtures/eval/labels_synth --data-dir .v
   Order of precedence: `--rooms/--keywords`, `<labels>/project.json`, `eval/project.json`, then the label rooms in walk order.
 - **Media**: `DATA_DIR/record/<walk>/` (from `make record`), else `fixtures/pipeline/<walk>/media/`;
   `fixtures/pipeline/<walk>/cache/` is added to the cache read path.
+- **Never sends**: both `make eval` and `make eval-live` set `AUTO_SEND=false`, `SLACK_WEBHOOK_URL=`, `RESEND_API_KEY=` and
+  `EMAIL_FROM=` for the run (`run_eval.NO_SEND_ENV`, which beats `.env`), so no auto-send after walk1 and no re-send
+  after the walk2 re-walk: still-open items stay `open` in the report, never `dispatched`.
 - **Pipeline**: `runner.run_walk` on a temp DATA_DIR (or `--data-dir`, resumed: done walks don't re-run), one
   project `prj_eval`, walks `wlk_eval_<walk>` with a `job_eval_<walk>` Job row, in natural order like `make record --full`.
 - **Matching** (`matching.py`): t_pred = `Item.quote_start_s` (else `video_start_s + 2`); a candidate needs |dt| <= 6 s and

@@ -84,6 +84,26 @@ def rel_repo(path: Path) -> str:
 # --------------------------------------------------------------------------- environment
 
 
+# Every setting that lets a walk send something (punchwalk/config.py). Process env beats `.env`, and an empty
+# string is a real value for pydantic-settings, so these override a webhook/key that `.env` sets.
+NO_SEND_ENV: dict[str, str] = {
+    "AUTO_SEND": "false",  # no auto-send after a first walk, no re-send after a re-walk (runner._persist)
+    "SLACK_WEBHOOK_URL": "",  # the team's Slack webhook
+    "RESEND_API_KEY": "",  # email via Resend
+    "EMAIL_FROM": "",
+}
+
+
+def build_eval_env(data_dir: Path, *, live: bool, orig_cache_dir: Path) -> dict[str, str]:
+    """The environment variables a run sets: DATA_DIR, the cache mode/dir, and every send channel off."""
+    return {
+        "DATA_DIR": str(data_dir),
+        "PUNCHWALK_CACHE": "readwrite" if live else "readonly",
+        "PUNCHWALK_CACHE_DIR": str(orig_cache_dir if live else data_dir / "cache"),
+        **NO_SEND_ENV,
+    }
+
+
 @contextmanager
 def eval_environment(data_dir: Path, *, live: bool, orig_cache_dir: Path, orig_ledger: Path) -> Iterator[None]:
     """Point DATA_DIR (database, walk folders) at `data_dir` for the run; restore the env afterwards.
@@ -92,12 +112,10 @@ def eval_environment(data_dir: Path, *, live: bool, orig_cache_dir: Path, orig_l
     per-walk fixture caches) + FIXTURE_CACHE_DIR (fixtures/cache). Nothing is written back.
     --live: the cache stays the normal one (new answers persist) and the cost ledger is the normal one
     (linked in), so the $25 cap still counts every live call.
+    Both modes also switch every send channel off (NO_SEND_ENV): eval measures the pipeline and never posts
+    to Slack or sends email, even when `.env` carries a real webhook or Resend key.
     """
-    env = {
-        "DATA_DIR": str(data_dir),
-        "PUNCHWALK_CACHE": "readwrite" if live else "readonly",
-        "PUNCHWALK_CACHE_DIR": str(orig_cache_dir if live else data_dir / "cache"),
-    }
+    env = build_eval_env(data_dir, live=live, orig_cache_dir=orig_cache_dir)
     saved = {k: os.environ.get(k) for k in env}
     data_dir.mkdir(parents=True, exist_ok=True)
     if not live and orig_cache_dir.is_dir() and orig_cache_dir.resolve() != (data_dir / "cache").resolve():
