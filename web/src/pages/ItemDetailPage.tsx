@@ -27,7 +27,7 @@ import { EvidencePhoto } from '../features/item/EvidencePhoto';
 import { checkerName, groundingLabel, historyText, moreActions, primaryAction, recipient, showsCheck } from '../features/item/actions';
 import { useItemActions } from '../features/item/useItemActions';
 import { PlayMomentSheet } from '../features/play/PlayMomentSheet';
-import { formatClock, formatDateTime, formatShortDate } from '../lib/format';
+import { formatClock, formatDateTime, formatShortDate, walkDate } from '../lib/format';
 import { SEVERITY_LABEL, TRADE_LABEL, WALK_KIND_LABEL, capitalize, statusDetail } from '../lib/labels';
 import { cx } from '../lib/cx';
 import { ErrorState } from './common';
@@ -84,6 +84,12 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
   const more = moreActions(item, company);
   const closure = item.closure;
   const showSlider = item.status === 'closed' && closure?.before_image_url && closure.after_image_url;
+  // Before/after captions are the days the photos were taken (the walks' dates, as on the Re-walk page),
+  // not when the item row was written. Fall back to the item's own dates only if a walk isn't listed.
+  const rewalk = closure ? walks.data?.walks.find((w) => w.id === closure.rewalk_id) : undefined;
+  const beforeLabel = formatShortDate(walk ? walkDate(walk) : item.created_at);
+  const afterAt = rewalk ? walkDate(rewalk) : closure?.decided_at;
+  const afterLabel = afterAt ? `${formatShortDate(afterAt)}, re-walk` : 'Re-walk';
   const quoteAt = item.quote_start_s ?? item.video_start_s;
   const v = item.verification;
 
@@ -102,7 +108,7 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
     { label: 'Severity', value: SEVERITY_LABEL[item.severity] },
     { label: 'Status', value: statusDetail(item) },
     ...(walk
-      ? [{ label: 'Walk', value: `${WALK_KIND_LABEL[walk.kind]}, ${formatShortDate(walk.recorded_at ?? walk.created_at)}` }]
+      ? [{ label: 'Walk', value: `${WALK_KIND_LABEL[walk.kind]}, ${formatShortDate(walkDate(walk))}` }]
       : []),
     ...(item.evidence ? [{ label: 'Found by', value: groundingLabel(item.evidence.grounding) }] : []),
   ];
@@ -114,8 +120,8 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
           <BeforeAfter
             before={closure!.before_image_url!}
             after={closure!.after_image_url!}
-            beforeLabel={formatShortDate(item.created_at)}
-            afterLabel={closure!.decided_at ? `${formatShortDate(closure!.decided_at)}, re-walk` : 'Re-walk'}
+            beforeLabel={beforeLabel}
+            afterLabel={afterLabel}
             number={item.number}
             badge={badge}
             title={item.title}

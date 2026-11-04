@@ -42,6 +42,12 @@ export function formatShortDate(iso: string): string {
   });
 }
 
+/** The day a walk happened: when it was recorded, else when it was uploaded. Same rule as the server's
+ *  re-walk summary (before_at / after_at), so item detail and the Re-walk page agree. */
+export function walkDate(walk: { recorded_at: string | null; created_at: string }): string {
+  return walk.recorded_at ?? walk.created_at;
+}
+
 /** "8:05 AM" */
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', {
