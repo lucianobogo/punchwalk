@@ -100,6 +100,8 @@ TRADES: list[dict[str, Any]] = [
     {"trade": "windows_glazing", "company": "Clearview Glass", "contact": "Ana Kowalski", "phone": "(555) 010-2207"},
     {"trade": "plumbing", "company": "Riverside Plumbing", "contact": "Joe Lindqvist",
      "email": "joe.lindqvist@example.com", "phone": "(555) 010-2208"},
+    {"trade": "appliances", "company": "Northline Appliance Service", "contact": "Priya Nair",
+     "email": "priya.nair@example.com", "phone": "(555) 010-2209"},
 ]  # fmt: skip
 
 

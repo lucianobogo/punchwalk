@@ -891,6 +891,26 @@ def _ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
     return V2Result(grounding, svg, box, loc.concept, row)
 
 
+def crop_focus(item: ItemInput, row: dict[str, Any] | None) -> tuple[BoxF | None, str]:
+    """Where to centre the card crop of an item whose photo came from the frame picker and that ended up with
+    no outline (PLAN 10.4/10.5 follow-up): the region Muse Spark Open locates in that photo. When the item was
+    pointed, its dot was carried across a camera move and may be off, so the photo is located again without
+    the ring (one call, cached); otherwise the stored locate box is used. (box or None, where it came from)."""
+    from punchwalk.clients.cost import CostCapReached
+
+    loc = (row or {}).get("locate") or {}
+    if item.pointer is None:
+        box = loc.get("box") if loc.get("visible") else None
+        return (tuple(box) if box else None), "locate"
+    try:
+        fresh = locate(ItemInput(item.item_id, item.raw, item.width, item.height, item.title, item.description,
+                                 item.quote, None, item.number))
+    except (ApiError, llm.StructuredOutputError, CostCapReached) as err:
+        log.warning("ground_v2: crop focus for %s: %s", item.item_id, err)
+        return None, "locate failed"
+    return (fresh.box if fresh.visible else None), "locate without the ring"
+
+
 def save_walk_log(walk_dir: Path, rows: dict[str, Any], merge: bool = False) -> Path:
     """Write stages/ground_v2.json (merge=True: add/replace these rows, keep the others)."""
     from punchwalk.pipeline.context import STAGES_DIR, write_json

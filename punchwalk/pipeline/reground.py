@@ -16,6 +16,13 @@ For every walk of the project (first walks before re-walks), with GROUNDING_V2=1
 Writes stages/ground_v2.json and stages/frame_pick.json per walk, and every model call to model_calls.
 Text, status, history and closure decisions are never changed on protected items (REGROUND_ALL rules).
 
+--refresh-display: no new model calls (the ring-free locate of crop_focus replays from the cache). Re-applies
+the card-crop rule to items whose photo came from the picker and that have no outline (centre on what Muse
+Spark Open located), redraws those items' re-walk images, and rewrites each walk's ground_defects checklist
+line + counts from the stored evidence, exactly as a fresh v2 run writes them. Nothing else changes.
+
+The ground_defects stage state (counts + message) is written after every re-ground, as the runner would.
+
 --ignore-pointing (evaluation only): GROUNDING_MODE=voice_only for the run: every item is treated as
 unpointed (no fingertip prompts, no ring in the locate image, no dot in the renders, the picker runs for
 all), and the pointer is cleared in that copy's evidence. Never run it on data you keep.
@@ -88,6 +95,21 @@ def rerender_after(root: Path, item) -> dict[str, Any] | None:
     return out
 
 
+def write_stage_state(sf, walk_id: str, stage: str, counts: dict[str, int], message: str) -> None:
+    """Replace one stage's counts + message in Walk.stages (timings stay: they describe the real processing)."""
+    from punchwalk.core.models import Walk
+
+    with sf() as s:
+        walk = s.get(Walk, walk_id)
+        stages = dict(walk.stages or {})
+        cur = dict(stages.get(stage) or {"stage": stage, "status": "done"})
+        cur["counts"], cur["message"] = counts, message
+        stages[stage] = cur
+        walk.stages = stages
+        s.add(walk)
+        s.commit()
+
+
 def reground_project(data_dir: Path, project: str, walks: list[str] | None = None,
                      ignore_pointing: bool = False) -> dict[str, Any]:
     _env(Path(data_dir).resolve(), ignore_pointing)
@@ -124,6 +146,7 @@ def reground_project(data_dir: Path, project: str, walks: list[str] | None = Non
         finally:
             calls.remove_sink(buffer)
             n = buffer.flush(sf)
+        write_stage_state(sf, walk.id, Stage.ground_defects.value, g.counts, g.message)
         report["walks"][walk.id] = {"ground": g.counts, "verify": v.counts, "model_calls": n}
         print(f"{walk.id}: {g.message}; {v.message} ({n} model calls)")
     root = root_dir()
@@ -145,13 +168,94 @@ def reground_project(data_dir: Path, project: str, walks: list[str] | None = Non
     return report
 
 
+def refresh_display(data_dir: Path, project: str, walks: list[str] | None = None) -> dict[str, Any]:
+    """See --refresh-display in the module docstring."""
+    _env(Path(data_dir).resolve(), False)
+    from sqlmodel import select
+
+    from punchwalk import db
+    from punchwalk.core.enums import Grounding, Stage
+    from punchwalk.core.models import Evidence, Item, Walk
+    from punchwalk.pipeline import frame_pick, ground, ground_v2, runner
+    from punchwalk.pipeline.context import data_dir as root_dir
+    from punchwalk.render.evidence import render_crop
+
+    sf, root = db.session_factory, root_dir()
+    report: dict[str, Any] = {"project": project, "walks": {}, "crops": {}}
+    with sf() as s:
+        rows = [w for w in s.exec(select(Walk).where(Walk.project_id == project).order_by(Walk.created_at)).all()
+                if not walks or w.id in walks]
+    for walk in rows:
+        with sf() as s:
+            items = s.exec(select(Item).where(Item.origin_walk_id == walk.id).order_by(Item.number)).all()
+        if not items:
+            continue
+        ctx = runner._load_context(walk.id, sf, False)
+        written = ctx.output(Stage.write_items)["items"]
+        picks = frame_pick.load_log(ctx.walk_dir)
+        v2_rows = _read_items(ctx.walk_dir / "stages" / ground_v2.OUTPUT_NAME)
+        groundings, focus_rows = [], {}
+        for item in items:
+            if not item.evidence or item.id not in written:
+                continue
+            ev = Evidence.model_validate(item.evidence)
+            groundings.append(Grounding(ev.grounding))
+            if not (ground.was_picked(picks.get(item.id))
+                    and ev.grounding in (Grounding.pointed_only, Grounding.none)):
+                continue
+            focus, src = ground_v2.crop_focus(ground._v2_input(item, ev, root), v2_rows.get(item.id))
+            pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
+            cb = ground.card_crop_box(ev, root / ev.raw, pointer, None, focus)
+            focus_rows[item.id] = {"crop_focus": [round(v, 1) for v in focus] if focus else None,
+                                   "crop_focus_from": src}
+            old = ev.crop_box
+            if old is not None and (old.x1, old.y1, old.x2, old.y2) == tuple(float(v) for v in cb):
+                continue
+            render_crop(root / ev.image, ctx.item_dir(item.id) / "crop.jpg", cb)
+            new_ev = Evidence.model_validate({**ev.model_dump(), "crop_box": {"x1": cb[0], "y1": cb[1],
+                                                                             "x2": cb[2], "y2": cb[3]}})
+            ground.save_evidence(ctx, item, new_ev)
+            with sf() as s:
+                fresh = s.get(Item, item.id)
+            if fresh.closure:
+                rerender_after(root, fresh)
+            report["crops"][item.id] = {"number": item.number, "from": None if old is None else
+                                        [old.x1, old.y1, old.x2, old.y2], "to": list(cb), "focus": src}
+        if focus_rows:
+            merged = {k: {**v2_rows.get(k, {}), **v} for k, v in focus_rows.items()}
+            ground_v2.save_walk_log(ctx.walk_dir, merged, merge=True)
+        counts = ground.ground_counts(groundings)
+        picked = sum(1 for r in picks.values() if ground.was_picked(r))
+        message = ground.ground_message(True, counts, picked)
+        write_stage_state(sf, walk.id, Stage.ground_defects.value, counts, message)
+        report["walks"][walk.id] = {"counts": counts, "message": message}
+        print(f"{walk.id}: {message}")
+    for k, v in report["crops"].items():
+        print(f"crop #{v['number']:03d} {k}: {v['from']} -> {v['to']} ({v['focus']})")
+    return report
+
+
+def _read_items(path: Path) -> dict[str, Any]:
+    import json
+
+    try:
+        return json.loads(Path(path).read_text()).get("items", {}) if Path(path).is_file() else {}
+    except (OSError, ValueError):
+        return {}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Re-ground a project's walks with grounding v2 (PLAN 10.5).")
     ap.add_argument("--data-dir", type=Path, required=True)
     ap.add_argument("--project", required=True)
     ap.add_argument("--walks", nargs="*")
     ap.add_argument("--ignore-pointing", action="store_true", help="talking-only evaluation (never on kept data)")
+    ap.add_argument("--refresh-display", action="store_true",
+                    help="no re-ground: re-apply the card-crop rule and rewrite the stage lines from stored evidence")
     a = ap.parse_args(argv)
+    if a.refresh_display:
+        refresh_display(a.data_dir, a.project, a.walks)
+        return 0
     reground_project(a.data_dir, a.project, a.walks, a.ignore_pointing)
     return 0
 

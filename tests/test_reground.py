@@ -175,3 +175,68 @@ def test_walks_without_items_of_their_own_are_skipped(synth_walk, monkeypatch):
     rep = reground.reground_project(data, pid)
     assert rep["walks"]["wlk_empty_rewalk"] == {"skipped": "no items from this walk"}
     assert "ground" in rep["walks"][wid]
+
+
+def test_card_crop_centres_on_the_located_region_when_there_is_no_outline(tmp_path):
+    from punchwalk.core.models import Evidence
+    from punchwalk.pipeline import ground
+
+    raw = tmp_path / "raw.jpg"
+    Image.new("RGB", (1080, 1436), (120, 120, 120)).save(raw)
+    ev = Evidence(t=1.0, image="i.jpg", raw="raw.jpg", crop="c.jpg", width=1080, height=1436)
+    focus = (580.0, 940.0, 670.0, 1035.0)
+    x1, y1, x2, y2 = ground.card_crop_box(ev, raw, (523.0, 1288.0), None, focus)
+    assert x1 <= 580 and x2 >= 670 and y1 <= 940 and y2 >= 1035  # the located region is in the card
+    assert abs((y1 + y2) / 2 - 987.5) < 2 and not (y1 <= 1288 <= y2)  # centred on it, not on the (off) dot
+    assert ground.card_crop_box(ev, raw, (523.0, 1288.0), None, None) == \
+        ground.crop_box_for(1080, 1436, pointer=(523.0, 1288.0), defect_box=None)  # fallback: the fingertip
+    outlined = ground.card_crop_box(ev, raw, None, [100.0, 100.0, 200.0, 200.0], focus)
+    assert outlined == ground.crop_box_for(1080, 1436, defect_box=[100.0, 100.0, 200.0, 200.0])  # outline wins
+
+
+def test_ground_stage_line_names_the_models_and_v1_is_unchanged():
+    from punchwalk.core.enums import Grounding as G
+    from punchwalk.pipeline import ground
+
+    c = ground.ground_counts([G.sam_box] * 4 + [G.spark_box] * 2 + [G.sam_concept] + [G.pointed_only] * 4 + [G.none])
+    assert c == {"outlined": 7, "total": 12, "concept": 1, "box": 4, "spark_box": 2, "pointed_only": 4, "none": 1}
+    assert ground.ground_message(False, c) == "SAM 3.1 outlined 7 of 12 defects"
+    v2 = ground.ground_message(True, c, 3)
+    assert v2 == ("7 of 12 outlined: Muse Spark Open located each defect, SAM 3.1 drew 5 outlines and Muse Spark "
+                  "Open 2 boxes, each checked by Muse Spark Open; a clearer photo picked for 3")
+
+
+def test_refresh_display_recrops_picked_items_and_rewrites_the_stage_line(synth_walk, monkeypatch):
+    from punchwalk import db
+    from punchwalk.core.models import Evidence
+
+    data, pid, wid = synth_walk
+    _fake_models(monkeypatch, {})
+    reground.reground_project(data, pid)
+    with db.session_factory() as s:
+        walk = s.get(Walk, wid)
+        assert walk.stages["ground_defects"]["message"].startswith("3 of 3 outlined: Muse Spark Open located")
+    items = _items(pid)
+    target = next(i for i in items.values() if not i.evidence.get("pointer"))
+    with db.session_factory() as s:  # this item's photo came from the picker and ended without an outline
+        row = s.get(Item, target.id)
+        row.evidence = {**row.evidence, "grounding": "none", "defect_svg": None, "defect_box": None}
+        s.add(row)
+        s.commit()
+    stages = data / "walks" / wid / "stages"
+    frame_pick.save_log(data / "walks" / wid, {target.id: {"outcome": "new frame", "t": 1.0}}, merge=False)
+    ev = Evidence.model_validate(target.evidence)
+    monkeypatch.setattr(ground_v2, "crop_focus", lambda item, row: ((40.0, 60.0, 120.0, 140.0), "locate"))
+    before = {n: i.evidence for n, i in items.items()}
+    rep = reground.refresh_display(data, pid)
+    after = _items(pid)
+    changed = [n for n in after if after[n].evidence != before[n] and n != target.number]
+    assert not changed  # only the picked, unoutlined item is re-cropped
+    cb = after[target.number].evidence["crop_box"]
+    assert cb["x1"] <= 40 and cb["x2"] >= 120 and cb != ev.crop_box.model_dump()
+    assert rep["walks"][wid]["message"].startswith("2 of 3 outlined") and "a clearer photo picked for 1" in \
+        rep["walks"][wid]["message"]
+    with db.session_factory() as s:
+        st = s.get(Walk, wid).stages["ground_defects"]
+    assert st["counts"]["outlined"] == 2 and st["message"] == rep["walks"][wid]["message"]
+    assert json.loads((stages / "ground_v2.json").read_text())["items"][target.id]["crop_focus_from"] == "locate"

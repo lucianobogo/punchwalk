@@ -33,6 +33,7 @@ import logging
 import math
 import re
 import threading
+from collections.abc import Sequence
 from contextlib import closing
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -201,9 +202,48 @@ def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict
     return res.grounding, res.defect_svg, box, res.concept or concept, summary
 
 
+def card_crop_box(ev: Evidence, raw, pointer: tuple[float, float] | None, defect_box: list[float] | None,
+                  focus_box: Sequence[float] | None = None) -> tuple[int, int, int, int]:
+    """The 4:3 card crop: around the outline (+ dot); with no outline, around `focus_box` (the region Muse Spark
+    Open located in a picked photo), else the dot, else the widest crop over the busiest band."""
+    if defect_box is None and focus_box is not None:
+        return crop_box_for(ev.width, ev.height, defect_box=list(focus_box))
+    if pointer is None and defect_box is None:
+        return wide_crop_box(raw)
+    return crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+
+
+def ground_message(v2: bool, counts: dict[str, int], picked: int = 0) -> str:
+    """The ground_defects checklist line (a fresh run and reground's refresh write the same words)."""
+    total = counts.get("total", 0)
+    outlined = counts.get("outlined", 0)
+    if not v2:
+        return f"SAM 3.1 outlined {outlined} of {total} defects"
+    sam_n = counts.get("concept", 0) + counts.get("box", 0)
+    spark_n = counts.get("spark_box", 0)
+    line = (f"{outlined} of {total} outlined: Muse Spark Open located each defect, SAM 3.1 drew {sam_n} "
+            f"{'outline' if sam_n == 1 else 'outlines'}")
+    if spark_n:
+        line += f" and Muse Spark Open {spark_n} {'box' if spark_n == 1 else 'boxes'}"
+    line += ", each checked by Muse Spark Open"
+    if picked:
+        line += f"; a clearer photo picked for {picked}"
+    return line
+
+
+def ground_counts(groundings: list[Grounding]) -> dict[str, int]:
+    c = {g.value: 0 for g in Grounding}
+    for g in groundings:
+        c[g.value] += 1
+    outlined = c["sam_concept"] + c["sam_box"] + c["spark_box"]
+    return {"outlined": outlined, "total": len(groundings), "concept": c["sam_concept"], "box": c["sam_box"],
+            "spark_box": c["spark_box"], "pointed_only": c["pointed_only"], "none": c["none"]}
+
+
 def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Grounding, defect_svg: str | None,
                      defect_box: list[float] | None, concept: str | None, extra: dict[str, Any],
-                     event: dict[str, Any] | None, *, save: bool = True) -> Evidence:
+                     event: dict[str, Any] | None, *, save: bool = True,
+                     focus_box: Sequence[float] | None = None) -> Evidence:
     """evidence.jpg, crop.jpg and pointing.jpg for the item's current frame + outline; saves Item.evidence
     (save=False: the caller saves it, see `save_evidence`)."""
     meta = ctx.meta
@@ -212,10 +252,7 @@ def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Gro
     pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
     out = ctx.item_dir(item.id)
     evidence_jpg = render_evidence(raw, out / "evidence.jpg", defect_svg=defect_svg, pointer=pointer)
-    if pointer is None and defect_box is None:  # nothing located: widest 4:3 crop over the busiest band
-        cb = wide_crop_box(raw)
-    else:
-        cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+    cb = card_crop_box(ev, raw, pointer, defect_box, focus_box)
     crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
     pointing_rel = ev.pointing_frame
     if extra.get("pointing_raw") and (root / extra["pointing_raw"]).is_file():
@@ -249,7 +286,7 @@ def save_evidence(ctx: StageContext, item, ev: Evidence) -> None:
 
 def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[str, Any], extra: dict[str, Any],
                       event: dict[str, Any] | None, v2: bool, v2_rows: dict[str, Any], *, save: bool = True,
-                      ) -> tuple[Evidence, Grounding, dict[str, Any]]:
+                      picked: bool = False) -> tuple[Evidence, Grounding, dict[str, Any]]:
     """Outline one item on its current frame (v1 or v2), render, save (save=False: the caller saves).
     (new evidence, grounding, notes)."""
     raw = root / ev.raw
@@ -268,9 +305,25 @@ def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[st
             defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
             if not defect_svg:
                 grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
+    focus = None
+    if v2 and picked and grounding in (Grounding.pointed_only, Grounding.none):
+        # a photo from the picker with no outline: frame the card on what Muse Spark Open located in it
+        focus, notes["crop_focus_from"] = ground_v2.crop_focus(_v2_input(item, ev, root), v2_rows.get(item.id))
+        notes["crop_focus"] = [round(v, 1) for v in focus] if focus else None
     new_ev = _render_and_save(ctx, root, item, ev, grounding, defect_svg, defect_box, concept, extra, event,
-                              save=save)
+                              save=save, focus_box=focus)
     return new_ev, grounding, {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
+
+
+def _v2_input(item, ev: Evidence, root) -> ground_v2.ItemInput:
+    return ground_v2.ItemInput(item_id=item.id, raw=root / ev.raw, width=ev.width, height=ev.height, title=item.title,
+                               description=item.description or "", quote=item.quote,
+                               pointer=(ev.pointer.x, ev.pointer.y) if ev.pointer else None, number=item.number)
+
+
+def was_picked(pick_row: dict[str, Any] | None) -> bool:
+    """The item's photo came from the frame picker in this run (frame_pick.json `outcome`)."""
+    return (pick_row or {}).get("outcome") == "new frame"
 
 
 def _not_visible(v2_row: dict[str, Any] | None) -> bool:
@@ -293,7 +346,7 @@ def reground_one(ctx: StageContext, item, ev: Evidence) -> tuple[Evidence, Groun
     event = events.get(item.point_id) if item.point_id else None
     v2_rows: dict[str, Any] = {}
     out = ground_and_render(ctx, root, item, ev, written.get(item.id) or {}, extras.get(item.id, {}), event,
-                            True, v2_rows)
+                            True, v2_rows, picked=True)
     ground_v2.save_walk_log(ctx.walk_dir, v2_rows, merge=True)
     return out
 
@@ -354,13 +407,13 @@ def run(ctx: StageContext) -> StageOutcome:
             ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, get_picker(), reason, out.pick_rows,
                                            save=False)
         new_ev, grounding, notes = ground_and_render(ctx, root, item, ev, wrow, extra, event, v2, out.v2_rows,
-                                                     save=False)
+                                                     save=False, picked=was_picked(out.pick_rows.get(item.id)))
         if v2 and _not_visible(out.v2_rows.get(item.id)) and item.id not in out.pick_rows:
             picked = frame_pick.pick_and_adopt(ctx, root, item, new_ev, extra, event, get_picker(),
                                                frame_pick.REASON_NOT_VISIBLE, out.pick_rows, save=False)
             if picked.t != new_ev.t:
                 new_ev, grounding, notes = ground_and_render(ctx, root, item, picked, wrow, extra, event, v2,
-                                                             out.v2_rows, save=False)
+                                                             out.v2_rows, save=False, picked=True)
         notes["changed"] = (new_ev.t, new_ev.defect_svg) != before
         if protected:
             notes["regrounded_protected"] = True
@@ -389,9 +442,6 @@ def run(ctx: StageContext) -> StageOutcome:
     if v2:
         ground_v2.save_walk_log(ctx.walk_dir, v2_rows)
         frame_pick.save_log(ctx.walk_dir, pick_rows, merge=False)
-    outlined = counts["sam_concept"] + counts["sam_box"] + counts["spark_box"]
-    return StageOutcome(
-        counts={"outlined": outlined, "total": len(items), "concept": counts["sam_concept"], "box": counts["sam_box"],
-                "spark_box": counts["spark_box"], "pointed_only": counts["pointed_only"], "none": counts["none"]},
-        message=f"SAM 3.1 outlined {outlined} of {len(items)} defects",
-    )
+    totals = ground_counts([Grounding(g) for g, n in counts.items() for _ in range(n)])
+    picked_n = sum(1 for r in pick_rows.values() if was_picked(r))
+    return StageOutcome(counts=totals, message=ground_message(v2, totals, picked_n))
