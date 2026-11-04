@@ -67,7 +67,7 @@ flowchart TD
     J --> K["Muse Spark Open on Baseten<br/>writes the item: summary, action, trade, room, severity"]
     K --> L["SAM 3.1 image, concept or box prompt<br/>outlines the defect near the fingertip"]
     L --> M["Muse Spark Open on Baseten<br/>verifies the item against photo + quote"]
-    M --> N["Dispatch: Slack, email or Outbox<br/>verified items go out, flagged ones wait"]
+    M --> N["Dispatch: Slack, email or a copied link<br/>verified items go out, flagged ones wait"]
     N --> O["Phone PWA: punch list, evidence,<br/>Play this moment, trades, PDF report"]
     O -. "re-walk (same route)" .-> P["Muse Spark Open on Baseten<br/>maps each status update to an open item<br/>and compares before vs after"]
     P --> Q["Signed off / still open (sent again) /<br/>needs a look: marked fixed, still visible"]
@@ -209,7 +209,7 @@ the container (`--import`). The commands are in [docs/DEPLOY.md](docs/DEPLOY.md)
 - `punchwalk/clients/`: the only code that calls the Meta Model API or Baseten, with the cache and cost ledger
 - `punchwalk/pipeline/`: the stages
 - `punchwalk/api/`: FastAPI and the job worker
-- `punchwalk/dispatch/`: Slack, email, Outbox
+- `punchwalk/dispatch/`: Slack, email, Copy link
 - `punchwalk/report/`: the PDF
 - `web/`: the React PWA
 - `eval/`: labels and scoring
@@ -261,7 +261,7 @@ was committed. The dated list below comes from the git history.
 - Items: Spark Open writes each one, SAM 3.1 outlines the defect near the fingertip, Spark Open verifies it, and a resumable job runner ties the stages together.
 - API: SQLite (WAL), range-capable media for iOS video seeking, upload with limits, progress (poll and SSE), the hand overlay, and guards.
 - PWA: design system, punch list, item detail, Play this moment, walk detail with the hand overlay, the record flow with a live checklist, and "How this walk was processed".
-- Dispatch to Slack, email or the Outbox, with an auto-send policy (verified items go out, flagged ones wait), and a PDF punch report.
+- Dispatch to Slack, email or a copied link (Copy link: a shareable message, and the items count as sent), with an auto-send policy (verified items go out, flagged ones wait), and a PDF punch report.
 - Docker image and Fly config, and `make seed` (zero-cost replay, plus a snapshot for the deployed image).
 - Our own walks: three walks recorded on Ray-Ban Meta glasses (5 clips, 5 clips, 1 clip), with ground truth labeled by the inspector. `make record` captured every model answer ($0.44).
 - Eval: label loading, matching (6 s window + Hungarian assignment), metrics and the report. Tuned on walk1 and walk2 until every target was met; walk3 held out.
