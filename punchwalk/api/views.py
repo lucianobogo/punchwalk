@@ -87,6 +87,14 @@ def media_url(rel: str | None) -> str | None:
     return "/media/" + rel.lstrip("/")
 
 
+def existing_media_url(rel: str | None) -> str | None:
+    """`media_url(rel)` when the DATA_DIR-relative file is there, else None (written later, or lost)."""
+    if not rel or rel.startswith(("/media/", "http://", "https://")):
+        return media_url(rel)
+    path = Path(get_settings().DATA_DIR) / rel.lstrip("/")
+    return media_url(rel) if path.is_file() else None
+
+
 def lenient(model: type[M], data: Any) -> M | None:
     """Validate a JSON-column value, ignoring keys the model doesn't know. None if unusable."""
     if not isinstance(data, dict):
@@ -382,6 +390,7 @@ def closure_out(item: Item) -> S.ClosureOut | None:
         before_image_url=media_url(ev.crop) if ev else None,
         after_image_url=media_url(cl.after_image),
         after_frame_url=media_url(cl.after_frame),
+        before_after_url=existing_media_url(cl.before_after),
         voice_status=cl.voice_status,
         vision_status=cl.vision_status,
         decision=cl.decision,
@@ -761,6 +770,9 @@ def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
     return row.detail or ""
 
 
+FILES_MODEL = "meta-files"  # ModelCall.model of Files API uploads (pipeline/runner.py)
+
+
 def processing_summary_out(session: Session, walk: Walk) -> S.ProcessingSummaryOut:
     calls = walk_calls(session, walk.id)
     rows = {r.stage: r for r in stage_rows(walk)}
@@ -786,8 +798,8 @@ def processing_summary_out(session: Session, walk: Walk) -> S.ProcessingSummaryO
             )
         )
     models: list[str] = []
-    for c in calls:
-        if c.provider != Provider.meta_fallback and c.model_label not in models:
+    for c in calls:  # the models that did the work: not the fallback, not Files API uploads
+        if c.provider != Provider.meta_fallback and c.model != FILES_MODEL and c.model_label not in models:
             models.append(c.model_label)
     started = [r.started_at for r in rows.values() if r.started_at]
     finished = [r.finished_at for r in rows.values() if r.finished_at]

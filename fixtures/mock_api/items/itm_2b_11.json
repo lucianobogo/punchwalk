@@ -59,6 +59,7 @@
     "before_image_url": "/media/items/itm_2b_11/crop.jpg",
     "after_image_url": null,
     "after_frame_url": null,
+    "before_after_url": null,
     "voice_status": "not_mentioned",
     "vision_status": "not_checked",
     "decision": "not_checked",

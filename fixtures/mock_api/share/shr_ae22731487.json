@@ -60,6 +60,7 @@
     "before_image_url": "/media/items/itm_2b_08/crop.jpg",
     "after_image_url": "/media/items/itm_2b_08/after.jpg",
     "after_frame_url": "/media/items/itm_2b_08/after_frame.jpg",
+    "before_after_url": null,
     "voice_status": "not_fixed",
     "vision_status": "still_visible",
     "decision": "still_open",

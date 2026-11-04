@@ -1681,6 +1681,23 @@ def save_jpeg(img: Image.Image, url: str, quality: int = 85) -> None:
     img.save(p, "JPEG", quality=quality, optimize=True)
 
 
+BEFORE_AFTER_GAP = 12  # px between the two photos
+BEFORE_AFTER_GAP_COLOR = (38, 41, 46)  # graphite
+
+
+def save_before_after(before_url: str, after_url: str, out_url: str) -> None:
+    """A placeholder for the pipeline's before_after.jpg: the before and after crops side by side, no text."""
+    with Image.open(media_path(before_url)) as b, Image.open(media_path(after_url)) as a:
+        before, after = b.convert("RGB"), a.convert("RGB")
+    if after.size != before.size:
+        after = after.resize(before.size, Image.Resampling.LANCZOS)
+    w, h = before.size
+    img = Image.new("RGB", (2 * w + BEFORE_AFTER_GAP, h), BEFORE_AFTER_GAP_COLOR)
+    img.paste(before, (0, 0))
+    img.paste(after, (w + BEFORE_AFTER_GAP, 0))
+    save_jpeg(img, out_url)
+
+
 def encode_video(walk: WalkSpec, url: str) -> None:
     out = media_path(url)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -2230,6 +2247,7 @@ class Gen:
                 before_image_url=evidence.crop_url,
                 after_image_url=None,
                 after_frame_url=None,
+                before_after_url=None,
                 voice_status=VoiceStatus.not_mentioned,
                 vision_status=VisionStatus.not_checked,
                 decision=ClosureDecision.not_checked,
@@ -2377,6 +2395,10 @@ class Gen:
             note, new_status = "Said not fixed, and the defect is still visible.", ItemStatus.open
             check_note = "Said not fixed on the re-walk. Still open."
         base = f"items/{item_id(it.key)}"
+        before_after = None
+        if decision in (ClosureDecision.signed_off, ClosureDecision.needs_review):  # signed off, false fix
+            before_after = media_url(base, "before_after.jpg")
+            save_before_after(media_url(base, "crop.jpg"), media_url(base, "after.jpg"), before_after)
         closure = S.ClosureOut(
             rewalk_id=W2,
             rewalk_turn_id=self.turn_id(W2, turn_idx),
@@ -2385,6 +2407,7 @@ class Gen:
             before_image_url=media_url(base, "crop.jpg"),
             after_image_url=media_url(base, "after.jpg"),
             after_frame_url=media_url(base, "after_frame.jpg"),
+            before_after_url=before_after,
             voice_status=voice,
             vision_status=vision,
             decision=decision,

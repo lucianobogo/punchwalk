@@ -207,6 +207,7 @@ class Closure(_Shape):
     after_t: float | None = None  # seconds into the re-walk video
     after_image: str | None = None  # 4:3 crop of the re-walk frame, same framing as `Evidence.crop`
     after_frame: str | None = None  # full re-walk frame
+    before_after: str | None = None  # items/<id>/before_after.jpg: before and after side by side (pipeline)
     voice_status: VoiceStatus = VoiceStatus.not_mentioned
     vision_status: VisionStatus = VisionStatus.not_checked
     decision: ClosureDecision = ClosureDecision.not_checked

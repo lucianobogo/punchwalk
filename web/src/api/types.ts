@@ -172,6 +172,7 @@ export const MODEL_LABEL: Record<string, string> = {
   'muse-voice-transcribe-1.0': 'Muse Voice Transcribe',
   'sam-3.1': 'SAM 3.1',
   'meta-models/muse-spark-open-1026': 'Muse Spark Open on Baseten',
+  'meta-models/muse-spark-open': 'Muse Spark Open on Baseten',
   'muse-spark-1.3': 'Muse Spark 1.3',
 };
 
@@ -464,6 +465,7 @@ export interface ClosureOut {
   before_image_url: string | null;
   after_image_url: string | null;
   after_frame_url: string | null;
+  before_after_url: string | null;
   voice_status: VoiceStatus;
   vision_status: VisionStatus;
   decision: ClosureDecision;

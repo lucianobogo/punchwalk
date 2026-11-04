@@ -345,6 +345,7 @@ class ClosureOut(Schema):
     before_image_url: str | None  # 4:3, from the original walk
     after_image_url: str | None  # 4:3, same framing, from the re-walk
     after_frame_url: str | None  # full re-walk frame
+    before_after_url: str | None  # before and after side by side (/media/items/<id>/before_after.jpg); null until written
     voice_status: VoiceStatus
     vision_status: VisionStatus
     decision: ClosureDecision

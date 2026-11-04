@@ -230,6 +230,7 @@ STAGES_REWALK: tuple[Stage, ...] = (
 MODEL_ASR = "muse-voice-transcribe-1.0"
 MODEL_SAM = "sam-3.1"
 MODEL_SPARK_OPEN = "meta-models/muse-spark-open-1026"
+MODEL_SPARK_OPEN_CATALOG = "meta-models/muse-spark-open"  # public catalog slug, used when -1026 404s
 MODEL_SPARK_HOSTED = "muse-spark-1.3"
 
 # --------------------------------------------------------------------------- fixed review reasons
@@ -309,6 +310,7 @@ MODEL_LABEL: dict[str, str] = {
     MODEL_ASR: "Muse Voice Transcribe",
     MODEL_SAM: "SAM 3.1",
     MODEL_SPARK_OPEN: "Muse Spark Open on Baseten",
+    MODEL_SPARK_OPEN_CATALOG: "Muse Spark Open on Baseten",  # config SPARK_OPEN_MODEL_ALTERNATES (404 fallback slug)
     MODEL_SPARK_HOSTED: "Muse Spark 1.3",
 }
 

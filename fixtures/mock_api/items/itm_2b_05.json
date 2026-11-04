@@ -72,6 +72,7 @@
     "before_image_url": "/media/items/itm_2b_05/crop.jpg",
     "after_image_url": "/media/items/itm_2b_05/after.jpg",
     "after_frame_url": "/media/items/itm_2b_05/after_frame.jpg",
+    "before_after_url": "/media/items/itm_2b_05/before_after.jpg",
     "voice_status": "fixed",
     "vision_status": "fixed",
     "decision": "signed_off",
