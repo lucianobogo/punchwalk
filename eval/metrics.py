@@ -1,6 +1,7 @@
 """Metrics over matched walks (PLAN 3.2) and the PLAN 3.4 targets.
 
-Initial walks: recall, precision, trade accuracy (over matched), room accuracy (over matched), grounding
+Initial walks: recall, precision, trade accuracy (over matched rows with a labeled trade), room accuracy
+(over matched rows with a labeled room), grounding
 rate for pointed labels (pointed=1 rows whose matched item is outlined by SAM: `sam_concept` or
 `sam_box`; unmatched pointed rows count as not grounded), needs_review rate (over predictions).
 
@@ -87,14 +88,16 @@ class InitialMetrics:
 
 def initial_metrics(labels: list[Label], preds: list[Pred], match: MatchResult) -> InitialMetrics:
     matched = match.pairs
+    traded = [p for p in matched if p.label.trade is not None]  # a blank label trade isn't scored
+    roomed = [p for p in matched if (p.label.room or "").strip()]
     pointed = [lb for lb in labels if lb.pointed]
     by_label = {p.label.item_no: p for p in matched}
     grounded = sum(1 for lb in pointed if (p := by_label.get(lb.item_no)) and p.pred.grounding in SAM_GROUNDED)
     return InitialMetrics(
         recall=Ratio(len(matched), len(labels)),
         precision=Ratio(len(matched), len(preds)),
-        trade=Ratio(sum(1 for p in matched if p.trade_ok), len(matched)),
-        room=Ratio(sum(1 for p in matched if p.room_ok), len(matched)),
+        trade=Ratio(sum(1 for p in traded if p.trade_ok), len(traded)),
+        room=Ratio(sum(1 for p in roomed if p.room_ok), len(roomed)),
         grounding=Ratio(grounded, len(pointed)),
         needs_review=Ratio(sum(1 for p in preds if p.status == ItemStatus.needs_review), len(preds)),
     )

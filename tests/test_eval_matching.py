@@ -109,8 +109,11 @@ def test_discover_orders_walks_and_checks_duplicates(tmp_path):
                                        "walk1,1,Hall,Again,general,00:30,1,,,"])
     write_csv(tmp_path / "walk10.csv", ["walk10,1,Kitchen,Knob,carpentry_millwork,00:09,1,1,1,"])
     write_csv(tmp_path / "walk2.csv", [",1,Kitchen,Knob,carpentry_millwork,00:09,1,1,1,"])  # blank walk = file name
-    with pytest.raises(LabelError, match="item_no 1 already used for walk1"):
+    with pytest.raises(LabelError, match=r"walk1.csv:3: item_no 1 already used at walk1.csv:2"):
         discover_labels(tmp_path)
+    problems: list = []
+    assert list(discover_labels(tmp_path, problems=problems)) == ["walk2", "walk10"]  # the rest is still scored
+    assert [p.name for p, _ in problems] == ["walk1.csv"]
     write_csv(tmp_path / "walk1.csv", ["walk1,1,Kitchen,Knob,carpentry_millwork,00:14,1,,,"])
     assert list(discover_labels(tmp_path)) == ["walk1", "walk2", "walk10"]  # natural order
     assert discover_labels(tmp_path / "missing") == {}
@@ -285,3 +288,34 @@ def test_rewalk_closure_and_false_claim_catch(tmp_path):
 def test_error_row():
     rows = summary_rows("walk1", holdout=True, error="Writing the items failed.")
     assert len(rows) == 1 and rows[0].result == "error" and rows[0].holdout and any_failed(rows)
+
+
+def test_one_unfilled_file_does_not_block_the_folder(tmp_path):
+    shutil.copyfile(TEMPLATE, tmp_path / "walk2.csv")  # still the template
+    write_csv(tmp_path / "walk1.csv", ["walk1,1,Kitchen,Knob,Carpentry_millwork,00:14,1,,,a"])
+    write_csv(tmp_path / "walk3.csv", ["walk3,13,Laundry room,Mold in the detergent compartment,Cleaning,00:03,1,,,"])
+    (tmp_path / "walk4.csv").write_text(HEADER + "walk4,1,Kitchen,Knob,tiling,00:14,1,,,\n")
+    problems: list = []
+    by_walk = discover_labels(tmp_path, problems=problems)
+    assert list(by_walk) == ["walk1", "walk3"]
+    assert [(p.name, why) for p, why in problems][0] == ("walk2.csv", "template")
+    assert "walk4.csv:2: unknown trade 'tiling'" in problems[1][1]
+    # --walks is applied before discovery: other files aren't read at all
+    problems = []
+    assert list(discover_labels(tmp_path, walks={"walk3"}, problems=problems)) == ["walk3"] and problems == []
+
+
+def test_capitalized_trades_and_blank_labels(tmp_path):
+    labels = labels_from(tmp_path, [
+        "walk1,1,Kitchen,Coffee stains on the counter,Cleaning,00:05,1,,,",
+        "walk1,2,Living room,Window screen not placed correctly,Windows_glazing,00:11,1,,,",
+        "walk1,3,,Pencil marks on the wall,,00:30,1,,,",  # no room, no trade labeled
+    ])
+    assert [lb.trade for lb in labels] == [Trade.cleaning, Trade.windows_glazing, None]
+    preds = [pred_from_item(item(1, 5.0, "Coffee stains on counter", trade="cleaning")),
+             pred_from_item(item(2, 11.0, "Window screen loose", room="living ROOM", trade="windows_glazing")),
+             pred_from_item(item(3, 30.0, "Pencil marks on wall", room="Hallway", trade="painting"))]
+    res = match_walk(labels, preds)
+    assert len(res.pairs) == 3 and res.pairs[1].room_ok  # room compare ignores case/whitespace
+    m = initial_metrics(labels, preds, res)
+    assert m.trade == Ratio(2, 2) and m.room == Ratio(2, 2)  # the blank row is left out, not counted wrong

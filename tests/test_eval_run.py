@@ -7,7 +7,7 @@ can't change (all three found, rooms right, both pointed items outlined); model-
 trade are checked for consistency between the table, report.md and report.json, not for a value.
 
 The pipeline runs once per session into a template DATA_DIR; each test works on its own copy (resumed,
-so nothing re-runs). The re-walk is faked at the `run_walk` seam (no recorded re-walk exists yet).
+so nothing re-runs). A cache miss there fails every test that needs it (re-record the synthetic walk). The re-walk is faked at the `run_walk` seam (no recorded re-walk exists yet).
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def data_dir(tmp_path_factory, tmp_path) -> Path:
         _template.update(dir=base / "data", report=report, error=doc["walks"][0]["error"])
     if _template["error"]:
         if "recorded model answer is missing" in _template["error"]:
-            pytest.skip(STALE)
+            pytest.fail(STALE)  # never skip: a stale fixture must be re-recorded, not hidden
         pytest.fail(f"the synthetic walk failed in the eval: {_template['error']}")
     dest = tmp_path / "data"
     shutil.copytree(_template["dir"], dest)
@@ -97,7 +97,24 @@ def test_template_labels_are_refused(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "walk1.csv is still the template — fill it in per FOOTAGE.md" in out
     assert "walk3.csv is still the template" in out and not (tmp_path / "r.md").exists()
+    assert "nothing to score" in out
     assert run_eval.main(["--labels", str(labels), "--strict", "--report", str(tmp_path / "r.md")]) == 1
+
+
+def test_one_template_file_doesnt_block_the_others(data_dir, tmp_path, capsys):
+    labels = tmp_path / "labels"
+    shutil.copytree(LABELS, labels)
+    shutil.copyfile(run_eval.REPO_ROOT / "eval" / "labels_template.csv", labels / "walk9.csv")
+    report = tmp_path / "r.md"
+    assert run_eval.main(["--labels", str(labels), "--data-dir", str(data_dir), "--report", str(report)]) == 0
+    out = capsys.readouterr().out
+    assert "walk9.csv is still the template — fill it in per FOOTAGE.md (walk9 not scored)" in out
+    assert "synth_walk  Recall" in out and "walk9" not in report.read_text()
+    # --walks is applied before discovery: the unfilled file isn't even mentioned
+    assert run_eval.main(["--labels", str(labels), "--walks", "synth_walk", "--data-dir", str(data_dir),
+                          "--report", str(report)]) == 0
+    assert "walk9" not in capsys.readouterr().out
+    assert run_eval.main(["--labels", str(labels), "--walks", "walk7", "--report", str(report)]) == 2
 
 
 def test_synthetic_walk_scores_and_writes_the_report(data_dir, tmp_path, capsys):
@@ -366,3 +383,40 @@ def test_label_drafts_from_the_pipeline(data_dir, tmp_path, monkeypatch):
     rows2 = list(csv.reader((out / "synth_walk2.csv").read_text().splitlines()))[1:]
     assert [r[1] for r in rows2] == ["1", "2", "3"]
     assert [r[5:] for r in rows2] == [["00:01", "", "", "", "a"], ["00:01", "", "", "", "b"], ["00:01", "", "", "", "c"]]
+
+
+def test_force_never_replaces_the_committed_mocks_with_failing_ones(data_dir):
+    before = {p.relative_to(bm.DEFAULT_OUT): p.stat().st_mtime_ns for p in bm.DEFAULT_OUT.rglob("*") if p.is_file()}
+    with pytest.raises(bm.BuildError, match="would fail tests/test_contracts.py"):
+        bm.build(data_dir, bm.DEFAULT_OUT, force=True, eval_summary=None)  # synthetic crops are 432x324, not 800x600
+    after = {p.relative_to(bm.DEFAULT_OUT): p.stat().st_mtime_ns for p in bm.DEFAULT_OUT.rglob("*") if p.is_file()}
+    assert after == before and not bm.DEFAULT_OUT.with_name("mock_api.staging").exists()
+
+
+@pytest.mark.parametrize("passes", [True, False])
+def test_force_swap_runs_the_contract_tests_and_restores_on_failure(tmp_path, monkeypatch, passes):
+    """The swap itself, on a stand-in for fixtures/mock_api (the real one is never moved by tests)."""
+    import subprocess
+
+    fake = tmp_path / "fixtures" / "mock_api"
+    fake.mkdir(parents=True)
+    (fake / "healthz.json").write_text("old")
+    staging = tmp_path / "fixtures" / "mock_api.staging"
+    staging.mkdir()
+    (staging / "healthz.json").write_text("new")
+    monkeypatch.setattr(bm, "DEFAULT_OUT", fake)
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"], seen["now"] = cmd, (fake / "healthz.json").read_text()
+        return subprocess.CompletedProcess(cmd, 0 if passes else 1, stdout="" if passes else "FAILED tests/x\nE  boom", stderr="")
+
+    monkeypatch.setattr(bm.subprocess, "run", fake_run)
+    if passes:
+        bm.swap_in_and_run_contracts(staging)
+    else:
+        with pytest.raises(bm.BuildError, match="fixtures/mock_api was left as it was"):
+            bm.swap_in_and_run_contracts(staging)
+    assert seen["cmd"][-1] == "tests/test_contracts.py" and seen["now"] == "new"  # the tests ran on the new mocks
+    assert (fake / "healthz.json").read_text() == ("new" if passes else "old")
+    assert not fake.with_name("mock_api.previous").exists()

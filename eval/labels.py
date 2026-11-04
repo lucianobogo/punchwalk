@@ -11,8 +11,11 @@ Format (eval/labels_template.csv):
 - Re-walk rows (walk2) reuse the walk1 `item_no` and fill `fixed_in_rewalk` (the truth) and
   `claimed_fixed_in_rewalk` (what was said). A walk with any of those filled is a re-walk.
 - Each file holds one walk: `walk` must equal the file name (walk1.csv -> walk1) or be blank.
-- A file that is still a copy of eval/labels_template.csv (same rows), or whose `walk` column names
-  another walk, is not truth: `discover_labels` raises `TemplateLabels` and nothing is scored.
+- A file that is still a copy of eval/labels_template.csv (same rows), names another walk, or doesn't parse
+  is not truth: that walk is reported and left out; the other files are still scored.
+- Trades are matched case-insensitively ("Carpentry_millwork", "Carpentry & millwork" -> carpentry_millwork);
+  an unknown trade is an error naming the file and line. A blank trade or room is "not labeled": the row is
+  left out of trade / room accuracy instead of counting as wrong.
 - `project.json` next to the CSVs (optional) gives the project's rooms/keywords, which must equal the
   `scripts/record.py --rooms/--keywords` used to record (they are part of the cached prompts).
 """
@@ -176,33 +179,41 @@ def template_problem(path: Path, rows: list[Label], template: Path | None = TEMP
     return None
 
 
-def discover_labels(labels_dir: Path, *, template: Path | None = TEMPLATE) -> dict[str, list[Label]]:
-    """{walk: labels} from every *.csv in `labels_dir`, walks in natural order. Empty if there are none.
+def discover_labels(labels_dir: Path, *, template: Path | None = TEMPLATE, walks: set[str] | None = None,
+                    problems: list[tuple[Path, str]] | None = None) -> dict[str, list[Label]]:
+    """{walk: labels} from the *.csv files in `labels_dir`, walks in natural order. Empty if there are none.
 
-    Raises `TemplateLabels` if any file is still the template (or names another walk): then no file in
-    the folder is used as truth.
+    `walks`: only read these files (by name, walk1.csv -> walk1). A file that is still the template, names
+    another walk, or can't be read is left out: appended to `problems` as (file, why) when a list is given,
+    so the other walks are still scored; with no list, `TemplateLabels` is raised.
     """
     labels_dir = Path(labels_dir)
     if not labels_dir.is_dir():
         return {}
     by_walk: dict[str, list[Label]] = {}
-    problems: list[tuple[Path, str]] = []
+    found: list[tuple[Path, str]] = []
     for path in sorted(labels_dir.glob("*.csv")):
-        rows = read_labels_file(path)
-        why = template_problem(path, rows, template)
-        if why:
-            problems.append((path, why))
+        if walks is not None and path.stem not in walks:
             continue
-        for label in rows:
-            by_walk.setdefault(label.walk, []).append(label)
-    if problems:
-        raise TemplateLabels(problems)
-    for walk, rows in by_walk.items():
-        seen: dict[int, str] = {}
-        for r in rows:
-            if r.item_no in seen:
-                raise LabelError(f"{r.source}: item_no {r.item_no} already used for {walk} at {seen[r.item_no]}")
-            seen[r.item_no] = r.source
+        try:
+            rows = read_labels_file(path)
+            why = template_problem(path, rows, template)
+            if why is None:
+                seen: dict[int, str] = {}
+                for r in rows:
+                    if r.item_no in seen:
+                        raise LabelError(f"{r.source}: item_no {r.item_no} already used at {seen[r.item_no]}")
+                    seen[r.item_no] = r.source
+        except LabelError as exc:
+            why = str(exc)
+        if why:
+            found.append((path, why))
+            continue
+        by_walk[path.stem] = rows
+    if found:
+        if problems is None:
+            raise TemplateLabels(found)
+        problems.extend(found)
     return {w: by_walk[w] for w in sorted(by_walk, key=natural_key)}
 
 

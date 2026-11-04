@@ -27,7 +27,10 @@
 - Deterministic: the same DATA_DIR gives byte-identical output (no "now" anywhere; healthz.time is the
   newest walk's created_at).
 - Refuses to write into fixtures/mock_api without --force, and refuses any non-empty --out that doesn't
-  already look like a mock dir. fixtures/mock_api/README.md is kept; other outputs get a short README.
+  already look like a mock dir. With --force it builds next to fixtures/mock_api, runs the contract test's
+  format/point checks and then tests/test_contracts.py itself on the result, and swaps it in only if both pass
+  (otherwise the old mocks stay), so --force can't break `make test`. Other --out dirs get the same checks as
+  a printed warning. fixtures/mock_api/README.md is kept; other outputs get a short README.
 """
 
 from __future__ import annotations
@@ -497,6 +500,121 @@ def validate_mock_dir(root: Path) -> list[str]:
     return problems
 
 
+def contract_format_problems(root: Path) -> list[str]:
+    """tests/test_contracts.py's media-format, point and overlay checks, on any mock dir.
+
+    Anything listed here would fail `make test` if this dir were fixtures/mock_api.
+    """
+    from PIL import Image
+
+    problems: list[str] = []
+    media = root / "media"
+    for f in sorted(media.rglob("*.jpg")):
+        rel = f.relative_to(root).as_posix()
+        with Image.open(f) as im:
+            size = im.size
+            if im.format != "JPEG":
+                problems.append(f"{rel}: not a JPEG")
+        if f.name in ("crop.jpg", "after.jpg") and size != (800, 600):
+            problems.append(f"{rel}: crops are 800x600 in the contract, this is {size[0]}x{size[1]}")
+        if f.name in ("evidence.jpg", "frame.jpg", "after_frame.jpg", "pointing.jpg") and size not in ((1080, 1920), (1920, 1080)):
+            problems.append(f"{rel}: full frames are 1080x1920 / 1920x1080 in the contract, this is {size[0]}x{size[1]}")
+    for f in sorted(media.rglob("*.mp4")):
+        if f.stat().st_size >= 2_000_000:
+            problems.append(f"{f.relative_to(root).as_posix()}: {f.stat().st_size / 1e6:.1f} MB (the contract caps videos at 2 MB)")
+
+    points: dict[str, tuple[str, Any]] = {}
+    for p in sorted((root / "walks").glob("*.json")):
+        detail = S.WalkDetailOut.model_validate_json(p.read_text())
+        ts = [pt.t for pt in detail.points]
+        if ts != sorted(ts) or [pt.number for pt in detail.points] != list(range(1, len(ts) + 1)):
+            problems.append(f"walks/{p.name}: points must be numbered 1.. in time order")
+        for pt in detail.points:
+            b = pt.hand_box
+            where = f"walks/{p.name} point {pt.number} ({pt.id})"
+            if not (b.x1 - 1 <= pt.fingertip_x <= b.x2 + 1 and b.y1 - 1 <= pt.fingertip_y <= b.y2 + 1):
+                problems.append(f"{where}: fingertip ({pt.fingertip_x}, {pt.fingertip_y}) outside hand_box "
+                                f"x {b.x1}..{b.x2}, y {b.y1}..{b.y2}")
+            if not 0.4 <= pt.hold_s <= 3.0:
+                problems.append(f"{where}: hold_s {pt.hold_s} outside 0.4..3.0")
+            if pt.frame != round(pt.t * 10):
+                problems.append(f"{where}: frame {pt.frame} != round(t * 10) = {round(pt.t * 10)}")
+            points[pt.id] = (p.stem, pt)
+    for p in sorted((root / "items").glob("*.json")):
+        it = S.ItemOut.model_validate_json(p.read_text())
+        ev, where = it.evidence, f"items/{p.name}"
+        if not 0 <= it.video_start_s < it.video_end_s:
+            problems.append(f"{where}: video_start_s {it.video_start_s} / video_end_s {it.video_end_s}")
+        if it.quote_start_s is not None and not it.video_start_s <= it.quote_start_s <= it.video_end_s:
+            problems.append(f"{where}: quote_start_s outside the clip window")
+        if ev is None:
+            problems.append(f"{where}: no evidence")
+            continue
+        if it.point_id is None:
+            if ev.grounding != "none" or ev.pointer or ev.pointing_frame or ev.hand_box:
+                problems.append(f"{where}: a voice-only item has grounding none and no pointer/pointing frame")
+            continue
+        if it.point_id not in points:
+            problems.append(f"{where}: point {it.point_id} is in no walk detail")
+            continue
+        walk_id, pt = points[it.point_id]
+        if walk_id != it.origin_walk_id or ev.grounding == "none" or ev.pointer is None or ev.hand_box is None:
+            problems.append(f"{where}: a pointed item needs its walk's point, a grounding, a pointer and a hand_box")
+        elif not (0 <= ev.pointer.x <= ev.width and 0 <= ev.pointer.y <= ev.height):
+            problems.append(f"{where}: pointer outside the frame")
+        if not (ev.pointing_frame or "").endswith("/pointing.jpg"):
+            problems.append(f"{where}: pointing_frame should be .../pointing.jpg")
+        if abs(ev.t - pt.t) > 1.5:
+            problems.append(f"{where}: evidence frame {ev.t} s is more than 1.5 s from its point at {pt.t} s")
+        if ev.grounding == "pointed_only" and (ev.defect_svg or ev.defect_box):
+            problems.append(f"{where}: pointed_only evidence has no outline")
+        if ev.grounding in ("sam_concept", "sam_box") and not (ev.defect_svg and ev.defect_box):
+            problems.append(f"{where}: a SAM grounding needs defect_svg and defect_box")
+    for p in sorted((root / "walks").glob("*/overlay.json")):
+        ov = S.OverlayOut.model_validate_json(p.read_text())
+        ts = [f.t for f in ov.frames]
+        where = p.relative_to(root).as_posix()
+        if ts != sorted(ts) or len(ts) != len(set(ts)):
+            problems.append(f"{where}: frames out of order or repeated")
+        bad: dict[str, list[float]] = {}
+        for f in ov.frames:
+            if abs(f.t * ov.fps - round(f.t * ov.fps)) >= 1e-6:
+                bad.setdefault(f"off the {ov.fps} fps grid", []).append(f.t)
+            for h in f.hands:
+                b = h.box
+                if not (0 <= b.x1 < b.x2 <= ov.width and 0 <= b.y1 < b.y2 <= ov.height):
+                    bad.setdefault(f"hand box outside {ov.width}x{ov.height}", []).append(f.t)
+                if not (h.svg.startswith("M") and h.svg.endswith("Z")):
+                    bad.setdefault("hand svg isn't a closed path", []).append(f.t)
+                if h.fingertip and not (b.x1 - 1 <= h.fingertip.x <= b.x2 + 1 and b.y1 - 1 <= h.fingertip.y <= b.y2 + 1):
+                    bad.setdefault("fingertip outside its hand box", []).append(f.t)
+        for why, at in bad.items():
+            problems.append(f"{where}: {why} in {len(at)} frame(s), t {at[0]}..{at[-1]} s")
+    return problems
+
+
+def swap_in_and_run_contracts(staging: Path) -> None:
+    """Put `staging` at fixtures/mock_api, run tests/test_contracts.py, and restore the old mocks if it fails."""
+    backup = DEFAULT_OUT.with_name(DEFAULT_OUT.name + ".previous")
+    if backup.exists():
+        shutil.rmtree(backup)
+    os.replace(DEFAULT_OUT, backup)
+    try:
+        os.replace(staging, DEFAULT_OUT)
+        res = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "tests/test_contracts.py"], cwd=REPO_ROOT,
+                             capture_output=True, text=True, env={**os.environ, "PUNCHWALK_CACHE": "readonly"})
+        if res.returncode != 0:
+            tail = "\n".join(line for line in res.stdout.splitlines() if line.startswith(("FAILED", "E ")))[:1500]
+            raise BuildError("tests/test_contracts.py fails on the new mocks; fixtures/mock_api was left as it was:\n"
+                             + (tail or res.stdout[-1500:]))
+    except BaseException:
+        if DEFAULT_OUT.exists():
+            shutil.rmtree(DEFAULT_OUT)
+        os.replace(backup, DEFAULT_OUT)
+        raise
+    shutil.rmtree(backup)
+
+
 # --------------------------------------------------------------------------- main
 
 
@@ -504,6 +622,9 @@ def build(data_dir: Path, out: Path, *, projects: list[str] | None = None, force
           processing_from: Path | None = DEFAULT_OUT, eval_summary: Path | None = DEFAULT_EVAL,
           base_url: str = BASE_URL) -> tuple[Bundle, dict[str, str]]:
     data_dir = data_dir.resolve()
+    if out.resolve() == DEFAULT_OUT.resolve() and not force:
+        raise BuildError(f"refusing to overwrite {DEFAULT_OUT.relative_to(REPO_ROOT)} without --force "
+                         "(it is what the web app and the contract tests run on)")
     report = eval_summary.resolve() if eval_summary is not None and eval_summary.is_file() else None
     with tempfile.TemporaryDirectory(prefix="punchwalk-mockdb-") as tmp, source_environment(data_dir, base_url, report):
         db = copy_database(data_dir, Path(tmp))
@@ -518,10 +639,28 @@ def build(data_dir: Path, out: Path, *, projects: list[str] | None = None, force
     example = load_processing_example(processing_from, bundle) if processing_from else None
     if example:
         merge_example(bundle, example)
-    keep_readme = prepare_out(out, force=force)
-    notes = write_bundle(bundle, out)
-    if not keep_readme:
+    if out.resolve() != DEFAULT_OUT.resolve():
+        prepare_out(out, force=force)
+        notes = write_bundle(bundle, out)
         (out / "README.md").write_text(readme_text(data_dir, bundle, example is not None))
+        return bundle, notes
+    # fixtures/mock_api: build next to it, check it like `make test` does, swap only if everything passes
+    staging = DEFAULT_OUT.with_name(DEFAULT_OUT.name + ".staging")
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir()
+    try:
+        notes = write_bundle(bundle, staging)
+        if (DEFAULT_OUT / "README.md").is_file():
+            shutil.copyfile(DEFAULT_OUT / "README.md", staging / "README.md")
+        problems = validate_mock_dir(staging) + contract_format_problems(staging)
+        if problems:
+            raise BuildError("the new mocks would fail tests/test_contracts.py, so fixtures/mock_api was left as "
+                             "it was:\n  " + "\n  ".join(problems[:25]))
+        swap_in_and_run_contracts(staging)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
     return bundle, notes
 
 
@@ -562,6 +701,10 @@ def main(argv: list[str] | None = None) -> int:
             print("contract problems:\n  " + "\n  ".join(problems[:30]))
             return 1
         print("contract check: every file round-trips through its schema; media resolve, none orphaned")
+        later = contract_format_problems(out)
+        if later:
+            print(f"{len(later)} format/point problem(s) that tests/test_contracts.py would reject if this were "
+                  "fixtures/mock_api (build_mock_api --force refuses then):\n  " + "\n  ".join(later[:25]))
     return 0
 
 

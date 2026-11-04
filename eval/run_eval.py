@@ -43,7 +43,6 @@ from eval.labels import (  # noqa: E402
     Label,
     LabelError,
     ProjectConfig,
-    TemplateLabels,
     discover_labels,
     is_rewalk,
     project_config,
@@ -55,7 +54,6 @@ from eval.report import CostSummary, EvalRun, StageTiming, WalkEval, render_json
 from punchwalk.clients import cost as cost_mod  # noqa: E402
 from punchwalk.config import get_settings, reset_settings  # noqa: E402
 from punchwalk.core.enums import (  # noqa: E402
-    MODEL_SPARK_OPEN,
     ItemStatus,
     JobStatus,
     Provider,
@@ -90,7 +88,8 @@ def rel_repo(path: Path) -> str:
 def eval_environment(data_dir: Path, *, live: bool, orig_cache_dir: Path, orig_ledger: Path) -> Iterator[None]:
     """Point DATA_DIR (database, walk folders) at `data_dir` for the run; restore the env afterwards.
 
-    readonly: reads come from <data_dir>/cache (seeded with per-walk fixture caches) + FIXTURE_CACHE_DIR.
+    readonly: reads come from <data_dir>/cache (a copy of the normal cache dir, e.g. data/cache, plus the
+    per-walk fixture caches) + FIXTURE_CACHE_DIR (fixtures/cache). Nothing is written back.
     --live: the cache stays the normal one (new answers persist) and the cost ledger is the normal one
     (linked in), so the $25 cap still counts every live call.
     """
@@ -101,6 +100,8 @@ def eval_environment(data_dir: Path, *, live: bool, orig_cache_dir: Path, orig_l
     }
     saved = {k: os.environ.get(k) for k in env}
     data_dir.mkdir(parents=True, exist_ok=True)
+    if not live and orig_cache_dir.is_dir() and orig_cache_dir.resolve() != (data_dir / "cache").resolve():
+        shutil.copytree(orig_cache_dir, data_dir / "cache", dirs_exist_ok=True)  # data/cache answers, read-only copy
     if live:
         link = data_dir / "cost_ledger.jsonl"
         if link.resolve() != orig_ledger.resolve():
@@ -266,13 +267,6 @@ def stage_timings(walk: Walk) -> list[StageTiming]:
     return out
 
 
-def call_label(model: str) -> str:
-    """Plain model names for the report (any Spark Open slug, and the Files API)."""
-    if "muse-spark-open" in model:
-        return model_label(MODEL_SPARK_OPEN)
-    return {"meta-files": "Files API"}.get(model, model_label(model))
-
-
 def cost_summary(walk: Walk) -> CostSummary:
     with session_factory() as s:
         calls = s.exec(select(ModelCall).where(ModelCall.walk_id == walk.id)).all()
@@ -283,7 +277,7 @@ def cost_summary(walk: Walk) -> CostSummary:
         c.fallback_calls += int(m.provider == Provider.meta_fallback)
         c.live_usd += 0.0 if m.cached else m.est_cost_usd
         c.latency_ms += m.latency_ms or 0
-        label = call_label(m.model)
+        label = model_label(m.model)
         c.by_model[label] = c.by_model.get(label, 0) + 1
         if not m.ok:
             continue
@@ -314,6 +308,30 @@ def finish_walk_facts(we: WalkEval) -> None:
 # --------------------------------------------------------------------------- orchestration
 
 
+def load_labels(labels_dir: Path, only: list[str] | None) -> dict[str, list[Label]]:
+    """Usable label files (only the walks asked for, plus a re-walk's first walk); problem files are reported."""
+    problems: list[tuple[Path, str]] = []
+    wanted = set(only) if only else None
+    by_walk = discover_labels(labels_dir, walks=wanted, problems=problems)
+    if wanted and any(is_rewalk(rows) for rows in by_walk.values()):
+        everything = discover_labels(labels_dir, problems=[])
+        first = next((w for w, rows in everything.items() if not is_rewalk(rows)), None)
+        if first and first not in by_walk:
+            by_walk = {w: everything[w] for w in everything if w in by_walk or w == first}
+        elif first is None:
+            problems += [(Path(labels_dir) / "walk1.csv", "the first walk a re-walk needs isn't labeled (or isn't usable)")]
+    if wanted:
+        missing = sorted(wanted - set(by_walk) - {p.stem for p, _ in problems})
+        if missing:
+            raise LabelError(f"no labels file for {', '.join(missing)} in {rel_repo(labels_dir)}/")
+    for path, why in problems:
+        if why == "template":
+            print(f"{rel_repo(path)} is still the template — fill it in per FOOTAGE.md ({path.stem} not scored)")
+        else:
+            print(f"{rel_repo(path)}: {why} — fix it per FOOTAGE.md ({path.stem} not scored)")
+    return by_walk
+
+
 def plan_walks(by_walk: dict[str, list[Label]], only: list[str] | None) -> list[tuple[str, WalkKind, str | None]]:
     """[(walk, kind, rewalk_of walk name)] in natural order; a selected re-walk pulls in its first walk."""
     order = list(by_walk)
@@ -324,14 +342,15 @@ def plan_walks(by_walk: dict[str, list[Label]], only: list[str] | None) -> list[
         parent[w] = last_initial if kinds[w] == WalkKind.rewalk else None
         if kinds[w] == WalkKind.initial and last_initial is None:
             last_initial = w
-        if kinds[w] == WalkKind.rewalk and last_initial is None:
-            raise LabelError(f"{w} is a re-walk but no first walk is labeled before it")
     wanted = set(only or order)
     unknown = wanted - set(order)
     if unknown:
         raise LabelError(f"no labels for {', '.join(sorted(unknown))} (labeled: {', '.join(order)})")
-    for w in list(wanted):
-        if parent.get(w):
+    for w in sorted(wanted):
+        if kinds[w] == WalkKind.rewalk and not parent[w]:
+            print(f"{w} is a re-walk but no usable first walk is labeled before it: not scored")
+            wanted.discard(w)
+        elif parent.get(w):
             wanted.add(parent[w])  # type: ignore[arg-type]
     return [(w, kinds[w], parent[w]) for w in order if w in wanted]
 
@@ -402,27 +421,25 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        by_walk = discover_labels(args.labels)
-    except TemplateLabels as exc:
-        for path, why in exc.problems:
-            if why == "template":
-                print(f"{rel_repo(path)} is still the template — fill it in per FOOTAGE.md")
-            else:
-                print(f"{rel_repo(path)}: {why} (still the template?) — fill it in per FOOTAGE.md")
-        print("not scoring: no file in that folder is used as ground truth until every file is filled in")
-        return 1 if args.strict else 0
+        by_walk = load_labels(args.labels, args.walks)
     except LabelError as exc:
         print(f"labels: {exc}")
         return 2
     if not by_walk:
-        print(f"no labels in {rel_repo(args.labels)}/ (expected walk1.csv, walk2.csv, walk3.csv; "
-              "format in eval/labels_template.csv and FOOTAGE.md)")
-        return 0
+        if not any(Path(args.labels).glob("*.csv")):
+            print(f"no labels in {rel_repo(args.labels)}/ (expected walk1.csv, walk2.csv, walk3.csv; "
+                  "format in eval/labels_template.csv and FOOTAGE.md)")
+        else:
+            print("nothing to score: every labels file asked for is still the template or needs fixing")
+        return 1 if args.strict else 0
     try:
         plan = plan_walks(by_walk, args.walks)
     except LabelError as exc:
         print(f"labels: {exc}")
         return 2
+    if not plan:
+        print("nothing to score")
+        return 1 if args.strict else 0
     project = project_config(args.labels, {w: by_walk[w] for w, _, _ in plan}, rooms=args.rooms,
                              keywords=args.keywords, fallback=REPO_ROOT / "eval" / "project.json")
 
