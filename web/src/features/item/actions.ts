@@ -111,7 +111,10 @@ export function historyText(h: HistoryEntryOut): string {
   const you = h.actor === 'human';
   switch (h.action) {
     case 'edited': {
-      const f = FIELD_LABEL[h.field ?? ''] ?? h.field ?? 'item';
+      // A field-less edit is a whole-item write (the API notes "Muse Spark Open wrote the item"):
+      // there is no "from X to Y" to tell, so it says what happened.
+      if (!h.field) return h.note ?? (you ? 'You edited it.' : 'Written by Muse Spark Open on Baseten.');
+      const f = FIELD_LABEL[h.field] ?? h.field;
       return `${you ? 'You changed' : 'Changed'} the ${f} from ${valueLabel(h.field, h.from)} to ${valueLabel(h.field, h.to)}.`;
     }
     case 'status_changed': {

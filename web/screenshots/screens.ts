@@ -71,6 +71,26 @@ export async function seekVideo(page: Page, t: number, play = false) {
 }
 
 /**
+ * itm_2b_12 (general trade, needs a look) as the live app serves #003: the trade's company is
+ * "Northline Appliance Service" and History carries the field-less `edited` entry the pipeline writes.
+ */
+export async function routeLongLabelItem(page: Page) {
+  await page.route('**/mock-api/projects/prj_unit2b.json', async (route) => {
+    const project = await (await route.fetch()).json();
+    project.trades = project.trades.map((t: { trade: string }) => (t.trade === 'general' ? { ...t, company: 'Northline Appliance Service' } : t));
+    await route.fulfill({ json: project });
+  });
+  await page.route('**/mock-api/items/itm_2b_12.json', async (route) => {
+    const item = await (await route.fetch()).json();
+    const [created, ...rest] = item.history;
+    const wrote = { at: created.at, actor: 'model', action: 'edited', field: null, from: null, to: null, note: 'Muse Spark Open wrote the item' };
+    item.history = [created, wrote, ...rest];
+    await route.fulfill({ json: item });
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+}
+
+/**
  * Attaches clips to the first file input (the Record screen). Each clip is a real mock video
  * (fixtures/mock_api/media/<path>) under the given file name, so thumbnails and lengths load.
  */
@@ -185,6 +205,29 @@ export const SCREENS: Screen[] = [
     checklist: '3. Item detail: needs-a-look item, scrolled to Details, Checked (the verifier\'s note) and History',
     path: '/items/itm_2b_12',
     setup: async (page) => {
+      await scrollBy(page, 5000);
+    },
+  },
+  {
+    // The longest real company name in the demo ("Approve and send to Northline Appliance Service", 47
+    // characters): the primary button wraps to two lines beside the More button, never clips.
+    name: 'item-needs-look-long-label',
+    checklist: '3. Item detail: needs-a-look item whose trade has a long company name (primary button wraps)',
+    path: '/items/itm_2b_12',
+    setup: async (page) => {
+      await routeLongLabelItem(page);
+      await page.getByRole('button', { name: 'Approve and send to Northline Appliance Service' }).waitFor({ timeout: 4000 });
+    },
+  },
+  {
+    // The same item scrolled to History: the field-less "edited" entry the pipeline writes shows its note
+    // ("Muse Spark Open wrote the item"), never "Changed the item from nothing to nothing."
+    name: 'item-needs-look-long-label-history',
+    checklist: '3. Item detail: History with the model\'s whole-item write, and the long-label bottom bar',
+    path: '/items/itm_2b_12',
+    setup: async (page) => {
+      await routeLongLabelItem(page);
+      await page.getByRole('button', { name: 'Approve and send to Northline Appliance Service' }).waitFor({ timeout: 4000 });
       await scrollBy(page, 5000);
     },
   },

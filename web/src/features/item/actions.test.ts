@@ -68,6 +68,26 @@ describe('channel and wording', () => {
     expect(historyText(h)).toBe('You changed the trade from Carpentry & millwork to General.');
     expect(historyText({ ...h, action: 'status_changed', field: 'status', from: 'open', to: 'closed' })).toBe('You signed it off.');
   });
+
+  it('shows the note of a field-less edit (the model writing the item), never "from nothing to nothing"', () => {
+    const wrote: HistoryEntryOut = {
+      at: '2026-11-04T01:49:00Z',
+      actor: 'model',
+      action: 'edited',
+      field: null,
+      from: null,
+      to: null,
+      note: 'Muse Spark Open wrote the item',
+    };
+    expect(historyText(wrote)).toBe('Muse Spark Open wrote the item');
+    expect(historyText({ ...wrote, note: null })).toBe('Written by Muse Spark Open on Baseten.');
+    expect(historyText({ ...wrote, actor: 'human', note: null })).toBe('You edited it.');
+    expect(historyText({ ...wrote, field: '' })).not.toMatch(/nothing/);
+    // A model edit with a field keeps the "Changed X from A to B" wording.
+    expect(historyText({ ...wrote, field: 'severity', from: 'cosmetic', to: 'functional', note: null })).toBe(
+      'Changed the severity from Cosmetic to Functional.',
+    );
+  });
 });
 
 describe('edit sheet', () => {

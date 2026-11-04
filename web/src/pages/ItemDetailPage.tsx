@@ -237,7 +237,9 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
       <ActionBar>
         <Button
           size="lg"
-          className={cx('min-w-0 flex-1 whitespace-nowrap', primary.label.length > 24 && 'text-body!')}
+          // Never clipped: a long label ("Approve and send to Northline Appliance Service") drops to the
+          // body size and wraps to two balanced lines; short labels stay one line at the card size.
+          className={cx('min-w-0 flex-1 text-balance', primary.label.length > 24 && 'text-body! py-1.5')}
           busy={busy}
           busyLabel="Saving…"
           onClick={() => runPrimary(primary.kind)}
