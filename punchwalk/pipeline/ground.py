@@ -13,6 +13,10 @@ Per item, in order, recording which worked in `Evidence.grounding`:
 
 Items that are protected (sent, closed or edited by a person) keep their outline and renders.
 
+With GROUNDING_V2=1 (PLAN 10.3) steps 1-3 are replaced by punchwalk/pipeline/ground_v2.py (locate the
+defect itself, SAM box/point prompts, score, Spark Open check, smoothing); its per-item log goes to
+stages/ground_v2.json. Everything else (renders, protection) is the same.
+
 Renders (punchwalk/render/evidence.py, quality 85, no text): evidence.jpg (red outline + 30% fill and
 the blue "pointed here" dot), crop.jpg (4:3 around pointer + defect, outlines drawn), pointing.jpg
 (the pointing frame with the hand outlined in blue). Coordinates are display pixels.
@@ -29,8 +33,10 @@ import numpy as np
 
 from punchwalk.clients import sam
 from punchwalk.clients.base import ApiError
+from punchwalk.config import get_settings
 from punchwalk.core.enums import Grounding, Stage
 from punchwalk.core.models import Box, Evidence
+from punchwalk.pipeline import ground_v2
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, data_dir, rel_to_data
 from punchwalk.pipeline.frames import scale_svg_path
@@ -158,6 +164,33 @@ def ground_one(raw, w: int, h: int, pointer: tuple[float, float] | None, concept
     return (Grounding.pointed_only if pointer is not None else Grounding.none), None, notes
 
 
+def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict[str, Any] | None,
+               concept: str | None, v2_rows: dict[str, Any],
+               ) -> tuple[Grounding, str | None, list[float] | None, str | None, dict[str, Any]]:
+    """GROUNDING_V2=1 (PLAN 10.3): see ground_v2.py. The scored candidates go to stages/ground_v2.json."""
+    notes: dict[str, Any] = {}
+    pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
+    pointing_raw = extra.get("pointing_raw")
+    same = bool(event) and extra.get("frame") is not None and extra.get("frame") == event.get("frame")
+    pointer = ground_v2.resolve_pointer(
+        pointer, aligned=extra.get("aligned"), same_frame=same,
+        pointing_raw=(root / pointing_raw) if pointing_raw else None, evidence_raw=raw,
+        fingertip_display=tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None,
+        notes=notes)
+    res = ground_v2.ground_item(ground_v2.ItemInput(
+        item_id=item.id, raw=raw, width=ev.width, height=ev.height, title=item.title,
+        description=item.description or "", quote=item.quote, pointer=pointer, number=item.number))
+    res.row.update(notes)
+    v2_rows[item.id] = res.row
+    if res.grounding == Grounding.pointed_only and ev.pointer is None:
+        res.grounding = Grounding.none
+    if res.grounding == Grounding.none and ev.pointer is not None:
+        res.grounding = Grounding.pointed_only  # the dot is still drawn
+    box = [round(v, 1) for v in res.defect_box] if res.defect_box else None
+    summary = {"v2": True, "source": res.row["result"].get("source"), "reason": res.row["result"].get("reason")}
+    return res.grounding, res.defect_svg, box, res.concept or concept, summary
+
+
 def run(ctx: StageContext) -> StageOutcome:
     root = data_dir()
     written = ctx.output(Stage.write_items)["items"]
@@ -169,6 +202,8 @@ def run(ctx: StageContext) -> StageOutcome:
         items = [i for i in walk_items(ctx, s) if i.evidence and i.id in written]
     counts = {g.value: 0 for g in Grounding}
     rows: dict[str, Any] = {}
+    v2 = get_settings().GROUNDING_V2
+    v2_rows: dict[str, Any] = {}
     ctx.report({"outlined": 0, "total": len(items)})
     for n, item in enumerate(items, 1):
         ev = Evidence.model_validate(item.evidence)
@@ -181,14 +216,20 @@ def run(ctx: StageContext) -> StageOutcome:
         wrow = written.get(item.id) or {}
         concept = ev.sam_concept or (wrow.get("result") or {}).get("sam_concept")
         r = wrow.get("result") or {}
-        grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"),
-                                           f"{r.get('title', '')} {r.get('description', '')}")
+        extra = extras.get(item.id, {})
+        event = events.get(item.point_id) if item.point_id else None
         defect_svg = defect_box = None
-        if rec is not None:
-            defect_svg = mask_to_frame_svg(rec, ev.width, ev.height, epsilon_px=P.GROUND_SVG_EPSILON_PX) or None
-            defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
-            if not defect_svg:
-                grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
+        if v2:
+            grounding, defect_svg, defect_box, concept, notes = _ground_v2(root, raw, ev, item, extra, event,
+                                                                           concept, v2_rows)
+        else:
+            grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"),
+                                               f"{r.get('title', '')} {r.get('description', '')}")
+            if rec is not None:
+                defect_svg = mask_to_frame_svg(rec, ev.width, ev.height, epsilon_px=P.GROUND_SVG_EPSILON_PX) or None
+                defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
+                if not defect_svg:
+                    grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
         counts[grounding.value] += 1
 
         out = ctx.item_dir(item.id)
@@ -199,8 +240,6 @@ def run(ctx: StageContext) -> StageOutcome:
             cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
         crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
         pointing_rel = ev.pointing_frame
-        extra = extras.get(item.id, {})
-        event = events.get(item.point_id) if item.point_id else None
         if extra.get("pointing_raw") and (root / extra["pointing_raw"]).is_file():
             hand_svg = scale_svg_path(event["svg"], sx, sy) if event and event.get("svg") else None
             pointing_rel = rel_to_data(render_pointing(root / extra["pointing_raw"], out / "pointing.jpg",
@@ -224,7 +263,9 @@ def run(ctx: StageContext) -> StageOutcome:
             s.commit()
         rows[item.id] = {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
         ctx.report({"outlined": counts["sam_concept"] + counts["sam_box"], "done": n, "total": len(items)})
-    ctx.save_output(Stage.ground_defects, {"version": 1, "items": rows})
+    ctx.save_output(Stage.ground_defects, {"version": 2 if v2 else 1, "items": rows})
+    if v2:
+        ground_v2.save_walk_log(ctx.walk_dir, v2_rows)
     outlined = counts["sam_concept"] + counts["sam_box"]
     return StageOutcome(
         counts={"outlined": outlined, "total": len(items), "concept": counts["sam_concept"], "box": counts["sam_box"],

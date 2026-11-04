@@ -71,6 +71,48 @@ GROUND_BOX_EXPAND = 0.10  # SPEC: box prompt = Spark Open's defect_box grown 10%
 GROUND_MAX_AREA_FRAC = 0.35  # an "instance" bigger than this share of the frame is a wall, not a defect
 GROUND_SVG_EPSILON_PX = 1.5  # outline simplification (display px)
 
+# --------------------------------------------------------------------------- 10.3 grounding v2 (GROUNDING_V2=1)
+# (a) locate
+V2_LOCATE_MAX_TOKENS = 2500
+V2_LOCATE_EFFORT = "medium"  # the box quality decides everything downstream; ~1 cent per item
+V2_LOCATE_GRID = True  # draw a labelled pixel grid on the locate image (measured: much tighter boxes)
+V2_GRID_STEP_PX = 100
+V2_RING_RADIUS_DIV = 60  # hollow fingertip ring radius = short side / this
+# (b) segment
+V2_CROP_SMALL_FRAC = 0.15  # box short side below this share of the frame's short side -> run SAM on a crop
+V2_CROP_SCALE = 2.5  # the crop spans this many times the box
+V2_CROP_MIN_SHORT_PX = 640  # ...and at least this many px on its short side
+V2_NEG_OFFSET_FRAC = 0.12  # negative points sit this share of the box size outside each side
+V2_NEG_OFFSET_MIN_PX = 6
+# (c) score
+V2_MAX_AREA_RATIO = 2.5  # SPEC: reject masks larger than this x the Spark box area
+V2_MIN_AREA_RATIO = 0.03  # ...and specks smaller than this x the box area
+V2_MAX_FRAME_FRAC = 0.4  # SPEC: reject masks over this share of the frame unless extent is whole_surface
+V2_DUP_IOU = 0.85  # SPEC: near-duplicates (mask IoU above this) keep only the best
+V2_MAX_FINGER_DIST_FRAC = 0.25  # reject masks further than this share of the frame width from the fingertip
+V2_FINGER_SCALE_FRAC = 0.08  # fingertip score falls to 0 at this share of the frame's short side from the mask
+V2_EXPECTED_FILL = {"spot": 0.6, "region": 0.6, "whole_surface": 0.75}  # mask area / box area when tight
+V2_W_IOU = 0.40  # score weights (renormalised over the terms that apply: no fingertip -> no finger term)
+V2_W_CONF = 0.20
+V2_W_FINGER = 0.25
+V2_W_AREA = 0.15
+V2_MIN_SCORE = 0.35  # below this a candidate is not shown to the check call
+V2_CHECK_TOP = 3  # SPEC: top masks shown to the check call (plus the Spark box)
+V2_CHECK_MAX_TOKENS = 2500
+V2_CHECK_CONTEXT_SCALE = 3.0  # check images are cropped to the candidates' union grown by this...
+V2_CHECK_MIN_FRAC = 0.25  # ...at least this share of the frame's short side
+V2_CHECK_MIN_SHORT_PX = 768  # smaller check crops are upscaled to this short side
+# (f) smooth
+V2_SMOOTH_SIGMA_FRAC = 0.04  # blur sigma = this x sqrt(mask area) px...
+V2_SMOOTH_MIN_SIGMA_PX = 2.0  # ...at least this
+V2_HOLE_FILL_FRAC = 0.15  # fill holes smaller than this share of the component (a ring keeps its middle)
+V2_DP_EPSILON_PX = 2.0  # Douglas-Peucker tolerance before Chaikin (frame px)
+V2_CHAIKIN_ITERS = 2
+V2_BOX_CORNER_FRAC = 0.18  # rounded-rect corner radius as a share of the box's short side
+# (g) pointer mapping
+V2_HOMOGRAPHY_MIN_INLIERS = 15
+V2_HOMOGRAPHY_MAX_SHIFT_FRAC = 0.35
+
 # --------------------------------------------------------------------------- 2.5 runner
 STAGE_RETRIES = 2  # SPEC: retries per stage for retryable errors (5xx, timeouts)
 STAGE_RETRY_BACKOFF_S = (2.0, 6.0)

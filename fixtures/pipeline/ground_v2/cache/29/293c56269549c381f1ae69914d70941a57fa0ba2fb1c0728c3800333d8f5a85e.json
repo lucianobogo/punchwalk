@@ -1,0 +1,54 @@
+{
+ "key": "293c56269549c381f1ae69914d70941a57fa0ba2fb1c0728c3800333d8f5a85e",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(OutlinePick) stage=ground_defects format=json_schema",
+ "created_at": "2026-11-04T06:01:28+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-d50fdd486b3144d8aa73cc692f8b123c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"pick\": 1, \"rationale\": \"Image 1's red outline tightly traces the damaged/discolored burner ring on the front-left (bottom-left) of the glass cooktop with minimal extra area and contains the small hollow blue fingertip marker, while Image 2 uses a larger rounded-rectangle that adds extra undamaged glass around the ring.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793772084,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 400,
+   "prompt_tokens": 3622,
+   "total_tokens": 4022,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 251,
+    "audio_tokens": 0,
+    "reasoning_tokens": 313,
+    "rejected_prediction_tokens": 785,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

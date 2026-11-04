@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     # Pipeline
     # point+voice: pointed items use the fingertip; voice_only: every item takes the voice-only path
     GROUNDING_MODE: Literal["point+voice", "voice_only"] = "point+voice"
+    # PLAN 10.3: defect outline v2 (locate -> SAM box/point prompts -> score -> Spark check -> smooth)
+    GROUNDING_V2: bool = False
     SAM_HAND_CONCEPT: str = DEFAULT_HAND_CONCEPT
     COST_CAP_USD: float = Field(default=25.0, ge=0)
 

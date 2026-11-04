@@ -1,0 +1,12 @@
+{
+ "grounding": "sam_box",
+ "source": "box",
+ "defect_box": [
+  321.0,
+  818.0,
+  759.0,
+  1182.0
+ ],
+ "concept": "burn mark",
+ "pick": 1
+}

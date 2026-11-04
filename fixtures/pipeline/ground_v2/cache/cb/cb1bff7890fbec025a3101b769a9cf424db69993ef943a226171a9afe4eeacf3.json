@@ -1,0 +1,54 @@
+{
+ "key": "cb1bff7890fbec025a3101b769a9cf424db69993ef943a226171a9afe4eeacf3",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(DefectLocate) stage=ground_defects format=json_schema",
+ "created_at": "2026-11-04T06:00:10+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-f95892016df7425885f1f88ca7b6f85c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"visible\": true, \"box\": [310, 805, 760, 1150], \"extent\": \"region\", \"concept\": \"burn mark\", \"rationale\": \"Discolored/damaged scorched ring covering the front-left burner circle on the glass cooktop; the blue fingertip ring at (704,1108) lies on its outer edge, so the box tightly encloses the circular burn area at the bottom-center of the stove top.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793772006,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 778,
+   "prompt_tokens": 2591,
+   "total_tokens": 3369,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 529,
+    "audio_tokens": 0,
+    "reasoning_tokens": 669,
+    "rejected_prediction_tokens": 1221,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 384,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

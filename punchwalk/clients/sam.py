@@ -14,6 +14,7 @@ import json
 import re
 import subprocess
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -24,6 +25,7 @@ from meta_sam_parser import (
     FramePrompt,
     PromptBox,
     PromptObject,
+    PromptPoint,
     SegmentationBoxRecord,
     SegmentationMask,
     SegmentationMaskRecord,
@@ -477,6 +479,55 @@ def boxes_on_image(image: bytes | str | Path, boxes: list[BoxLike] | list[Prompt
     text = build_object_prompt(size=size, objects=_prompt_objects(boxes))
     name = "bytes" if isinstance(image, bytes) else Path(image).name
     return _image_request(image, text, f"SAM {len(boxes)} box prompt(s) on image {name}")
+
+
+@dataclass(frozen=True)
+class ImageObject:
+    """One prompted object on a single image (frame 0): a box and/or positive and negative points,
+    in media pixels. `id` becomes the object id in SAM's output."""
+
+    id: int
+    box: tuple[float, float, float, float] | None = None  # x1, y1, x2, y2 (x2/y2 exclusive)
+    positive: tuple[tuple[float, float], ...] = ()
+    negative: tuple[tuple[float, float], ...] = ()
+
+
+def image_prompt_objects(objects: Sequence[ImageObject], size: tuple[int, int]) -> list[PromptObject]:
+    """ImageObjects -> PromptObjects on frame 0, coordinates rounded and clamped into the media
+    (`size` = (w, h)). Raises ValueError for an object with no box and no points, or an empty box."""
+    w, h = size
+    out: list[PromptObject] = []
+    for o in objects:
+        box = None
+        if o.box is not None:
+            x1, y1, x2, y2 = o.box
+            bx1, by1 = int(min(max(round(x1), 0), w - 1)), int(min(max(round(y1), 0), h - 1))
+            bx2, by2 = int(min(max(round(x2), 0), w)), int(min(max(round(y2), 0), h))
+            if bx2 <= bx1 or by2 <= by1:
+                raise ValueError(f"SAM object {o.id}: empty box {o.box} inside a {w}x{h} image")
+            box = PromptBox(bx1, by1, bx2, by2)
+        points = [
+            PromptPoint(int(min(max(round(x), 0), w - 1)), int(min(max(round(y), 0), h - 1)), label)
+            for pts, label in ((o.positive, "positive"), (o.negative, "negative"))
+            for x, y in pts
+        ]
+        if box is None and not points:
+            raise ValueError(f"SAM object {o.id}: needs a box or at least one point")
+        out.append(PromptObject(id=int(o.id), prompts=[FramePrompt(frame=0, box=box, points=points)]))
+    return out
+
+
+def objects_on_image(image: bytes | str | Path, objects: Sequence[ImageObject]) -> SamResult:
+    """Segment several prompted objects (box / box + points / points, with negative points) on one
+    image in ONE request (`<0f>` prompt). Records come back with `object_id` = `ImageObject.id`."""
+    if not objects:
+        raise ValueError("objects_on_image needs at least one object")
+    if len(objects) > 16:
+        raise ValueError(f"SAM takes at most 16 prompted objects per request (got {len(objects)})")
+    _, size, _ = _image_bytes_and_size(image)
+    text = build_object_prompt(size=size, objects=image_prompt_objects(objects, size))
+    name = "bytes" if isinstance(image, bytes) else Path(image).name
+    return _image_request(image, text, f"SAM {len(objects)} object prompt(s) on image {name}")
 
 
 def boxes_on_video(
