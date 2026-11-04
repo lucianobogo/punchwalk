@@ -3,7 +3,7 @@
 Status: COMPLETE
 Updated: 2026-11-03 22:29 ET
 Current phase: COMPLETE — 51/51 PLAN boxes `[x]`, all verified; live demo at https://punchwalk.fly.dev with the seeded project (live smoke test PASS).
-Last checkpoint: ckpt-9.1 (final). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
+Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9.4, 54 tags); nothing untagged.
 
 ## Next actions
 1. Human only (see Final handoff): `make deploy` once more, iPhone upload check, record the video, fill `<!-- VIDEO_URL -->`, push + make public, submit by Wed 9 PM ET.
