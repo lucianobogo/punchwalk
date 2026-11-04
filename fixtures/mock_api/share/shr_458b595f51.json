@@ -53,5 +53,6 @@
     "sam_concept": "baseboard"
   },
   "closure": null,
-  "walked_at": "2026-11-04T14:40:00Z"
+  "walked_at": "2026-11-04T14:40:00Z",
+  "after_at": null
 }

@@ -33,6 +33,7 @@ from punchwalk.api.progress import (
 from punchwalk.config import get_settings
 from punchwalk.core.enums import (
     CHANNEL_LABEL,
+    MODEL_FILES,
     NOT_CHECKED_ON_REWALK,
     REVIEW_FALSE_FIX,
     STAGE_TITLE,
@@ -831,7 +832,7 @@ def ground_detail(c: dict[str, Any], message: str = "") -> str:
 # in grounding v2), SAM 3.1 draws the outline. One string: ProcessingStepOut.model_label is a single chip.
 STEP_MODEL_LABEL: dict[Stage, str] = {Stage.ground_defects: f"{SPARK} + {SAM}"}
 
-FILES_MODEL = "meta-files"  # ModelCall.model of Files API uploads (pipeline/runner.py)
+FILES_MODEL = MODEL_FILES  # ModelCall.model of Files API uploads (pipeline/runner.py)
 
 
 def processing_summary_out(session: Session, walk: Walk) -> S.ProcessingSummaryOut:
@@ -934,6 +935,8 @@ def share_item_out(item: Item, ctx: ItemContext) -> S.ShareItemOut:
     project = ctx.projects.get(item.project_id)
     walk = ctx.walks.get(item.origin_walk_id)
     c = contact_for(project, item.trade) if project else None
+    closure = closure_out(item)
+    rewalk = ctx.walks.get(closure.rewalk_id) if closure and closure.after_image_url else None
     return S.ShareItemOut(
         token=item.share_token or "",
         project_name=project.name if project else "",
@@ -955,8 +958,9 @@ def share_item_out(item: Item, ctx: ItemContext) -> S.ShareItemOut:
         video_start_s=item.video_start_s,
         video_end_s=item.video_end_s,
         evidence=evidence_out(item.evidence),
-        closure=closure_out(item),
+        closure=closure,
         walked_at=as_utc(walk.recorded_at or walk.created_at) if walk else None,
+        after_at=as_utc(rewalk.recorded_at or rewalk.created_at) if rewalk else None,
     )
 
 

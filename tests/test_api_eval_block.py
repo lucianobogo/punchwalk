@@ -103,4 +103,7 @@ def test_files_api_uploads_are_not_a_model_used(api: TestClient, clip_path: Path
         s.commit()
     proc = check(S.ProcessingSummaryOut, api.get(f"/api/walks/{up['walk_id']}/processing").json())
     assert "meta-files" not in proc.models_used
+    assert "Meta Files API" not in proc.models_used
+    files = [c for c in proc.calls if c.model == views.FILES_MODEL]
+    assert files and {c.model_label for c in files} == {"Meta Files API"}  # "Every model call" names it plainly
     assert proc.models_used.count("Muse Spark Open on Baseten") == 1

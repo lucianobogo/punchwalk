@@ -67,5 +67,6 @@
     "note": "The defect is gone where the inspector pointed.",
     "decided_at": "2026-11-04T13:21:05.600000Z"
   },
-  "walked_at": "2026-11-03T15:12:00Z"
+  "walked_at": "2026-11-03T15:12:00Z",
+  "after_at": "2026-11-04T13:05:00Z"
 }

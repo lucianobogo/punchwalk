@@ -3244,6 +3244,9 @@ class Gen:
             evidence=it.evidence,
             closure=it.closure,
             walked_at=walk.recorded_at,
+            after_at=self.walks[it.closure.rewalk_id].recorded_at
+            if it.closure and it.closure.after_image_url and it.closure.rewalk_id in self.walks
+            else None,
         )
 
     # ---------------------------------------------------------------- run

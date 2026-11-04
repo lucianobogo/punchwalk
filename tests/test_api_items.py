@@ -169,9 +169,51 @@ def test_share_link_and_public_page(api: TestClient, clip_path: Path) -> None:
     shared = check(S.ShareItemOut, api.get(f"/api/share/{link.token}").json())
     assert shared.project_name == "Unit 2B final punch" and shared.company == "Oakline Millwork"
     assert shared.video_url and shared.evidence and shared.walked_at is not None
+    assert shared.closure is None and shared.after_at is None  # no re-walk yet
     assert api.get("/api/share/shr_0000000000").status_code == 404
     api.delete(f"/api/items/{item_id}")
     assert api.get(f"/api/share/{link.token}").status_code == 404
+
+
+def test_share_after_at_is_the_rewalk_date(api: TestClient, clip_path: Path) -> None:
+    """The after photo's caption date: the re-walk's recorded_at (else created_at), not closure.decided_at."""
+    from datetime import UTC, datetime
+
+    from punchwalk.core.enums import WalkKind
+    from punchwalk.core.models import Walk
+
+    project, up = ready_walk(api, clip_path)
+    item_id = items(api, project["id"]).items[0].id
+    token = api.post(f"/api/items/{item_id}/share").json()["token"]
+    recorded = datetime(2026, 11, 3, 15, 12, tzinfo=UTC)
+    uploaded = datetime(2026, 11, 3, 18, 0, tzinfo=UTC)
+    with session_factory() as s:
+        rw = Walk(project_id=project["id"], kind=WalkKind.rewalk, rewalk_of=up["walk_id"], recorded_at=recorded)
+        s.add(rw)
+        row = s.get(Item, item_id)
+        row.status = ItemStatus.closed
+        row.closure = {"rewalk_id": rw.id, "after_image": f"items/{item_id}/after.jpg", "decision": "signed_off",
+                       "decided_at": "2026-11-04T13:21:07Z"}  # fmt: skip
+        s.add(row)
+        s.commit()
+        rw_id = rw.id
+    shared = check(S.ShareItemOut, api.get(f"/api/share/{token}").json())
+    assert shared.closure and shared.closure.decided_at.day == 4
+    assert shared.after_at == recorded
+
+    with session_factory() as s:  # no recorded_at: the upload time stands in, as on the Re-walk page
+        w = s.get(Walk, rw_id)
+        w.recorded_at, w.created_at = None, uploaded
+        s.add(w)
+        s.commit()
+    assert check(S.ShareItemOut, api.get(f"/api/share/{token}").json()).after_at == uploaded
+
+    with session_factory() as s:  # a closure without an after photo has no after date
+        row = s.get(Item, item_id)
+        row.closure = {**row.closure, "after_image": None}
+        s.add(row)
+        s.commit()
+    assert check(S.ShareItemOut, api.get(f"/api/share/{token}").json()).after_at is None
 
 
 def test_dispatch_summary_on_items_and_trades(api: TestClient, clip_path: Path) -> None:

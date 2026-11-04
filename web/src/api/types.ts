@@ -175,6 +175,7 @@ export const MODEL_LABEL: Record<string, string> = {
   'meta-models/muse-spark-open-1026': 'Muse Spark Open on Baseten',
   'meta-models/muse-spark-open': 'Muse Spark Open on Baseten',
   'muse-spark-1.3': 'Muse Spark 1.3',
+  'meta-files': 'Meta Files API',
 };
 
 export const PROVIDER_LABEL: Record<Provider, string> = {
@@ -588,6 +589,7 @@ export interface ShareItemOut {
   evidence: EvidenceOut | null;
   closure: ClosureOut | null;
   walked_at: string | null;
+  after_at: string | null;
 }
 
 /** GET /api/walks/{walk_id}. items: created by an initial walk, or checked by a re-walk. */

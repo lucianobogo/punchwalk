@@ -54,5 +54,6 @@
     "note": "Not checked on re-walk",
     "decided_at": "2026-11-04T13:21:15.300000Z"
   },
-  "walked_at": "2026-11-03T15:12:00Z"
+  "walked_at": "2026-11-03T15:12:00Z",
+  "after_at": null
 }

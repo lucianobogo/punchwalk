@@ -472,6 +472,7 @@ class ShareItemOut(Schema):
     evidence: EvidenceOut | None
     closure: ClosureOut | None
     walked_at: datetime | None
+    after_at: datetime | None  # when the re-walk behind closure.after_image_url was recorded (null: no after photo)
 
 
 # GET /api/walks/{walk_id}  (walk + transcript + pointing events + items)

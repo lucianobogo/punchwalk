@@ -50,6 +50,8 @@ export function ShareBody({ s }: { s: ShareItemOut }) {
   const quoteAt = s.quote_start_s ?? s.video_start_s;
   const c = s.closure;
   const slider = s.status === 'closed' && c?.before_image_url && c.after_image_url;
+  // The re-walk's date, as on item detail (decided_at is when the decision row was written; older payloads lack after_at).
+  const afterAt = s.after_at ?? c?.decided_at ?? null;
   const playable: Playable = {
     id: s.token,
     origin_walk_id: null,
@@ -71,7 +73,7 @@ export function ShareBody({ s }: { s: ShareItemOut }) {
             before={c!.before_image_url!}
             after={c!.after_image_url!}
             beforeLabel={s.walked_at ? formatShortDate(s.walked_at) : 'Before'}
-            afterLabel={c!.decided_at ? `${formatShortDate(c!.decided_at)}, re-walk` : 'Re-walk'}
+            afterLabel={afterAt ? `${formatShortDate(afterAt)}, re-walk` : 'Re-walk'}
             number={s.number}
             badge={badge}
             title={s.title}
