@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 19:00 ET
+Updated: 2026-11-03 19:11 ET
 Current phase: 3.4 tuning (A) → 7.5 eval → 8.1 real seed + Fly import → 8.3 screenshot audit on real data → 9.2/9.3 final → 9.4 final pass. Everything else is done. Far ahead of the PLAN clock (Phase 8 target was Wed 10:30 AM).
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts, CHANGE-4 (uncommitted until the eval builder reports). 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -14,7 +14,6 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
-| CHANGE-4: Closure.before_after (+ ClosureOut.before_after_url, types.ts, mocks, views) | builder (fresh fix builder) | 18:56 | contract files + scripts/gen_mock_api.py + punchwalk/api/views.py | briefed; Track A writes the field |
 | Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
 
 ## Needs human
@@ -30,9 +29,9 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 
 ## Health
 - make test: 427 passed + 1 skipped (Pango) Python, 100 web (Track A report 18:45)
-- make eval: harness verified; real labels landed 18:42 → first real run on walk1/walk3 in progress; walk2 after Phase 7
+- make eval (19:05, pre-tuning): walk1 recall 1.00 (12/12), precision 1.00, trade 1.00, room 1.00, grounding 11/11, needs-review 3/12 (overexposed/blurry photos); walk2 closure 0.50 (6/12) FAIL, false-claim catch 1.00 (2/2); walk3 pending one classify call
 - make screenshots: 35/35 strict (verified at 8.4); 8.3 audit pending on real-walk data
-- Live API spend: $1.43 of $25 at 18:45 (real walks: record $0.44 + full runs $0.54; synthetic fixtures $0.45)
+- Live API spend: $1.99 of $25 at 19:02 (3.4 tuning runs in progress)
 - Deploy: LIVE at https://punchwalk.fly.dev (human ran the runbook 18:55 ET); demo project not seeded yet (snapshot after 3.4)
 - Live URL: https://punchwalk.fly.dev
 
