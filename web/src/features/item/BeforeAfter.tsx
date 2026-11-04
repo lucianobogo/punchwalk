@@ -21,7 +21,7 @@ export function BeforeAfter({
   badge?: TapeTabBadge;
   title: string;
 }) {
-  const [pos, setPos] = useState(0.5);
+  const [pos, setPos] = useState(0.7);
   const box = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
