@@ -42,6 +42,7 @@ import re
 import shutil
 import sqlite3
 import sys
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -57,7 +58,8 @@ from punchwalk.clients.cost import CostCapReached
 from punchwalk.core.enums import Stage
 from punchwalk.pipeline import ground_v2, media
 from punchwalk.pipeline import params as P
-from punchwalk.pipeline.frames import laplacian_variance, rasterize_svg, read_frames
+from punchwalk.pipeline.evidence import iter_frames
+from punchwalk.pipeline.frames import laplacian_variance, rasterize_svg
 
 log = logging.getLogger(__name__)
 
@@ -270,7 +272,8 @@ class Picker:
         self.sam_w, self.sam_h = int(track["sam"]["width"]), int(track["sam"]["height"])
         self.fps = float(track["sam"]["fps"])
         self.windows = turn_windows(drafts)
-        self._frames: dict[int, np.ndarray] = {}
+        # One window's frames in memory at a time (PLAN 10.9): ground_defects runs items on a thread pool.
+        self._decode_lock = threading.Lock()
 
     @classmethod
     def for_walk(cls, walk_dir: Path) -> Picker:
@@ -294,11 +297,41 @@ class Picker:
         lo, hi = max(first, int(round(lo_s * self.fps))), min(last, int(round(hi_s * self.fps)))
         return list(range(lo, hi + 1))
 
+    def frame_stream(self, indices: list[int]):
+        """(index, SAM frame) for `indices`, one at a time, from one sequential decode."""
+        return iter_frames(self.walk_dir / self.meta.sam.path, indices)
+
     def frames(self, indices: list[int]) -> dict[int, np.ndarray]:
-        need = [f for f in indices if f not in self._frames]
-        if need:
-            self._frames.update(read_frames(self.walk_dir / self.meta.sam.path, need))
-        return {f: self._frames[f] for f in indices if f in self._frames}
+        """Decoded SAM frames for `indices` (nothing is kept between calls)."""
+        return dict(self.frame_stream(indices))
+
+    def candidates(self, window: list[int], current: int) -> tuple[list[FrameInfo], list[int], bool, dict[int, np.ndarray]]:
+        """(frame infos, chosen candidate frames, current frame decoded?, {candidate: image}) for a window, from
+        one sequential decode that keeps only the frames that can still be chosen: the current frame, and
+        frames with the hand out of the way that are not below the blur bar of the sharpest frame so far
+        (the final bar can only be higher, so a frame dropped here would have been rejected anyway). The
+        result is exactly `select_candidates(filter_frames(...))` over every decoded frame."""
+        hand = self.hand_fracs(window)
+        sharp: dict[int, float] = {}
+        kept: dict[int, np.ndarray] = {}
+        best = 0.0
+
+        def bar() -> float:
+            return max(P.V4_MIN_SHARPNESS, P.V4_BLUR_REL * best)
+
+        with self._decode_lock:
+            for f, img in self.frame_stream(window):
+                v = laplacian_variance(img)
+                sharp[f] = v
+                if v > best:
+                    best = v
+                    kept = {k: im for k, im in kept.items() if k == current or sharp[k] >= bar()}
+                if f == current or (hand.get(f, 0.0) <= P.V4_MAX_HAND_FRAC and v >= bar()):
+                    kept[f] = img
+            infos = filter_frames(sharp, hand)
+            has_current = current in sharp
+            chosen = select_candidates(infos, current if has_current else None)
+            return infos, chosen, has_current, {f: kept[f] for f in chosen}
 
     def hand_fracs(self, indices: list[int]) -> dict[int, float]:
         want = set(indices)
@@ -313,9 +346,7 @@ class Picker:
     def choose(self, item: PickInput, out_dir: Path, reason: str) -> PickResult:
         window = self.window_frames(item.item_id, item.t)
         current = int(round(item.t * self.fps))
-        imgs = self.frames(window)
-        infos = filter_frames({f: laplacian_variance(img) for f, img in imgs.items()}, self.hand_fracs(window))
-        chosen = select_candidates(infos, current if current in imgs else None)
+        infos, chosen, _, imgs = self.candidates(window, current)
         lo_s, hi_s = (window[0] / self.fps, window[-1] / self.fps) if window else (None, None)
         row: dict[str, Any] = {"reason": reason, "window_s": [lo_s, hi_s], "current_frame": current,
                                "frames_considered": len(infos),
@@ -333,6 +364,7 @@ class Picker:
             data = numbered_jpeg(imgs[f], n)
             (pick_dir / f"cand_{n}.jpg").write_bytes(data)
             images.append(data)
+        del imgs
         try:
             pick, why, provider = ask_pick(item.title, item.description, item.quote, images)
         except (ApiError, llm.StructuredOutputError, CostCapReached) as err:
@@ -450,9 +482,10 @@ def load_log(walk_dir: Path) -> dict[str, Any]:
 
 
 def pick_and_adopt(ctx, root: Path, item, ev, extra: dict[str, Any], event: dict[str, Any] | None, picker: Picker,
-                   reason: str, rows: dict[str, Any]):
+                   reason: str, rows: dict[str, Any], *, save: bool = True):
     """Run the picker for one pipeline item; on a new frame pin the old evidence (items with a closure),
-    move the new frames into place, update Evidence.t / pointer and save. Returns the (new) Evidence."""
+    move the new frames into place, update Evidence.t / pointer and save (save=False: the caller saves the
+    final evidence). Returns the (new) Evidence."""
     from punchwalk.core.models import Evidence
 
     item_dir = ctx.item_dir(item.id)
@@ -474,6 +507,8 @@ def pick_and_adopt(ctx, root: Path, item, ev, extra: dict[str, Any], event: dict
         **ev.model_dump(), "t": res.t, "raw": rel_to_data(item_dir / "raw.jpg"),
         "pointer": None if res.pointer is None else {"x": round(res.pointer[0], 1), "y": round(res.pointer[1], 1)},
     })
+    if not save:
+        return new_ev
     with ctx.session() as s:
         row = s.get(type(item), item.id)
         row.evidence = new_ev.model_dump(mode="json")

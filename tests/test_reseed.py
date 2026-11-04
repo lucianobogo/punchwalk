@@ -143,3 +143,81 @@ def test_a_boot_reseed_logs_import_and_restore(tmp_path: Path, monkeypatch: pyte
     assert f"re-seed (boot): importing {snap}" in lines
     assert f"re-seed: restored prj_demo (14 items) from {snap}" in lines
 
+
+
+# --------------------------------------------------------------------------- boot reset token (PLAN 10.9)
+
+
+@pytest.fixture
+def reset_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
+    snap = tmp_path / "snap.tar.gz"
+    snap.write_bytes(b"x")
+    order: list[str] = []
+
+    def drop() -> int:
+        order.append("drop")
+        return 3
+
+    def importer(p: Path) -> bool:
+        order.append("import")
+        return True
+
+    def run(reason: str, token: str) -> str:
+        monkeypatch.setenv("DEMO_RESET_TOKEN", token)
+        reset_settings()
+        return reseed.reseed_once(reason, snapshot=snap, importer=importer, wait=lambda: True, dropper=drop)
+
+    yield run, order
+    reset_settings()
+
+
+def test_a_new_reset_token_drops_everything_before_the_import_once(reset_env, caplog) -> None:
+    import logging
+
+    run, order = reset_env
+    with caplog.at_level(logging.INFO, logger="punchwalk.reseed"):
+        assert run("boot", "2026-11-04-a") == "done"
+    assert order == ["drop", "import"]
+    assert reseed.stored_token() == "2026-11-04-a"
+    assert "demo reset: token changed, dropped 3 projects" in [r.getMessage() for r in caplog.records]
+    order.clear()
+    assert run("boot", "2026-11-04-a") == "done"  # a restart with the same token: no reset
+    assert order == ["import"]
+    order.clear()
+    assert run("boot", "2026-11-04-b") == "done"  # changed again: one more reset
+    assert order == ["drop", "import"] and reseed.stored_token() == "2026-11-04-b"
+
+
+def test_an_empty_token_or_the_nightly_run_never_drops(reset_env) -> None:
+    run, order = reset_env
+    assert run("boot", "") == "done"
+    assert run("nightly", "2026-11-04-a") == "done"  # only boot looks at the token
+    assert order == ["import", "import"] and reseed.stored_token() == ""
+
+
+def test_a_failed_drop_keeps_the_old_token_so_the_next_boot_retries(reset_env, monkeypatch) -> None:
+    run, order = reset_env
+    monkeypatch.setenv("DEMO_RESET_TOKEN", "t1")
+    reset_settings()
+    assert reseed.maybe_reset(dropper=lambda: None) is None
+    assert reseed.stored_token() == ""
+    assert run("boot", "t1") == "done" and order == ["drop", "import"]
+
+
+def test_run_drop_all_reads_the_seed_scripts_json(monkeypatch) -> None:
+    import subprocess
+
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0, stdout='{"dropped": ["prj_a", "prj_demo"], "walks": []}\n',
+                                           stderr="")
+
+    monkeypatch.setattr(reseed.subprocess, "run", fake_run)
+    assert reseed.run_drop_all() == 2
+    assert seen["cmd"][-2:] == ["--drop-all", "--json"]
+    monkeypatch.setattr(reseed.subprocess, "run",
+                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom"))
+    assert reseed.run_drop_all() is None

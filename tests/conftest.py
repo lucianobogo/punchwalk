@@ -82,6 +82,7 @@ def _reset_client_state() -> None:
     calls.clear_sinks()
     llm._format_mode.clear()
     llm._resolved_model.clear()
+    llm._dead_models.clear()
     sam.IMAGE_INPUT_MODE = "data_url"
 
 

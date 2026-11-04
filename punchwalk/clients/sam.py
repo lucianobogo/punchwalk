@@ -13,6 +13,7 @@ import io
 import json
 import re
 import subprocess
+import threading
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -92,7 +93,7 @@ class SamRecord:
             if self.mask is None:
                 self._raster = np.zeros((0, 0), dtype=np.uint8)
             else:
-                flat = np.frombuffer(decode_mask_to_raster(self.mask), dtype=np.uint8)
+                flat = np.frombuffer(decode_mask_once(self.mask), dtype=np.uint8)
                 self._raster = flat.reshape(int(self.mask.height), int(self.mask.width))
         return self._raster
 
@@ -127,14 +128,77 @@ class SamResult:
 
 
 # --------------------------------------------------------------------------- parsing
+#
+# Decode each mask once (PLAN 10.9). meta_sam_parser's accept check runs `decode_mask_to_raster`, which
+# decodes a one_bit payload and then re-encodes it to prove it is canonical (about half the parse time), and
+# throws the raster away; `SamRecord.raster()` then decoded it strictly again. The parser's check is swapped
+# for one that decodes once with the library's own decoder (no re-encode) and hands the raster to
+# `parse_output`, so each mask is decoded exactly once. The decoded bits are the same bytes the strict path
+# returns for every payload it accepts (tests/test_clients_sam.py replays the walk1 hand tracks to prove it).
+# A payload the fast path can't decode goes through the strict decoder, which raises the library's own error,
+# so the parser's `invalid_mask_payload` diagnostics stay the same. If the library's internals ever move,
+# nothing is patched and the strict path runs as before.
+
+_strict_decode = decode_mask_to_raster
+_decode_store = threading.local()  # per-thread {id(mask): raster bytes} while parse_output runs
+
+
+def _find_fast_decoder():
+    try:
+        from meta_sam_parser import _mask_codec, _segmentation
+    except ImportError:
+        return None, None
+    fast = getattr(_mask_codec, "_decode_raster", None)
+    current = getattr(_segmentation, "decode_mask_to_raster", None)
+    if not callable(fast) or (current is not _strict_decode and not getattr(current, "punchwalk_accept", False)):
+        return None, None
+    return fast, _segmentation
+
+
+_FAST_DECODE, _PARSER_MODULE = _find_fast_decoder()
+
+
+def decode_mask_once(mask: SegmentationMask) -> bytes:
+    """Mask bits (H*W bytes of 0/1): decode-only for one_bit payloads, strict decode otherwise or on error."""
+    w, h, payload = mask.width, mask.height, mask.payload
+    if (
+        _FAST_DECODE is not None and mask.encoding == "one_bit" and isinstance(payload, str)
+        and payload.startswith("!") and type(w) is int and type(h) is int and w > 0 and h > 0
+    ):  # fmt: skip
+        try:
+            out = _FAST_DECODE(payload, w, h)
+            if len(out) == w * h:
+                return out
+        except Exception:  # noqa: BLE001 - the strict decoder below raises the library's own error
+            pass
+    return _strict_decode(mask)
+
+
+def _accept_check(mask: SegmentationMask) -> bytes:
+    """Replacement for the parser's accept check: decode once and keep the raster for parse_output."""
+    raster = decode_mask_once(mask)
+    store = getattr(_decode_store, "rasters", None)
+    if store is not None:
+        store[id(mask)] = raster
+    return raster
+
+
+_accept_check.punchwalk_accept = True  # type: ignore[attr-defined]  # (a re-import patches again)
+if _PARSER_MODULE is not None:
+    _PARSER_MODULE.decode_mask_to_raster = _accept_check
 
 
 def parse_output(raw_text: str, media: Media, media_size: tuple[int, int] | None = None) -> SamResult:
     """Parse SAM output text (concatenated deltas) with meta_sam_parser."""
     fmt = video_segmentation_format() if media == "video" else image_segmentation_format()
     parser = fmt.create_parser()
-    parser.push(raw_text, emit=False)
-    result = parser.finish(CompletedOutcome()).result
+    previous = getattr(_decode_store, "rasters", None)
+    _decode_store.rasters = decoded = {}
+    try:
+        parser.push(raw_text, emit=False)
+        result = parser.finish(CompletedOutcome()).result
+    finally:
+        _decode_store.rasters = previous
 
     frames: dict[int, list[SamRecord]] = {}
     by_key: dict[tuple[int, int], SamRecord] = {}
@@ -164,6 +228,9 @@ def parse_output(raw_text: str, media: Media, media_size: tuple[int, int] | None
                 frames.setdefault(fi, []).append(sr)
             sr.mask, sr.mask_confidence = rec.mask, rec.confidence  # latest revision wins
             sr._raster = sr._svg = None
+            bits = decoded.get(id(rec.mask))  # decoded by the accept check: no second decode
+            if bits is not None:
+                sr._raster = np.frombuffer(bits, dtype=np.uint8).reshape(int(rec.mask.height), int(rec.mask.width))
             if sr.confidence is None:
                 sr.confidence = rec.confidence
     size = media_size or size_from_output(raw_text)

@@ -34,6 +34,7 @@ kill_timeout = "30s"  # jobs interrupted by a restart are re-queued and resume o
   DEMO_RESEED = "true"
   DEMO_RESEED_AT = "03:00"
   DEMO_SNAPSHOT = "/app/demo/seed_snapshot.tar.gz"
+  DEMO_RESET_TOKEN = "2026-11-04-a"  # change this value and deploy to wipe uploaded projects; the demo project is re-imported on boot
   # Secrets (MODEL_API_KEY, BASETEN_API_KEY, SLACK_WEBHOOK_URL, RESEND_API_KEY, EMAIL_FROM) are set
   # with `fly secrets import`, never here.
 

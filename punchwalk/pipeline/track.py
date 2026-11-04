@@ -16,6 +16,11 @@ indices are always read from the stream marker (they can skip).
 `frame` is the global SAM frame (t = frame / fps); box and svg are SAM-frame pixels (scale by
 meta.json `scale` for display pixels). The raw SAM stream text of each part is kept next to it in
 `stages/track_hands.<label>.txt`.
+
+Nothing to point at (PLAN 10.9): when classify_turns found nothing to look for (no defect and no status
+update was said: a silent walk, or only small talk), SAM is not called at all. The document has no parts
+and no records (`"skipped": "nothing said to point at"`), find_points finds nothing, and the stage's
+message tells the person what to do (NO_NARRATION / NO_DEFECTS); the processing checklist shows it.
 """
 
 from __future__ import annotations
@@ -35,6 +40,9 @@ from punchwalk.render.masks import mask_to_frame_svg
 
 log = logging.getLogger(__name__)
 TRACK_VERSION = 1
+NO_NARRATION = "We didn't hear any narration. Say each defect out loud and upload again."
+NO_NARRATION_REWALK = "We didn't hear any narration. Say each item's status out loud and upload again."
+NO_DEFECTS = "We didn't hear a defect described. Point at each one, say what's wrong, and upload again."
 
 
 def hand_concept() -> str:
@@ -115,7 +123,41 @@ def track_walk(walk_dir: Path, meta: IngestMeta, concept: str | None = None) -> 
     }
 
 
+def nothing_to_point_at(ctx: StageContext) -> tuple[bool, int]:
+    """(True when classify_turns found no defect and no status update, number of turns heard). A walk
+    without a classify output (older runs) is tracked as before."""
+    from punchwalk.pipeline.context import StageInputMissing
+    from punchwalk.pipeline.mentions import build_mentions
+
+    try:
+        turns = ctx.output(Stage.classify_turns)["turns"]
+    except (StageInputMissing, FileNotFoundError, KeyError):
+        return False, -1
+    return not build_mentions(turns), len(turns)
+
+
+def empty_track(meta: IngestMeta, concept: str | None = None) -> dict[str, Any]:
+    w, h = meta.sam.width, meta.sam.height
+    return {
+        "version": TRACK_VERSION,
+        "concept": concept or hand_concept(),
+        "sam": {"width": w, "height": h, "fps": meta.sam.fps, "frame_count": meta.sam.frame_count},
+        "parts": [],
+        "records": [],
+        "skipped": "nothing said to point at",
+    }
+
+
 def run(ctx: StageContext) -> StageOutcome:
+    skip, heard = nothing_to_point_at(ctx)
+    if skip:  # a silent walk: no SAM call (it would cost ~$0.04 and ~30 s and find nothing to use)
+        from punchwalk.core.enums import WalkKind
+
+        ctx.save_output(Stage.track_hands, empty_track(ctx.meta))
+        silent = NO_NARRATION_REWALK if ctx.kind == WalkKind.rewalk else NO_NARRATION
+        msg = NO_DEFECTS if heard else silent
+        log.info("track_hands: %s turn(s), nothing to point at; SAM not called", heard)
+        return StageOutcome(counts={"frames": 0, "hands": 0, "parts": 0, "skipped": 1}, message=msg)
     doc = track_walk(ctx.walk_dir, ctx.meta)
     ctx.save_output(Stage.track_hands, doc)
     objects = len({r["object_id"] for r in doc["records"]})

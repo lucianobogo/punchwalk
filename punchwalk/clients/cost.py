@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 
@@ -69,6 +70,9 @@ def ledger_path() -> Path:
     return get_settings().ledger_path
 
 
+_ledger_lock = threading.Lock()  # per-item calls run on a thread pool (calls.map_in_order)
+
+
 def append_ledger(record) -> None:  # record: CallRecord (import cycle avoided)
     path = ledger_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,8 +82,9 @@ def append_ledger(record) -> None:  # record: CallRecord (import cycle avoided)
             "stage", "latency_ms", "cached", "ok", "error", "tokens_in", "tokens_out", "frames",
         }
     )
-    with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(line, sort_keys=True) + "\n")
+    text = json.dumps(line, sort_keys=True) + "\n"
+    with _ledger_lock, path.open("a", encoding="utf-8") as f:
+        f.write(text)
 
 
 def read_ledger(path: Path | None = None) -> list[dict]:

@@ -10,10 +10,17 @@ snapshot. Other projects are never touched.
 - It waits until the job worker is idle (no queued or running job) before importing, for at most
   `IDLE_WAIT_MAX_S`; a busy worker postpones the import, it never interrupts a walk.
 - A missing snapshot is logged and skipped. Every run is logged with its outcome.
+
+Boot reset (PLAN 10.9): at boot only (never the nightly run), when `DEMO_RESET_TOKEN` is set and differs
+from the token stored in `DATA_DIR/.demo_reset_token`, every project is dropped first (rows, jobs, model
+calls and walk media, via `scripts/seed.py --drop-all`), then the snapshot is imported as usual and the
+token is stored. The same token on the next restart drops nothing; an empty token never drops anything.
+So changing the value in fly.toml and deploying wipes uploaded projects once.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 import sys
@@ -39,6 +46,7 @@ IDLE_POLL_S = 15.0
 IDLE_WAIT_MAX_S = 45 * 60.0
 IMPORT_TIMEOUT_S = 15 * 60.0
 BOOT_DELAY_S = 5.0  # let the server answer health checks first
+RESET_TOKEN_FILE = ".demo_reset_token"  # under DATA_DIR
 
 
 def parse_hhmm(text: str) -> dtime:
@@ -94,6 +102,55 @@ def run_import(snapshot: Path) -> bool:
     return True
 
 
+def run_drop_all() -> int | None:
+    """`scripts/seed.py --drop-all`: drop every project. Returns how many, or None when it failed."""
+    cmd = [sys.executable, str(SEED_SCRIPT), "--drop-all", "--json"]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=IMPORT_TIMEOUT_S, cwd=REPO_ROOT)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        log.error("demo reset: the drop didn't run: %s", exc)
+        return None
+    if res.returncode != 0:
+        tail = (res.stdout or "").strip().splitlines()[-3:] + (res.stderr or "").strip().splitlines()[-3:]
+        log.error("demo reset: the drop failed (exit %d): %s", res.returncode, " | ".join(tail))
+        return None
+    try:
+        return len(json.loads((res.stdout or "").strip().splitlines()[-1])["dropped"])
+    except (IndexError, KeyError, TypeError, ValueError):
+        return 0
+
+
+def token_path() -> Path:
+    return Path(get_settings().DATA_DIR) / RESET_TOKEN_FILE
+
+
+def stored_token() -> str:
+    try:
+        return token_path().read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+def maybe_reset(*, dropper: Callable[[], int | None] = run_drop_all) -> int | None:
+    """The boot reset: drop every project when DEMO_RESET_TOKEN is set and differs from the stored one, then
+    store it. Returns how many projects were dropped (None: no reset was due, or the drop failed)."""
+    token = (get_settings().DEMO_RESET_TOKEN or "").strip()
+    if not token:
+        return None
+    if stored_token() == token:
+        log.info("demo reset: token %r already applied; nothing dropped", token)
+        return None
+    dropped = dropper()
+    if dropped is None:
+        log.error("demo reset: token %r not applied (the drop failed); it is tried again on the next boot", token)
+        return None
+    path = token_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(token + "\n", encoding="utf-8")
+    log.info("demo reset: token changed, dropped %d projects", dropped)
+    return dropped
+
+
 def demo_item_count() -> int:
     from punchwalk.core.models import Item
 
@@ -103,16 +160,19 @@ def demo_item_count() -> int:
 
 def reseed_once(
     reason: str, *, snapshot: Path | None = None, importer: Callable[[Path], bool] = run_import,
-    wait: Callable[[], bool] = wait_until_idle,
+    wait: Callable[[], bool] = wait_until_idle, dropper: Callable[[], int | None] = run_drop_all,
 ) -> str:  # fmt: skip
-    """One re-seed. Returns what happened: "done", "failed", "no_snapshot" or "busy"."""
+    """One re-seed. Returns what happened: "done", "failed", "no_snapshot" or "busy". At boot, the reset
+    token is checked first (after the worker is idle, before the import): see the module docstring."""
     path = Path(snapshot or get_settings().DEMO_SNAPSHOT)
-    if not path.is_file():
+    if not path.is_file():  # no demo to restore: never wipe anything either
         log.warning("re-seed (%s): no snapshot at %s; skipped", reason, path)
         return "no_snapshot"
     if not wait():
         log.warning("re-seed (%s): the job worker stayed busy; skipped until the next run", reason)
         return "busy"
+    if reason == "boot":
+        maybe_reset(dropper=dropper)
     log.info("re-seed (%s): importing %s", reason, path)
     return "done" if importer(path) else "failed"
 

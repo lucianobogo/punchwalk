@@ -4,6 +4,8 @@
     uv run python scripts/seed.py                         # walk1 (first walk), walk2 (re-walk), walk3 if present
     uv run python scripts/seed.py --walks synth_walk      # the synthetic recording in fixtures/pipeline
     uv run python scripts/seed.py --reset                 # drop the demo project first, then seed
+    uv run python scripts/seed.py --drop-project prj_x    # drop one project (rows + walk media), nothing else
+    uv run python scripts/seed.py --drop-all              # drop EVERY project (the boot reset token uses this)
 
 What it does:
 1. Creates or updates project `prj_demo`: address, rooms, keywords, and a fictional trades directory
@@ -159,7 +161,9 @@ def recorded_at(src: Path):
 # --------------------------------------------------------------------------- database
 
 
-def reset_project() -> None:
+def reset_project(project_id: str = PROJECT_ID) -> list[str]:
+    """Drop one project: its dispatches, items, walks (with their points, turns, model calls and jobs) and
+    each walk's media folder under DATA_DIR/walks. Returns the dropped walk ids."""
     from sqlmodel import col, delete, select
 
     from punchwalk.config import get_settings
@@ -167,16 +171,49 @@ def reset_project() -> None:
     from punchwalk.db import session_factory
 
     with session_factory() as s:
-        walk_ids = list(s.exec(select(Walk.id).where(Walk.project_id == PROJECT_ID)).all())
-        s.exec(delete(Dispatch).where(col(Dispatch.project_id) == PROJECT_ID))
-        s.exec(delete(Item).where(col(Item.project_id) == PROJECT_ID))
+        walk_ids = list(s.exec(select(Walk.id).where(Walk.project_id == project_id)).all())
+        s.exec(delete(Dispatch).where(col(Dispatch.project_id) == project_id))
+        s.exec(delete(Item).where(col(Item.project_id) == project_id))
         for table in (Point, Turn, ModelCall, Job):
             s.exec(delete(table).where(col(table.walk_id).in_(walk_ids)))
         s.exec(delete(Walk).where(col(Walk.id).in_(walk_ids)))
-        s.exec(delete(Project).where(col(Project.id) == PROJECT_ID))
+        s.exec(delete(Project).where(col(Project.id) == project_id))
         s.commit()
+    walks_root = (Path(get_settings().DATA_DIR) / "walks").resolve()
     for wid in walk_ids:
-        shutil.rmtree(Path(get_settings().DATA_DIR) / "walks" / wid, ignore_errors=True)
+        folder = (walks_root / wid).resolve()
+        if folder.parent == walks_root:  # never outside DATA_DIR/walks
+            shutil.rmtree(folder, ignore_errors=True)
+    return walk_ids
+
+
+def project_ids() -> list[str]:
+    from sqlmodel import select
+
+    from punchwalk.core.models import Project
+    from punchwalk.db import session_factory
+
+    with session_factory() as s:
+        return sorted(s.exec(select(Project.id)).all())
+
+
+def drop_projects(ids: list[str] | None = None) -> dict[str, Any]:
+    """Drop the given projects (None: every project) with `reset_project`. Returns what was dropped."""
+    known = project_ids()
+    targets = known if ids is None else list(dict.fromkeys(ids))
+    missing = [p for p in targets if p not in known]
+    if missing:
+        raise SeedError(f"No project {', '.join(missing)} in {_db_where()}; nothing was dropped.")
+    walks: list[str] = []
+    for pid in targets:
+        walks += reset_project(pid)
+    return {"dropped": targets, "walks": walks}
+
+
+def _db_where() -> str:
+    from punchwalk.config import get_settings
+
+    return f"DATA_DIR {get_settings().DATA_DIR}"
 
 
 def upsert_project(rooms: list[str], keywords: list[str]) -> None:
@@ -558,6 +595,10 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     ap.add_argument("--no-sends", action="store_true",
                     help="seed with AUTO_SEND off: no automatic sends or re-walk re-sends, so no Dispatch rows")
     snap = ap.add_mutually_exclusive_group()
+    snap.add_argument("--drop-project", nargs="+", metavar="PROJECT_ID", default=None,
+                      help="drop these projects (rows + walk media) and stop; no seeding")
+    snap.add_argument("--drop-all", action="store_true",
+                      help="drop EVERY project (rows + walk media) and stop; no seeding")
     snap.add_argument("--export", type=Path, metavar="TAR_GZ", help="after seeding, write a snapshot of the demo project")
     snap.add_argument("--import", dest="import_", type=Path, metavar="TAR_GZ",
                       help="load a snapshot instead of running the pipeline (replaces the demo project)")
@@ -595,6 +636,14 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
     from punchwalk.db import init_db
 
     init_db()
+    if args.drop_all or args.drop_project:
+        info = drop_projects(None if args.drop_all else args.drop_project)
+        if args.json:
+            print(json.dumps(info))
+        else:
+            print(f"dropped {len(info['dropped'])} project(s), {len(info['walks'])} walk(s): "
+                  f"{', '.join(info['dropped']) or '-'}")
+        return info
     if args.import_:
         walk_ids = import_snapshot(args.import_)
         info = summary(walk_ids)

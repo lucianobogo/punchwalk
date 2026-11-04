@@ -9,6 +9,8 @@ from PIL import Image
 from pydantic import BaseModel, Field
 
 from punchwalk.clients import llm
+from punchwalk.clients.base import ApiError
+from punchwalk.clients.cache import make_key
 from tests.conftest import FIXTURES, PROBE
 
 BASETEN = "https://inference.baseten.co/v1/chat/completions"
@@ -219,6 +221,44 @@ def test_unknown_slug_falls_through_to_alternate(respx, no_fixture_cache, readwr
     respx.post(BASETEN).mock(side_effect=handler)
     _, rec = llm.structured(Item, [{"role": "user", "content": "x"}])
     assert rec.model == "meta-models/muse-spark-open" and llm._resolved_model["baseten"] == rec.model
+
+
+def test_a_404_slug_is_skipped_for_the_rest_of_the_process(respx, no_fixture_cache, readwrite, caplog):
+    """PLAN 10.9: the first 404 on the hackathon slug moves every later call (any prompt, even after the
+    catalog slug failed once) straight to the catalog slug; logged once; cache keys don't change."""
+    import logging
+
+    sent: list[str] = []
+    state = {"fail_next": False}
+
+    def handler(request):
+        model = json.loads(request.content)["model"]
+        sent.append(model)
+        if model.endswith("-1026"):
+            return json_response(404, {"error": "please check the model you provided"})
+        if state["fail_next"]:
+            state["fail_next"] = False
+            return json_response(400, {"error": "bad request"})
+        return chat(json.dumps(GOOD))
+
+    respx.post(BASETEN).mock(side_effect=handler)
+    with caplog.at_level(logging.WARNING, logger="punchwalk.clients.llm"):
+        llm.structured(Item, [{"role": "user", "content": "first"}])
+        llm._resolved_model.clear()  # even without the success memo, the 404 itself is remembered
+        state["fail_next"] = True
+        with pytest.raises(ApiError):
+            llm.structured(Item, [{"role": "user", "content": "second"}])
+        _, rec = llm.structured(Item, [{"role": "user", "content": "third"}])
+    assert sent == ["meta-models/muse-spark-open-1026", "meta-models/muse-spark-open",
+                    "meta-models/muse-spark-open", "meta-models/muse-spark-open"]
+    assert rec.model == "meta-models/muse-spark-open"
+    notes = [r.getMessage() for r in caplog.records if "404" in r.getMessage()]
+    assert len(notes) == 1 and "muse-spark-open-1026" in notes[0]
+    # the cache key is the request's (model included): a replay of "third" finds it under the catalog slug
+    req = llm._build_request("baseten", "meta-models/muse-spark-open",
+                             [{"role": "user", "content": "third"}], "Item", llm.strict_schema(Item), "low", 1500,
+                             "json_schema")
+    assert rec.cache_key == make_key("baseten", llm.ENDPOINT, "meta-models/muse-spark-open", llm._redact_images(req))
 
 
 def test_rejected_json_schema_downgrades_to_json_object(respx, no_fixture_cache, readwrite):

@@ -283,3 +283,32 @@ def test_export_only_packs_the_project_with_its_sends(seed, api: TestClient, tmp
     counts = seed.run(["--export-only", "--export", str(snap)])
     assert snap.is_file() and counts["dispatches"] == seed.dispatch_count()
 
+
+
+def test_drop_project_and_drop_all(seed, api: TestClient) -> None:
+    """PLAN 10.9: --drop-project removes one project (rows + walk media) and leaves the others; --drop-all
+    removes every project. Runs on the test's scratch DATA_DIR."""
+    from sqlmodel import select
+
+    from punchwalk.core.models import ModelCall, Project, Walk
+    from punchwalk.db import session_factory
+
+    seed.run(["--walks", "synth_walk"])
+    data = Path(get_settings().DATA_DIR)
+    demo_walks = [w["id"] for w in api.get("/api/walks?project_id=prj_demo").json()["walks"]]
+    assert demo_walks and all((data / "walks" / w).is_dir() for w in demo_walks)
+    other = api.post("/api/projects", json={"name": "Uploaded by a judge"}).json()
+    with pytest.raises(seed.SeedError, match="No project prj_nope"):
+        seed.run(["--drop-project", "prj_nope"])
+
+    info = seed.run(["--drop-project", "prj_demo"])
+    assert info["dropped"] == ["prj_demo"] and sorted(info["walks"]) == sorted(demo_walks)
+    with session_factory() as s:
+        assert [p.id for p in s.exec(select(Project)).all()] == [other["id"]]
+        assert not s.exec(select(Walk)).all() and not s.exec(select(ModelCall)).all()
+    assert not any((data / "walks" / w).exists() for w in demo_walks)
+
+    info = seed.run(["--drop-all", "--json"])
+    assert info["dropped"] == [other["id"]]
+    with session_factory() as s:
+        assert not s.exec(select(Project)).all()

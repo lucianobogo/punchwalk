@@ -32,12 +32,15 @@ from __future__ import annotations
 import logging
 import math
 import re
+import threading
+from contextlib import closing
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from punchwalk.clients import sam
+from punchwalk.clients import calls, sam
 from punchwalk.clients.base import ApiError
 from punchwalk.config import get_settings
 from punchwalk.core.enums import REVIEW_NOT_IN_FRAME, Grounding, Stage
@@ -200,8 +203,9 @@ def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict
 
 def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Grounding, defect_svg: str | None,
                      defect_box: list[float] | None, concept: str | None, extra: dict[str, Any],
-                     event: dict[str, Any] | None) -> Evidence:
-    """evidence.jpg, crop.jpg and pointing.jpg for the item's current frame + outline; saves Item.evidence."""
+                     event: dict[str, Any] | None, *, save: bool = True) -> Evidence:
+    """evidence.jpg, crop.jpg and pointing.jpg for the item's current frame + outline; saves Item.evidence
+    (save=False: the caller saves it, see `save_evidence`)."""
     meta = ctx.meta
     sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
     raw = root / ev.raw
@@ -230,18 +234,24 @@ def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Gro
         "pointing_frame": pointing_rel,
     }
     new_ev = Evidence.model_validate({**ev.model_dump(), **update})
-    with ctx.session() as s:
-        row = s.get(type(item), item.id)
-        row.evidence = new_ev.model_dump(mode="json")
-        s.add(row)
-        s.commit()
+    if save:
+        save_evidence(ctx, item, new_ev)
     return new_ev
 
 
+def save_evidence(ctx: StageContext, item, ev: Evidence) -> None:
+    with ctx.session() as s:
+        row = s.get(type(item), item.id)
+        row.evidence = ev.model_dump(mode="json")
+        s.add(row)
+        s.commit()
+
+
 def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[str, Any], extra: dict[str, Any],
-                      event: dict[str, Any] | None, v2: bool, v2_rows: dict[str, Any],
+                      event: dict[str, Any] | None, v2: bool, v2_rows: dict[str, Any], *, save: bool = True,
                       ) -> tuple[Evidence, Grounding, dict[str, Any]]:
-    """Outline one item on its current frame (v1 or v2), render, save. (new evidence, grounding, notes)."""
+    """Outline one item on its current frame (v1 or v2), render, save (save=False: the caller saves).
+    (new evidence, grounding, notes)."""
     raw = root / ev.raw
     pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
     concept = ev.sam_concept or (wrow.get("result") or {}).get("sam_concept")
@@ -258,7 +268,8 @@ def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[st
             defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
             if not defect_svg:
                 grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
-    new_ev = _render_and_save(ctx, root, item, ev, grounding, defect_svg, defect_box, concept, extra, event)
+    new_ev = _render_and_save(ctx, root, item, ev, grounding, defect_svg, defect_box, concept, extra, event,
+                              save=save)
     return new_ev, grounding, {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
 
 
@@ -287,6 +298,18 @@ def reground_one(ctx: StageContext, item, ev: Evidence) -> tuple[Evidence, Groun
     return out
 
 
+@dataclass
+class _Outcome:
+    """One item's grounding, computed on the pool; the stage saves it in item order."""
+
+    kept: bool = False  # protected: outline and renders left as they are
+    ev: Evidence | None = None
+    grounding: Grounding = Grounding.none
+    notes: dict[str, Any] = field(default_factory=dict)
+    v2_rows: dict[str, Any] = field(default_factory=dict)
+    pick_rows: dict[str, Any] = field(default_factory=dict)
+
+
 def run(ctx: StageContext) -> StageOutcome:
     root = data_dir()
     written, extras, events = _inputs(ctx)
@@ -300,15 +323,22 @@ def run(ctx: StageContext) -> StageOutcome:
     talking_only = settings.GROUNDING_MODE == "voice_only"
     v2_rows: dict[str, Any] = {}
     pick_rows: dict[str, Any] = {}
-    picker: frame_pick.Picker | None = None
-    ctx.report({"outlined": 0, "total": len(items)})
-    for n, item in enumerate(items, 1):
+    picker: list[frame_pick.Picker] = []
+    picker_lock = threading.Lock()
+
+    def get_picker() -> frame_pick.Picker:
+        with picker_lock:
+            if not picker:
+                picker.append(frame_pick.Picker.for_walk(ctx.walk_dir))
+            return picker[0]
+
+    def ground_item(item) -> _Outcome:
+        """Everything for one item but the database write (runs on the pool)."""
         ev = Evidence.model_validate(item.evidence)
         protected = is_protected(item)
         if protected and not reground_all:  # sent, closed or edited by a person: keep its outline and renders
-            counts[ev.grounding.value] += 1
-            rows[item.id] = {"grounding": ev.grounding.value, "kept": True}
-            continue
+            return _Outcome(kept=True, grounding=ev.grounding)
+        out = _Outcome()
         before = (ev.t, ev.defect_svg)
         if v2 and talking_only and ev.pointer is not None:  # PLAN 10.5 evaluation: every item as unpointed
             ev = ev.model_copy(update={"pointer": None})
@@ -320,25 +350,41 @@ def run(ctx: StageContext) -> StageOutcome:
                                   root)
         came_not_in_frame = (item.verification or {}).get("note") == REVIEW_NOT_IN_FRAME
         if v2 and (ev.pointer is None or came_not_in_frame):  # PLAN 10.4: the picker first
-            picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
             reason = frame_pick.REASON_UNPOINTED if ev.pointer is None else frame_pick.REASON_NOT_IN_FRAME
-            ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, reason, pick_rows)
-        new_ev, grounding, notes = ground_and_render(ctx, root, item, ev, wrow, extra, event, v2, v2_rows)
-        if v2 and _not_visible(v2_rows.get(item.id)) and item.id not in pick_rows:
-            picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
-            picked = frame_pick.pick_and_adopt(ctx, root, item, new_ev, extra, event, picker,
-                                               frame_pick.REASON_NOT_VISIBLE, pick_rows)
+            ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, get_picker(), reason, out.pick_rows,
+                                           save=False)
+        new_ev, grounding, notes = ground_and_render(ctx, root, item, ev, wrow, extra, event, v2, out.v2_rows,
+                                                     save=False)
+        if v2 and _not_visible(out.v2_rows.get(item.id)) and item.id not in out.pick_rows:
+            picked = frame_pick.pick_and_adopt(ctx, root, item, new_ev, extra, event, get_picker(),
+                                               frame_pick.REASON_NOT_VISIBLE, out.pick_rows, save=False)
             if picked.t != new_ev.t:
-                new_ev, grounding, notes = ground_and_render(ctx, root, item, picked, wrow, extra, event, v2, v2_rows)
+                new_ev, grounding, notes = ground_and_render(ctx, root, item, picked, wrow, extra, event, v2,
+                                                             out.v2_rows, save=False)
         notes["changed"] = (new_ev.t, new_ev.defect_svg) != before
         if protected:
             notes["regrounded_protected"] = True
             if item.closure and notes["changed"]:  # keep before/after framing consistent (after side kept)
                 frame_pick.refresh_before_after(root, item.closure, root / new_ev.crop)
-        counts[grounding.value] += 1
-        rows[item.id] = notes
-        ctx.report({"outlined": counts["sam_concept"] + counts["sam_box"] + counts["spark_box"], "done": n,
-                    "total": len(items)})
+        out.ev, out.grounding, out.notes = new_ev, grounding, notes
+        return out
+
+    ctx.report({"outlined": 0, "total": len(items)})
+    # PLAN 10.9: items are grounded on a small pool (model calls + renders); each result is saved here, in
+    # item order, so rows, logs and the database read exactly as a one-at-a-time loop leaves them.
+    with closing(calls.map_in_order(ground_item, items)) as results:
+        for n, task in enumerate(results, 1):
+            item, o = task.item, task.get()
+            counts[o.grounding.value] += 1
+            if o.kept:
+                rows[item.id] = {"grounding": o.grounding.value, "kept": True}
+                continue
+            save_evidence(ctx, item, o.ev)
+            v2_rows.update(o.v2_rows)
+            pick_rows.update(o.pick_rows)
+            rows[item.id] = o.notes
+            ctx.report({"outlined": counts["sam_concept"] + counts["sam_box"] + counts["spark_box"], "done": n,
+                        "total": len(items)})
     ctx.save_output(Stage.ground_defects, {"version": 2 if v2 else 1, "items": rows})
     if v2:
         ground_v2.save_walk_log(ctx.walk_dir, v2_rows)

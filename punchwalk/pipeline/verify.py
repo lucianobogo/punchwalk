@@ -13,11 +13,12 @@ from __future__ import annotations
 
 import logging
 import re
+from contextlib import closing
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-from punchwalk.clients import llm
+from punchwalk.clients import calls, llm
 from punchwalk.clients.base import ApiError
 from punchwalk.clients.cost import CostCapReached
 from punchwalk.core.enums import (
@@ -154,15 +155,22 @@ def status_locked(item) -> bool:
     return is_protected(item) or bool(item.closure)
 
 
-def _check_and_apply(ctx: StageContext, item, *, protected: bool) -> tuple[str, dict[str, Any], ItemCheck | None]:
+def _check(item) -> tuple[ItemCheck | None, str | None, dict[str, Any]]:
+    """One item's check call (thread-safe: no DB access). (check or None, provider, stage-output row)."""
     ev = Evidence.model_validate(item.evidence)
     try:
         check, provider = check_one(item, ev)
-        out: dict[str, Any] = {"ok": True, "provider": provider, **check.model_dump()}
+        return check, provider, {"ok": True, "provider": provider, **check.model_dump()}
     except (llm.StructuredOutputError, ApiError) as err:
         log.warning("verify: %s failed: %s", item.id, err)
-        check, provider = None, None
-        out = {"ok": False, "error": str(err)[:500]}
+        return None, None, {"ok": False, "error": str(err)[:500]}
+
+
+def _check_and_apply(ctx: StageContext, item, *, protected: bool,
+                     checked: tuple[ItemCheck | None, str | None, dict[str, Any]] | None = None,
+                     ) -> tuple[str, dict[str, Any], ItemCheck | None]:  # fmt: skip
+    """Check one item (or take the result `checked` already holds) and apply it to its row."""
+    check, provider, out = checked or _check(item)
     with ctx.session() as s:
         row = s.get(type(item), item.id)
         outcome = apply_check(row, check, provider, protected=protected)
@@ -201,10 +209,13 @@ def run(ctx: StageContext) -> StageOutcome:
     rows: dict[str, Any] = {}
     tally = {"matched": 0, "flagged": 0, "failed": 0}
     ctx.report({"checked": 0, "total": len(todo)})
-    for n, item in enumerate(todo, 1):
-        outcome, rows[item.id], _ = _check_and_apply(ctx, item, protected=status_locked(item))
-        tally[outcome] += 1
-        ctx.report({"checked": n, "total": len(todo)})
+    # PLAN 10.9: the check calls run on a small pool; results are applied here one by one, in item order.
+    with closing(calls.map_in_order(_check, todo)) as results:
+        for n, task in enumerate(results, 1):
+            item = task.item
+            outcome, rows[item.id], _ = _check_and_apply(ctx, item, protected=status_locked(item), checked=task.get())
+            tally[outcome] += 1
+            ctx.report({"checked": n, "total": len(todo)})
     if v2:
         frame_pass(ctx, items, rows, tally, reground_all)
     ctx.save_output(Stage.verify, {"version": 1, "items": rows})

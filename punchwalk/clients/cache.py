@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+import threading
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -149,11 +151,9 @@ class Cache:
             "meta": meta or {},
             "response": response,
         }
-        tmp = p.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(doc, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
-        tmp.replace(p)
-        if raw_text is not None:
-            p.with_suffix(".txt").write_text(raw_text, encoding="utf-8")
+        if raw_text is not None:  # the sidecar first, so a reader never finds the entry without it
+            _atomic_write(p.with_suffix(".txt"), raw_text)
+        _atomic_write(p, json.dumps(doc, indent=1, ensure_ascii=False, default=str))
         return p
 
     def delete(self, key: str) -> None:
@@ -183,6 +183,16 @@ class Cache:
             if src.with_suffix(".txt").exists():
                 shutil.copy2(src.with_suffix(".txt"), out.with_suffix(".txt"))
         return copied
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    """Write via a temp file unique to this process and thread, then rename (safe with parallel writers)."""
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def get_cache() -> Cache:

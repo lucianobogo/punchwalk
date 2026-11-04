@@ -31,7 +31,11 @@ from __future__ import annotations
 
 import logging
 import math
+import os
+from collections.abc import Iterable, Iterator
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import cv2
@@ -50,11 +54,13 @@ from punchwalk.pipeline.frames import (
     laplacian_variance,
     masked_laplacian_variance,
     rasterize_svg,
-    read_frames,
     square_around,
 )
+from punchwalk.pipeline.media import MediaError
 
 log = logging.getLogger(__name__)
+# PLAN 10.9: threads for the CPU-heavy parts that release the GIL (OpenCV alignment, ffmpeg frame extraction)
+WORKERS = max(1, min(4, os.cpu_count() or 2))
 
 
 # --------------------------------------------------------------------------- choosing a frame
@@ -152,10 +158,19 @@ def choose_pointed_frame(
     h, w = src.shape[:2]
     side = P.ALIGN_REGION_FRAC * min(w, h)
     scored: list[tuple[float, float, int, tuple[float, float], bool]] = []
-    for f in sorted(frames):
+    order = sorted(frames)
+
+    def carry(f: int) -> tuple[tuple[float, float], bool]:
+        return (fingertip, True) if f == pointing_frame else align_point(
+            src, frames[f], fingertip, hand_masks.get(pointing_frame), hand_masks.get(f))
+
+    if WORKERS > 1 and len(order) > 1:  # each alignment is independent; results keep frame order
+        with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix="punchwalk-align") as pool:
+            carried = list(pool.map(carry, order))
+    else:
+        carried = [carry(f) for f in order]
+    for f, (pt, aligned) in zip(order, carried, strict=True):
         img = frames[f]
-        pt, aligned = (fingertip, True) if f == pointing_frame else align_point(
-            src, img, fingertip, hand_masks.get(pointing_frame), hand_masks.get(f))
         mask = hand_masks.get(f)
         cover = hand_cover(mask, pt[0], pt[1], w, h)
         region = square_around(pt[0], pt[1], side, w, h)
@@ -205,16 +220,97 @@ def crop_box_4x3(x: float, y: float, w: int, h: int) -> tuple[int, int, int, int
     return x1, y1, x1 + cw, y1 + ch
 
 
-# --------------------------------------------------------------------------- stage
+# --------------------------------------------------------------------------- decoding (PLAN 10.9: memory)
+
+
+def iter_frames(video: Path, indices: Iterable[int]) -> Iterator[tuple[int, np.ndarray]]:
+    """(index, BGR frame) for `indices`, in order, from one sequential decode. The same grab/retrieve pass as
+    `frames.read_frames` (so the pixels are identical), but frames are handed over one at a time instead of
+    all being kept. Missing indices are skipped; decoding stops after the last wanted frame."""
+    wanted = sorted({int(i) for i in indices if int(i) >= 0})
+    if not wanted:
+        return
+    cap = cv2.VideoCapture(str(video))
+    if not cap.isOpened():
+        raise MediaError(f"OpenCV could not open {video}")
+    try:
+        targets = iter(wanted)
+        target = next(targets)
+        idx = 0
+        while True:
+            if not cap.grab():
+                break
+            if idx == target:
+                ok, frame = cap.retrieve()
+                if ok:
+                    yield idx, frame
+                try:
+                    target = next(targets)
+                except StopIteration:
+                    break
+            idx += 1
+    finally:
+        cap.release()
+
+
+def stream_item_frames(video: Path, plans: dict[str, list[int]]) -> Iterator[tuple[str, dict[int, np.ndarray]]]:
+    """(item_id, {frame: image}) as soon as every frame the item needs has been decoded, from ONE sequential
+    decode of `video`. A frame is let go once no item still waiting needs it, so memory holds the frames of
+    overlapping windows only (not every candidate frame of the walk: ~2.8 MB per 720p frame). Items whose
+    frames run past the end of the video come last, with the frames that were decoded."""
+    users: dict[int, int] = {}
+    for fs in plans.values():
+        for f in set(fs):
+            users[f] = users.get(f, 0) + 1
+    order = sorted((max(fs), n, item_id) for n, (item_id, fs) in enumerate(plans.items()) if fs)
+    held: dict[int, np.ndarray] = {}
+    pos = 0
+
+    def release(item_id: str) -> None:
+        for f in set(plans[item_id]):
+            users[f] -= 1
+            if users[f] == 0:
+                held.pop(f, None)
+
+    for idx, frame in iter_frames(video, users):
+        held[idx] = frame
+        while pos < len(order) and order[pos][0] <= idx:
+            item_id = order[pos][2]
+            pos += 1
+            yield item_id, {f: held[f] for f in plans[item_id] if f in held}
+            release(item_id)
+    while pos < len(order):  # the video ended before these items' last frames
+        item_id = order[pos][2]
+        pos += 1
+        yield item_id, {f: held[f] for f in plans[item_id] if f in held}
+        release(item_id)
+
+
+def hand_svgs_by_frame(records: list[dict[str, Any]], frames: set[int]) -> dict[int, list[str]]:
+    """The tracked hands' outlines for `frames`, in record order."""
+    out: dict[int, list[str]] = {}
+    for r in records:
+        if r["frame"] in frames and r.get("svg"):
+            out.setdefault(r["frame"], []).append(r["svg"])
+    return out
 
 
 def _hand_masks(records: list[dict[str, Any]], frames: set[int], w: int, h: int) -> dict[int, np.ndarray]:
+    """Full-frame hand masks for `frames` from track records (resolve_closures uses this)."""
+    return hand_masks_for(hand_svgs_by_frame(records, set(frames)), frames, w, h)
+
+
+def hand_masks_for(svgs: dict[int, list[str]], frames: Iterable[int], w: int, h: int) -> dict[int, np.ndarray]:
+    """Full-frame hand masks (union of the frame's hands) for `frames` only."""
     masks: dict[int, np.ndarray] = {}
-    for r in records:
-        if r["frame"] in frames and r.get("svg"):
-            m = rasterize_svg(r["svg"], w, h)
-            masks[r["frame"]] = np.maximum(masks[r["frame"]], m) if r["frame"] in masks else m
+    for f in frames:
+        for d in svgs.get(f, ()):
+            m = rasterize_svg(d, w, h)
+            masks[f] = np.maximum(masks[f], m) if f in masks else m
     return masks
+
+
+# --------------------------------------------------------------------------- stage
 
 
 def _protected_rows(ctx: StageContext) -> dict[str, dict[str, Any]]:
@@ -272,31 +368,41 @@ def run(ctx: StageContext) -> StageOutcome:
             lo, hi = _part_range(ctx, int(round(d["quote_start_s"] * fps)))
             plans[d["item_id"]] = sample_frames(d["quote_start_s"], d["quote_end_s"], fps, lo, hi,
                                                 P.VOICE_ONLY_SAMPLES)
-    needed = {f for fs in plans.values() for f in fs}
-    frames = read_frames(ctx.walk_dir / meta.sam.path, needed)
-    masks = _hand_masks(track["records"], needed, w, h)
+    kept = _protected_rows(ctx)  # sent, closed or edited by a person: its photo and outlines stay as they are
+    todo = {item_id: fs for item_id, fs in plans.items() if item_id not in kept}
+    svgs = hand_svgs_by_frame(track["records"], {f for fs in todo.values() for f in fs})
+    by_id = {d["item_id"]: d for d in drafts}
 
-    results: dict[str, dict[str, Any]] = {}
+    writes: dict[str, Future[dict[str, Any]]] = {}
     clear = 0
     display = ctx.walk_dir / meta.display.path
-    kept = _protected_rows(ctx)
+    # One sequential decode; each item is decided as soon as its frames are in, then its frames are let go.
+    # Its files (ffmpeg extractions from display.mp4) are written in the background meanwhile.
+    with ThreadPoolExecutor(max_workers=WORKERS, thread_name_prefix="punchwalk-evidence") as files_pool:
+        for item_id, got in stream_item_frames(ctx.walk_dir / meta.sam.path, todo):
+            d = by_id[item_id]
+            if not got:
+                log.warning("pick_evidence: no frames decoded for %s", item_id)
+                continue
+            ev = events.get(d["point_id"]) if d["point_id"] and not voice_only else None
+            if ev and ev["frame"] in got:
+                masks = hand_masks_for(svgs, got, w, h)
+                choice = choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
+                                              fingertip=tuple(ev["fingertip"]), hold_last=ev["hold_frames"][1])
+                del masks
+            else:
+                choice = choose_sharpest(got)
+            del got
+            clear += int(choice.hand_clear and ev is not None)
+            writes[item_id] = files_pool.submit(_write_item_files, ctx, d, ev, choice, fps, sx, sy, dw, dh, display)
+        picked = {item_id: fut.result() for item_id, fut in writes.items()}
+    results: dict[str, dict[str, Any]] = {}  # in fuse order, as before
     for d in drafts:
         item_id = d["item_id"]
-        if item_id in kept:  # sent, closed or edited by a person: its photo and outlines stay as they are
+        if item_id in kept:
             results[item_id] = kept[item_id]
-            continue
-        got = {f: frames[f] for f in plans[item_id] if f in frames}
-        if not got:
-            log.warning("pick_evidence: no frames decoded for %s", item_id)
-            continue
-        ev = events.get(d["point_id"]) if d["point_id"] and not voice_only else None
-        if ev and ev["frame"] in got:
-            choice = choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
-                                          fingertip=tuple(ev["fingertip"]), hold_last=ev["hold_frames"][1])
-        else:
-            choice = choose_sharpest(got)
-        clear += int(choice.hand_clear and ev is not None)
-        results[item_id] = _write_item_files(ctx, d, ev, choice, fps, sx, sy, dw, dh, display)
+        elif item_id in picked:
+            results[item_id] = picked[item_id]
 
     with ctx.session() as s:
         for item in s.exec(select(Item).where(Item.origin_walk_id == ctx.walk_id)).all():

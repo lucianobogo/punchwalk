@@ -20,12 +20,13 @@ from __future__ import annotations
 
 import logging
 import re
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from punchwalk.clients import llm
+from punchwalk.clients import calls, llm
 from punchwalk.clients.base import ApiError
 from punchwalk.core.enums import TRADE_LABEL, HistoryAction, HistoryActor, ItemStatus, Severity, Stage, Trade
 from punchwalk.core.models import Evidence
@@ -216,37 +217,51 @@ def run(ctx: StageContext) -> StageOutcome:
     rows: dict[str, dict[str, Any]] = {}
     written = failed = skipped = 0
     ctx.report({"written": 0, "total": total})
-    for item in items:
+
+    def model_row(item) -> dict[str, Any]:
+        """One item's model call (runs on the pool: no DB writes here)."""
         if is_protected(item):
-            skipped += 1
-            rows[item.id] = {"ok": True, "skipped": "a person edited or sent this item"}
-        elif not item.evidence:
-            rows[item.id] = {"ok": False, "error": "no evidence frame"}
-        else:
-            ev = Evidence.model_validate(item.evidence)
-            try:
-                rows[item.id] = write_one(ctx, drafts[item.id], ev, extras.get(item.id, {}))
-            except (llm.StructuredOutputError, ApiError) as err:
-                log.warning("write_items: %s failed: %s", item.id, err)
-                rows[item.id] = {"ok": False, "error": str(err)[:500]}
-        with ctx.session() as s:
-            row = s.get(type(item), item.id)
-            res = rows[item.id]
+            return {"ok": True, "skipped": "a person edited or sent this item"}
+        if not item.evidence:
+            return {"ok": False, "error": "no evidence frame"}
+        ev = Evidence.model_validate(item.evidence)
+        try:
+            return write_one(ctx, drafts[item.id], ev, extras.get(item.id, {}))
+        except (llm.StructuredOutputError, ApiError) as err:
+            log.warning("write_items: %s failed: %s", item.id, err)
+            return {"ok": False, "error": str(err)[:500]}
+
+    # PLAN 10.9: the model calls run on a small pool; each result is saved here, one by one, in item order.
+    with closing(calls.map_in_order(model_row, items)) as results:
+        for task in results:
+            item, res = task.item, task.get()
+            rows[item.id] = res
             if res.get("skipped"):
-                pass
+                skipped += 1
             elif res["ok"]:
-                apply_result(row, res, ctx.rooms)
                 written += 1
             else:
                 failed += 1
-                row.status = ItemStatus.needs_review
-                row.review_reason = REVIEW_WRITE_FAILED
-                add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_WRITE_FAILED)
-            s.add(row)
-            s.commit()
-        ctx.report({"written": written + failed + skipped, "total": total})
+            _save_row(ctx, item, res)
+            ctx.report({"written": written + failed + skipped, "total": total})
     ctx.save_output(Stage.write_items, {"version": 1, "items": rows})
     return StageOutcome(
         counts={"written": written, "total": total, "failed": failed, "kept": skipped},
         message=f"Muse Spark Open wrote {written} of {total} items",
     )
+
+
+def _save_row(ctx: StageContext, item, res: dict[str, Any]) -> None:
+    """Apply one item's result to its row (in the stage's thread)."""
+    if res.get("skipped"):
+        return
+    with ctx.session() as s:
+        row = s.get(type(item), item.id)
+        if res["ok"]:
+            apply_result(row, res, ctx.rooms)
+        else:
+            row.status = ItemStatus.needs_review
+            row.review_reason = REVIEW_WRITE_FAILED
+            add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_WRITE_FAILED)
+        s.add(row)
+        s.commit()

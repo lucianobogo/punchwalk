@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     DEMO_RESEED: bool = False
     DEMO_RESEED_AT: str = "03:00"
     DEMO_SNAPSHOT: Path = REPO_ROOT / "demo" / "seed_snapshot.tar.gz"
+    # Boot reset (PLAN 10.9): when this differs from DATA_DIR/.demo_reset_token, the boot re-seed drops EVERY
+    # project before importing the snapshot, then stores it. Change it and deploy to wipe uploaded projects.
+    DEMO_RESET_TOKEN: str = ""
 
     # Cache
     PUNCHWALK_CACHE: Literal["readwrite", "readonly", "off"] = "readwrite"

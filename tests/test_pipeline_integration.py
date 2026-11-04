@@ -274,3 +274,58 @@ def test_voice_only_mode_ignores_pointing(db, monkeypatch):
         turns = s.exec(select(Turn).where(Turn.walk_id == walk_id).order_by(Turn.idx)).all()
         for e, t in zip(evs, turns, strict=True):  # ...but the photo is the sharpest frame of the turn window
             assert t.start_ms / 1000 - 0.11 <= e.t <= t.end_ms / 1000 + 0.11
+
+
+def _silent_doc(turns: list[dict] | None = None) -> dict:
+    return {"version": 1, "model": "muse-voice-transcribe-1.0", "mode": "ENDPOINTING", "keywords": [],
+            "transcript": " ".join(t["text"] for t in turns or []), "audio_duration_ms": 21000, "turns": turns or []}
+
+
+def test_a_silent_walk_skips_hand_tracking_and_says_why(db, monkeypatch):
+    """PLAN 10.9: nothing was said, so nothing can be pointed at: no SAM call (no upload either), 0 points,
+    0 items, the walk is ready, and the processing checklist tells the person what to do."""
+    from punchwalk.api.progress import stage_rows
+    from punchwalk.clients import sam
+    from punchwalk.pipeline import track, transcribe
+
+    walk_id = make_walk(db)
+    monkeypatch.setattr(transcribe, "transcribe_audio", lambda wav, keywords: _silent_doc())
+
+    def no_sam(*a, **k):
+        raise AssertionError("SAM must not be called for a silent walk")
+
+    monkeypatch.setattr(sam, "concept_on_video", no_sam)
+    run_walk(walk_id, session_factory=db)
+    with db() as s:
+        walk = s.get(Walk, walk_id)
+        assert walk.status == WalkStatus.ready and walk.error is None
+        assert not s.exec(select(Point).where(Point.walk_id == walk_id)).all()
+        assert not s.exec(select(Item).where(Item.origin_walk_id == walk_id)).all()
+        models = [c.model for c in s.exec(select(ModelCall).where(ModelCall.walk_id == walk_id)).all()]
+    assert "sam-3.1" not in models and "meta-files" not in models
+    rows = {r.stage: r for r in stage_rows(walk)}  # what GET /api/walks/{id}/progress returns as `stages`
+    assert rows[Stage.track_hands].status == StageStatus.done
+    assert rows[Stage.track_hands].detail == rows[Stage.track_hands].message == track.NO_NARRATION
+    assert track.NO_NARRATION == "We didn't hear any narration. Say each defect out loud and upload again."
+    from punchwalk.pipeline.context import read_stage_output
+
+    doc = read_stage_output(Path(get_settings().DATA_DIR) / "walks" / walk_id, Stage.track_hands)
+    assert doc["parts"] == [] and doc["records"] == [] and doc["sam"]["width"] == 720
+
+
+def test_small_talk_without_a_defect_also_skips_hand_tracking(db, monkeypatch):
+    from punchwalk.clients import sam
+    from punchwalk.pipeline import classify, track, transcribe
+
+    walk_id = make_walk(db)
+    turns = [{"idx": 0, "start_ms": 500, "end_ms": 2500, "text": "Okay, starting in the kitchen."}]
+    monkeypatch.setattr(transcribe, "transcribe_audio", lambda wav, keywords: _silent_doc(turns))
+    monkeypatch.setattr(classify, "label_turns", lambda t, rooms, kind: (
+        [{"idx": 0, "kind": "location", "room": "Kitchen", "defects": [], "continues_previous": False,
+          "status_target": None, "claimed": None}], {"provider": "test"}))
+    monkeypatch.setattr(sam, "concept_on_video", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no SAM")))
+    run_walk(walk_id, session_factory=db)
+    with db() as s:
+        walk = s.get(Walk, walk_id)
+        assert walk.status == WalkStatus.ready
+        assert walk.stages["track_hands"]["message"] == track.NO_DEFECTS

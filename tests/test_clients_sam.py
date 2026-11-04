@@ -141,3 +141,53 @@ def test_readonly_miss_raises():
 
     with pytest.raises(CacheMiss, match="never recorded"):
         sam.concept_on_image(FRAME, "never recorded")
+
+
+# --------------------------------------------------------------------------- PLAN 10.9: decode each mask once
+
+
+def _strict_parse(text: str):
+    """The parser with the library's own strict accept check, rasters decoded strictly (the old path)."""
+    import numpy as np
+    from meta_sam_parser import _segmentation, decode_mask_to_raster
+
+    patched = _segmentation.decode_mask_to_raster
+    _segmentation.decode_mask_to_raster = decode_mask_to_raster
+    try:
+        res = sam.parse_output(text, "video", (720, 1280))
+    finally:
+        _segmentation.decode_mask_to_raster = patched
+    for r in res.all_records():
+        if r.mask is not None:
+            r._raster = np.frombuffer(decode_mask_to_raster(r.mask), dtype=np.uint8).reshape(r.mask.height,
+                                                                                            r.mask.width)
+    return res
+
+
+def test_masks_are_decoded_once_and_raster_identical_to_the_strict_path() -> None:
+    """walk1's part-d hand track (32 masks): same records, diagnostics and mask bits as the strict path;
+    the rasters come straight from the parser's accept check (no second decode)."""
+    import numpy as np
+
+    assert sam._PARSER_MODULE is not None, "meta_sam_parser internals moved: the decode-once patch is off"
+    key = "51ace85ad407dccca692a81af9e422b7ee125b3dcbbda75383b6573a97e00715"
+    text = (FIXTURES / "cache" / key[:2] / f"{key}.txt").read_text()
+    old, new = _strict_parse(text), sam.parse_output(text, "video", (720, 1280))
+    assert new.diagnostics == old.diagnostics
+    ra, rb = old.all_records(), new.all_records()
+    assert len(ra) == len(rb) == 32
+    for a, b in zip(ra, rb, strict=True):
+        assert (a.object_id, a.frame_index, a.box, a.confidence) == (b.object_id, b.frame_index, b.box, b.confidence)
+        assert b._raster is not None  # filled by the parse itself
+        assert np.array_equal(a._raster, b.raster())
+
+
+def test_a_bad_mask_payload_is_still_diagnosed_like_the_strict_parser() -> None:
+    key = "51ace85ad407dccca692a81af9e422b7ee125b3dcbbda75383b6573a97e00715"
+    text = (FIXTURES / "cache" / key[:2] / f"{key}.txt").read_text()
+    first = text.index("data=")
+    start = text.index("!", first)
+    broken = text[:start] + "~" + text[start + 1:]  # one_bit mask whose payload doesn't start with "!"
+    old, new = _strict_parse(broken), sam.parse_output(broken, "video", (720, 1280))
+    assert [d["code"] for d in new.diagnostics] == [d["code"] for d in old.diagnostics]
+    assert len(new.all_records()) == len(old.all_records())

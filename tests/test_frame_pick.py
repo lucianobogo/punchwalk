@@ -83,7 +83,8 @@ def _picker(monkeypatch, tmp_path, pick: int):
     track = {"records": [], "sam": {"width": 64, "height": 48, "fps": 10}}
     pk = fp.Picker(tmp_path, meta, track, [_draft("itm", "1.0", "stain", "a stain", 10.0, 12.0)])
     rng = np.random.default_rng(0)
-    monkeypatch.setattr(pk, "frames", lambda idx: {f: (rng.random((48, 64, 3)) * 255).astype(np.uint8) for f in idx})
+    monkeypatch.setattr(pk, "frame_stream",
+                        lambda idx: ((f, (rng.random((48, 64, 3)) * 255).astype(np.uint8)) for f in idx))
     asked = {}
 
     def fake_ask(title, description, quote, images):
@@ -370,3 +371,33 @@ def test_a_rewalk_decision_is_never_undone_by_a_check():
     verify.apply_check(row, good, "baseten", protected=verify.status_locked(row))
     assert row.status == ItemStatus.needs_review and row.review_reason == REVIEW_FALSE_FIX and not row.history
     assert row.verification["consistent"] is True
+
+
+def test_streamed_candidates_match_the_keep_everything_selection(monkeypatch, tmp_path):
+    """PLAN 10.9: the picker keeps only frames that can still be chosen; the candidates (and their pixels)
+    are exactly what scoring every decoded frame at once gives, whatever order the sharp frames come in."""
+    import cv2
+
+    meta = SimpleNamespace(clips=[SimpleNamespace(sam_frame_offset=0, sam_frame_count=300)],
+                           sam=SimpleNamespace(frame_count=300, path="sam.mp4"), display=SimpleNamespace(path="d"))
+    for seed in range(6):
+        rng = np.random.default_rng(seed)
+        base = (rng.random((48, 64, 3)) * 255).astype(np.uint8)
+        window = list(range(90, 150))
+        imgs = {}
+        for f in window:  # random blur per frame: sharpness rises and falls through the window
+            k = int(rng.choice([1, 3, 5, 9, 15]))
+            imgs[f] = cv2.GaussianBlur(base, (k, k), 0) if k > 1 else base.copy()
+        hand_svg = "M0 0 L40 0 L40 30 L0 30 Z"  # 39% of the frame: "hand in the way"
+        records = [{"frame": int(f), "svg": hand_svg} for f in rng.choice(window, 12, replace=False)]
+        track = {"records": records, "sam": {"width": 64, "height": 48, "fps": 10}}
+        pk = fp.Picker(tmp_path, meta, track, [_draft("itm", "1.0", "stain", "a stain", 10.0, 12.0)])
+        monkeypatch.setattr(pk, "frame_stream", lambda idx, imgs=imgs: ((f, imgs[f]) for f in idx if f in imgs))
+        current = int(rng.choice(window))
+        expected_infos = fp.filter_frames({f: fp.laplacian_variance(im) for f, im in imgs.items()},
+                                          pk.hand_fracs(window))
+        expected = fp.select_candidates(expected_infos, current)
+        infos, chosen, has_current, kept = pk.candidates(window, current)
+        assert has_current and chosen == expected
+        assert [i.as_row() for i in infos] == [i.as_row() for i in expected_infos]
+        assert set(kept) == set(chosen) and all(np.array_equal(kept[f], imgs[f]) for f in chosen)

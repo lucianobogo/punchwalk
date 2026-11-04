@@ -13,7 +13,9 @@ import base64
 import copy
 import io
 import json
+import logging
 import re
+import threading
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -34,6 +36,7 @@ from punchwalk.clients.base import (
 from punchwalk.clients.cache import get_cache, make_key
 from punchwalk.config import get_settings
 
+log = logging.getLogger(__name__)
 M = TypeVar("M", bound=BaseModel)
 ENDPOINT = "/chat/completions"
 MAX_IMAGES = 8
@@ -46,6 +49,25 @@ _FORMAT_ORDER = ("json_schema", "json_object", "none")
 _format_mode: dict[str, str] = {}
 # Baseten model slug that answered (SPARK_OPEN_MODEL, else the first alternate that is not 404).
 _resolved_model: dict[str, str] = {}
+# Slugs that answered 404 in this process: never sent live again (PLAN 10.9; logged once). Cache lookups
+# still try every candidate, so recorded answers and cache keys are exactly as before.
+_dead_models: set[str] = set()
+_models_lock = threading.Lock()
+
+
+def _mark_dead(provider: str, model: str, instead: str) -> None:
+    with _models_lock:
+        if model in _dead_models:
+            return
+        _dead_models.add(model)
+        _resolved_model.setdefault(provider, instead)
+    log.warning("%s: model %s is not found (404); using %s for the rest of this process", provider, model, instead)
+
+
+def live_candidates(provider: str) -> list[str]:
+    """Candidates for a live call: the ones that have not answered 404 in this process (all if none left)."""
+    cands = model_candidates(provider)
+    return [m for m in cands if m not in _dead_models] or cands
 
 
 class StructuredOutputError(RuntimeError):
@@ -307,14 +329,16 @@ def _complete(
         if hit is not None:
             _resolved_model[provider] = model
             return hit
-    for i, model in enumerate(candidates):
+    live = live_candidates(provider)
+    for i, model in enumerate(live):
         try:
             result = _complete_model(
                 provider, label, model, messages, name, schema, reasoning_effort, max_tokens, stage, live=True
             )
         except ApiError as err:
-            if err.status == 404 and i + 1 < len(candidates):
-                continue  # unknown model slug: try the next one
+            if err.status == 404 and i + 1 < len(live):
+                _mark_dead(provider, model, live[i + 1])
+                continue  # unknown model slug: try the next one, and skip this one from now on
             raise
         assert result is not None
         _resolved_model[provider] = model
