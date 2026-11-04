@@ -4,7 +4,8 @@
 dispatched punch list.
 
 An inspector walks the unit wearing Ray-Ban Meta glasses (or holding a phone), points at each defect for
-about two seconds, and says what's wrong. Punchwalk turns that one video into a punch list. Each item has
+about two seconds, and says what's wrong. Pointing is optional: a defect you only describe still becomes an
+item; pointing just makes the location and the outline more precise. Punchwalk turns that one video into a punch list. Each item has
 a photo showing exactly where the finger pointed and the defect outlined, plus a plain summary, the action
 needed, the trade, the room and the severity. Every item is checked against its own photo and the
 inspector's words, then sent to the trade that has to fix it. On the re-walk, Punchwalk signs off what's
