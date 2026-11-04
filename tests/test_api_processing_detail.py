@@ -89,3 +89,47 @@ def test_step_detail_uses_the_stage_counts() -> None:
     assert old == "Muse Spark Open names what to outline near your fingertip; SAM 3.1 draws it."
     running = _row({"outlined": 2, "total": 5}, "SAM 3.1, 2 of 5", StageStatus.running)
     assert _step_detail(None, Stage.ground_defects, running) == "SAM 3.1, 2 of 5"  # type: ignore[arg-type]
+
+
+def _rewalk_session(turn_kinds: list[str]):
+    from sqlmodel import Session, SQLModel, create_engine
+
+    from punchwalk.core.models import Turn, Walk
+
+    engine = create_engine("sqlite://")
+    SQLModel.metadata.create_all(engine)
+    session = Session(engine)
+    walk = Walk(id="wlk_rw", project_id="prj_x", kind="rewalk")
+    session.add(walk)
+    for i, k in enumerate(turn_kinds):
+        session.add(Turn(walk_id="wlk_rw", idx=i, start_ms=i * 1000, end_ms=i * 1000 + 900, text=f"t{i}", kind=k))
+    session.commit()
+    return session, walk
+
+
+def _classify_row(counts: dict, message: str) -> S.StageProgressOut:
+    row = _row(counts, message)
+    return row.model_copy(update={"stage": Stage.classify_turns})
+
+
+def test_rewalk_classify_line_counts_turns_when_the_counts_lack_status_updates() -> None:
+    session, walk = _rewalk_session(["location", "status_update", "status_update", "other", "status_update"])
+    row = _classify_row({"defects": 0, "rooms": 5}, "Muse Spark Open found 0 defects in 5 rooms")
+    assert _step_detail(walk, Stage.classify_turns, row, session) == "3 status updates found in 5 lines"
+    # counts that carry status_updates keep the current path (no DB read needed)
+    row2 = _classify_row({"status_updates": 4, "lines": 9}, "whatever")
+    assert _step_detail(walk, Stage.classify_turns, row2, session) == "4 status updates found in 9 lines"
+    # no session, or a walk with no turns: the stage message, as before
+    assert _step_detail(walk, Stage.classify_turns, row) == "Muse Spark Open found 0 defects in 5 rooms"
+    empty_session, empty_walk = _rewalk_session([])
+    assert _step_detail(empty_walk, Stage.classify_turns, row, empty_session) == row.detail
+
+
+def test_outline_chip_credits_both_models_with_the_shared_labels() -> None:
+    from punchwalk.api.progress import SAM, SPARK, STAGE_MODEL
+    from punchwalk.api.views import STEP_MODEL_LABEL
+
+    assert (SPARK, SAM) == ("Muse Spark Open on Baseten", "SAM 3.1")
+    assert STEP_MODEL_LABEL[Stage.ground_defects] == "Muse Spark Open on Baseten + SAM 3.1"
+    assert STAGE_MODEL[Stage.verify] == SPARK  # the verify chip uses the same string
+    assert set(STEP_MODEL_LABEL) == {Stage.ground_defects}  # every other step keeps its STAGE_MODEL chip

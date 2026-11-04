@@ -423,4 +423,6 @@ def test_model_calls_and_processing_summary(
     assert steps[Stage.track_hands].model_label == "SAM 3.1" and steps[Stage.track_hands].calls == 1
     assert steps[Stage.fuse].model_label is None and steps[Stage.fuse].detail.startswith("Timing and position")
     assert steps[Stage.ground_defects].detail.startswith("Muse Spark Open "), steps[Stage.ground_defects].detail
+    assert steps[Stage.ground_defects].model_label == "Muse Spark Open on Baseten + SAM 3.1"
+    assert steps[Stage.verify].model_label == "Muse Spark Open on Baseten"  # the same label strings
     assert proc.total_duration_ms == 10_800  # 11 stages, 1 s apart, 0.8 s each

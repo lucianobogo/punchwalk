@@ -22,6 +22,8 @@ from punchwalk.api import schemas as S
 from punchwalk.api.progress import (
     HEADLINE_STEPS_INITIAL,
     HEADLINE_STEPS_REWALK,
+    SAM,
+    SPARK,
     STAGE_MODEL,
     current_stage,
     overall_progress,
@@ -45,6 +47,7 @@ from punchwalk.core.enums import (
     Stage,
     StageStatus,
     Trade,
+    TurnKind,
     WalkKind,
     WalkStatus,
     model_label,
@@ -742,7 +745,7 @@ def walk_calls(session: Session, walk_id: str) -> list[S.ModelCallOut]:
     return sorted((model_call_out(r) for r in rows), key=lambda c: (c.started_at, c.id))
 
 
-def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
+def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut, session: Session | None = None) -> str:
     if row.status != StageStatus.done:
         return row.detail or ""
     c = row.counts
@@ -767,10 +770,20 @@ def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
     if stage == Stage.classify_turns and walk.kind == WalkKind.rewalk:
         n = c.get("status_updates")
         lines = c.get("lines", 0)
+        if n is None and session is not None:  # older stage state: count the walk's classified turns
+            n, lines = _status_update_counts(session, walk.id)
         return f"{n} status updates found in {lines} lines" if n is not None else row.detail or ""
     if stage == Stage.resolve_closures:
         return "Each update matched to its item, then the new frame compared with the original photo"
     return row.detail or ""
+
+
+def _status_update_counts(session: Session, walk_id: str) -> tuple[int | None, int]:
+    """(status_update turns, all turns) of a walk; (None, 0) when it has no turns."""
+    kinds = session.exec(select(Turn.kind).where(Turn.walk_id == walk_id)).all()
+    if not kinds:
+        return None, 0
+    return sum(1 for k in kinds if k == TurnKind.status_update), len(kinds)
 
 
 # ground_defects (pipeline/ground.py `ground_message`): v2 writes "... Muse Spark Open located each defect ..."
@@ -814,6 +827,10 @@ def ground_detail(c: dict[str, Any], message: str = "") -> str:
     return f"{line} A clearer photo was picked for {picked}." if picked else line
 
 
+# The outline step's chip credits both models: Muse Spark Open names/locates the defect (and boxes and checks it
+# in grounding v2), SAM 3.1 draws the outline. One string: ProcessingStepOut.model_label is a single chip.
+STEP_MODEL_LABEL: dict[Stage, str] = {Stage.ground_defects: f"{SPARK} + {SAM}"}
+
 FILES_MODEL = "meta-files"  # ModelCall.model of Files API uploads (pipeline/runner.py)
 
 
@@ -832,9 +849,9 @@ def processing_summary_out(session: Session, walk: Walk) -> S.ProcessingSummaryO
             S.ProcessingStepOut(
                 stage=stage,
                 title=STAGE_TITLE[stage],
-                model_label=STAGE_MODEL.get(stage),
+                model_label=STEP_MODEL_LABEL.get(stage, STAGE_MODEL.get(stage)),
                 provider=providers[0] if providers else None,
-                detail=_step_detail(walk, stage, row),
+                detail=_step_detail(walk, stage, row, session),
                 duration_ms=row.duration_ms or 0,
                 calls=len(mine),
                 fallback_calls=sum(1 for c in mine if c.provider == Provider.meta_fallback),

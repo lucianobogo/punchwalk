@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from punchwalk.api import schemas as S  # noqa: E402
+from punchwalk.api.views import ground_detail  # noqa: E402
 from punchwalk.core.enums import (  # noqa: E402
     CHANNEL_LABEL,
     MODEL_ASR,
@@ -3201,7 +3202,7 @@ class Gen:
             return f"Summary, action, trade, room and severity for {len(rows)} items"
         if st == Stage.ground_defects:
             n = len([r for r in rows if r.grounding in (Grounding.sam_concept, Grounding.sam_box)])
-            return f"Spark Open names what to outline near your fingertip, SAM draws it. {n} outlined."
+            return ground_detail({"outlined": n})
         if st == Stage.verify:
             flagged = len([r for r in rows if r.key in NOT_IN_FRAME])
             n = len(rows) - flagged

@@ -59,7 +59,7 @@
       "title": "Outline the defect",
       "model_label": "SAM 3.1",
       "provider": "meta",
-      "detail": "Spark Open names what to outline near your fingertip, SAM draws it. 9 outlined.",
+      "detail": "Muse Spark Open names what to outline near your fingertip; SAM 3.1 draws it. 9 outlined.",
       "duration_ms": 9600,
       "calls": 17,
       "fallback_calls": 0,
