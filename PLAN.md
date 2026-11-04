@@ -227,7 +227,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Make sure the demo media and cached results that `make seed` needs reach the deployed app (baked into the image or copied to the volume).
   - If `fly auth whoami` works or `FLY_API_TOKEN` is set: deploy, seed, and smoke-test the live URL with the iPhone profile.
   - Otherwise stop in a deploy-ready state and put the exact commands under Needs human.
-- [ ] **9.2 README.** Include:
+- [x] **9.2 README.** Include:
   - pitch, live URL, video link placeholder, iPhone screenshots (copy from `.verify/screens/` to `docs/screens/`)
   - architecture diagram (Mermaid)
   - each Meta model and exactly what it does
