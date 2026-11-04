@@ -1,0 +1,54 @@
+{
+ "key": "06ed408f8a28398d182e3439a7e3a21cc423815a67919442cd142778012b134e",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:10:18+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-445d137c3dfa49ccb6d5f3b6defb6c56",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"Two pencil X marks still on wall\", \"rationale\": \"Re-walk close-up Photo 2 and frame Photo 4 clearly show the same two X marks in the same spot as Photo 1 and 3, not removed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754614,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 362,
+   "prompt_tokens": 5555,
+   "total_tokens": 5917,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 246,
+    "audio_tokens": 0,
+    "reasoning_tokens": 289,
+    "rejected_prediction_tokens": 566,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 128,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

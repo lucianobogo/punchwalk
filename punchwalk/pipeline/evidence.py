@@ -330,12 +330,13 @@ def _write_item_files(
                      ("context_b.jpg", min(last_t, t + P.CONTEXT_FRAME_OFFSET_S))):
         # seeking to the very last frame time can find no frame: retry a little inside the clip, then
         # fall back to the photo itself (context frames only support it)
-        for attempt in (ct, max(first_t, min(ct, end_t - P.CONTEXT_END_MARGIN_S))):
+        # (the exact time first, so recorded frames stay byte-identical; the retry is expected at a clip end)
+        for n, attempt in enumerate((ct, max(first_t, min(ct, end_t - P.CONTEXT_END_MARGIN_S)))):
             try:
                 media.extract_frame(display, attempt, out / name, quality=q)
                 break
             except media.MediaError as err:
-                log.warning("pick_evidence: %s at %.2fs failed (%s)", name, attempt, str(err)[:120])
+                (log.debug if n == 0 else log.warning)("pick_evidence: %s at %.2fs: %s", name, attempt, str(err)[:120])
         else:
             (out / name).write_bytes(raw.read_bytes())
     pointing_rel = None

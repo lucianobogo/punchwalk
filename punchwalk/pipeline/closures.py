@@ -122,11 +122,10 @@ return it even when the photo is unclear or points elsewhere. confidence is betw
 claimed: "fixed" if the inspector says it is fixed, done or good; "not_fixed" if still there, not done,
 or if they describe the defect again; "unclear" otherwise. Keep rationale to one short sentence."""
 
-_LOOK_ANSWERS = """Answer about the PROBLEM, not about whether the object is still there: a fixed "missing knob"
-has a knob now, a fixed "screen not attached" has the screen properly in place, a fixed "loose, crooked
-outlet cover" sits straight and tight, a fixed stain or pencil mark is gone, a fixed "damaged stove top" looks
-intact. "yes": the problem is still there. "no": it has been fixed. "unclear": the re-walk photos don't show
-it well enough. Keep note and rationale short and plain."""
+_LOOK_ANSWERS = """Answer about the PROBLEM, not about whether the object is still in the picture: a fixed
+"missing" item is now in place, a fixed "loose" or "crooked" item is now tight and straight, a fixed mark,
+stain or residue is gone, fixed damage looks repaired. "yes": the problem is still there. "no": it has been
+fixed. "unclear": the re-walk photos don't show it well enough. Keep note and rationale short and plain."""
 
 LOOK_SYSTEM = """You check whether a construction defect was fixed, by comparing photos of the same spot from two walks.
 Photos 1 and 3 are from the first walk: the defect is outlined in red when it was found and a blue dot marks

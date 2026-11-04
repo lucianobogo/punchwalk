@@ -65,6 +65,8 @@ CLASSIFY_MAX_TOKENS_CAP = 12000
 # --------------------------------------------------------------------------- 2.2 ground defects
 GROUND_RADIUS_FRAC = 0.25  # SPEC: defect instance within ~25% of the frame width of the fingertip
 GROUND_BOX_MAX_DIST_FRAC = 0.15  # 3.4: Spark Open's defect_box must come within this share of the width of the dot
+GROUND_BOX_MAX_DIST_FRAC_ABSENT = 0.03  # ...3% for missing/loose/crooked defects: the dot IS the spot (empty hole)
+GROUND_CONCEPT_MAX_BOX_RATIO = 4.0  # a concept instance > this x Spark's box is the whole object: try the box first
 GROUND_BOX_EXPAND = 0.10  # SPEC: box prompt = Spark Open's defect_box grown 10%
 GROUND_MAX_AREA_FRAC = 0.35  # an "instance" bigger than this share of the frame is a wall, not a defect
 GROUND_SVG_EPSILON_PX = 1.5  # outline simplification (display px)

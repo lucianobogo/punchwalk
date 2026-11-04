@@ -1,0 +1,54 @@
+{
+ "key": "f85434b07bc1b296abafc4692962b0b0c064ac2fa1e87f373322702b9fdc2d13",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:19+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-e6fd51f7c1a84a07b612ef3cc26023ec",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Bulb now installed in range hood.\", \"rationale\": \"First-walk photos show empty socket, re-walk photos 2 and 4 show white bulb in place where it was missing.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754555,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 333,
+   "prompt_tokens": 6016,
+   "total_tokens": 6349,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 220,
+    "audio_tokens": 0,
+    "reasoning_tokens": 268,
+    "rejected_prediction_tokens": 571,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 128,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

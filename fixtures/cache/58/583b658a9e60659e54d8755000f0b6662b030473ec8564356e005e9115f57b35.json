@@ -1,0 +1,54 @@
+{
+ "key": "583b658a9e60659e54d8755000f0b6662b030473ec8564356e005e9115f57b35",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:10:03+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-74a123b955dc4034a5848d780a02d667",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"Screws/anchors and holes remain visible in wall above TV and pencil marks not removed. No patching or repainting visible under red outline.\", \"rationale\": \"Re-walk photo shows same screw holes and marks as first walk. Wall surface not repaired.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754599,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 605,
+   "prompt_tokens": 1216,
+   "total_tokens": 1821,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 384,
+    "audio_tokens": 0,
+    "reasoning_tokens": 526,
+    "rejected_prediction_tokens": 1163,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

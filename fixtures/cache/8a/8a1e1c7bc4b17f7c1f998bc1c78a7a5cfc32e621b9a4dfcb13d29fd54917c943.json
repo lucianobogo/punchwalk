@@ -1,0 +1,54 @@
+{
+ "key": "8a1e1c7bc4b17f7c1f998bc1c78a7a5cfc32e621b9a4dfcb13d29fd54917c943",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:28+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-d33454a7a33547caa4f1a1e9edd39553",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"unclear\", \"note\": \"White wall/plate blown out by light, screw detail not visible.\", \"rationale\": \"Cannot tell if screw is now in place or plate secured within a finger of the dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754563,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 689,
+   "prompt_tokens": 2803,
+   "total_tokens": 3492,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 425,
+    "audio_tokens": 0,
+    "reasoning_tokens": 626,
+    "rejected_prediction_tokens": 1423,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

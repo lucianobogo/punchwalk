@@ -1,0 +1,54 @@
+{
+ "key": "c1c7e9669e61bb3b34c70ef81e834b966f38e2ce145a8f17b03cf24ce99ce64a",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:39+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-4a1202f5e08a4909bcf61f422b68fe89",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\":\"no\",\"note\":\"Right door knob is now in place\",\"rationale\":\"Photo 1 and Photo 2 both show silver knobs on both cabinet doors near the blue dot. No empty hardware hole visible - problem fixed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754575,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 447,
+   "prompt_tokens": 2804,
+   "total_tokens": 3251,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 292,
+    "audio_tokens": 0,
+    "reasoning_tokens": 384,
+    "rejected_prediction_tokens": 793,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

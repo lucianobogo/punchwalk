@@ -1,0 +1,54 @@
+{
+ "key": "d7a7d09aeca1a5ab9bade4e92d8ffaa1f3dbd6d48e7bcc1a89061ba40823d052",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:34+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-a3b38cb4c0164056aca88499d13b9d01",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"No toothpaste smudge visible on mirror in re-walk.\", \"rationale\": \"Mirror surface in Photo 2 and Photo 4 looks clean where blue dot points, no smear or residue seen.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754569,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 791,
+   "prompt_tokens": 6740,
+   "total_tokens": 7531,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 500,
+    "audio_tokens": 0,
+    "reasoning_tokens": 724,
+    "rejected_prediction_tokens": 1537,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

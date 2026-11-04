@@ -1,0 +1,54 @@
+{
+ "key": "90cf5fabdf4e2030f417209ffe6cc1d04fa9bbc8da184422209df823f5c94dc1",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixConfirm) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:50+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ed1fad35ce2a4e61b3420e9e70dcd3e7",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"shows_fixed\": \"yes\", \"note\": \"Re-walk shows both cabinet doors now have matching silver knobs - the empty hardware hole on the right door seen in the before photo is now filled.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754579,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1906,
+   "prompt_tokens": 4823,
+   "total_tokens": 6729,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 1312,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1851,
+    "rejected_prediction_tokens": 2846,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

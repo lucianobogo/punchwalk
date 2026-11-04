@@ -1,0 +1,54 @@
+{
+ "key": "febbdf8c395c42c4b3d524acd2349a63ea31129c77720c3c47104bae94b0e73c",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T01:07:57+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-edb476f872864eeca797c024a57efd6f",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true, \"frame_shows_defect\": true, \"issues\": [], \"suggested_fix\": null, \"rationale\": \"Photo shows right door with empty hardware hole and left door with knob, exactly matching the title/description and the inspector's 'knob missing on cabinet' statement.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754472,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 913,
+   "prompt_tokens": 2938,
+   "total_tokens": 3851,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 598,
+    "audio_tokens": 0,
+    "reasoning_tokens": 839,
+    "rejected_prediction_tokens": 1607,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

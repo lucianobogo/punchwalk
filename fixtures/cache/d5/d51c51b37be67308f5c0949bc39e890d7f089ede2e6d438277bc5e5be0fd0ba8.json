@@ -1,0 +1,54 @@
+{
+ "key": "d51c51b37be67308f5c0949bc39e890d7f089ede2e6d438277bc5e5be0fd0ba8",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:54+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ca47283f36d0410eaf81d782170276ff",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Fire alarm now installed\", \"rationale\": \"First walk showed exposed bracket and wires. Re-walk close-up and frame show white alarm mounted in same spot, covering bracket.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754590,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 406,
+   "prompt_tokens": 5341,
+   "total_tokens": 5747,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 269,
+    "audio_tokens": 0,
+    "reasoning_tokens": 345,
+    "rejected_prediction_tokens": 690,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

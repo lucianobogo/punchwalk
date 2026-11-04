@@ -326,3 +326,28 @@ def test_failed_stage_message_is_plain_words(monkeypatch, tmp_path):
         st = s.get(Walk, "wlk_m").stages["transcribe"]
         assert st["message"] == plain and "c8f0deadbeef" in st["error"]  # detail only in `error`
     assert [e.message for e in events if e.status == "failed"] == [plain]
+
+
+def test_absent_defects_need_the_box_at_the_dot():
+    assert ground.is_absent_kind("Cabinet knob missing on right door")
+    assert ground.is_absent_kind("Window screen not attached properly") and not ground.is_absent_kind("Wall nick")
+    box = [595, 702, 650, 758]  # 113 px above the fingertip at (618, 871): a neighbouring panel, not the hole
+    assert ground.box_ok(box, (618, 871), 1080, absent=False)  # 10% of the width: fine for a mark
+    assert not ground.box_ok(box, (618, 871), 1080, absent=True)  # a missing knob is AT the dot
+    assert ground.box_ok(box, (618, 760), 1080, absent=True)
+    assert ground.box_ok(box, None, 1080, absent=True)  # no pointer: nothing to check against
+
+
+def test_whole_object_concept_tries_the_box_first(monkeypatch):
+    whole = _rec((200, 500, 600, 900))  # the whole cooktop (big, but not a whole wall)
+    burner = _rec((300, 600, 360, 660))
+
+    def result(recs):
+        return sam.SamResult(media="image", raw_text="", frames={0: recs}, diagnostics=[], media_size=(W, H))
+
+    monkeypatch.setattr(sam, "concept_on_image", lambda img, c: result([whole]))
+    monkeypatch.setattr(sam, "boxes_on_image", lambda img, b: result([burner]))
+    g, rec, notes = ground.ground_one("raw.jpg", W, H, (330, 630), "stovetop", [300, 600, 360, 660], "damaged burner")
+    assert g == Grounding.sam_box and rec is burner and notes["concept_too_big"] > 4
+    g, rec, _ = ground.ground_one("raw.jpg", W, H, (330, 630), "stovetop", [210, 510, 590, 890], "damaged burner")
+    assert g == Grounding.sam_concept and rec is whole  # Spark's box is about as big: keep the concept

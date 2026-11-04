@@ -1,0 +1,54 @@
+{
+ "key": "d2124a1ade5fa8e1859547e6a322c2bf2fffddf8115eac1305cb09e3df167105",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:12:29+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-8e441f00391f4998b0504dbb67113fb9",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\r\n  \"defect_still_present\": \"no\",\r\n  \"note\": \"No scuff marks visible within finger's length of blue dot\",\r\n  \"rationale\": \"Close-up and wide frame both show uniform beige wall by door - no dark marks/streaks. Wall appears cleaned and paint touched-up. Strictly image is very blurry/low-res so detail is limited, face value = fixed -> no, technically unclear.\"\r\n}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754742,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1727,
+   "prompt_tokens": 2016,
+   "total_tokens": 3743,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 1143,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1624,
+    "rejected_prediction_tokens": 2945,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

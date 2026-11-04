@@ -1,0 +1,54 @@
+{
+ "key": "6565f5dd7e62d26612507ad2e8a37a0fff1b1406f6b107876814cb4f9271ae6e",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T01:09:23+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-7b08bdfcf3654760963aad5ebf4bf857",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"White ring on front left burner still visible.\", \"rationale\": \"Photo 2 re-walk shows same discolored/whitish circular residue on the front left burner circle under the red outline as Photo 1. No cleaning or repair visible.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793754560,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 382,
+   "prompt_tokens": 2626,
+   "total_tokens": 3008,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 242,
+    "audio_tokens": 0,
+    "reasoning_tokens": 304,
+    "rejected_prediction_tokens": 738,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

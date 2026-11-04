@@ -6,8 +6,9 @@ Per item, in order, recording which worked in `Evidence.grounding`:
      Spark Open's defect_box, else the only instance). Instances covering more than
      GROUND_MAX_AREA_FRAC of the frame (a whole wall) are ignored.
   2. `sam_box`: SAM box prompt from Spark Open's defect_box grown 10%, if the box comes within
-     GROUND_BOX_MAX_DIST_FRAC x width of the fingertip (or there is no pointer): a box far from where the
-     finger pointed is on the wrong object.
+     GROUND_BOX_MAX_DIST_FRAC x width of the fingertip (3% for missing / loose / crooked defects, whose
+     spot is exactly where the finger points), or there is no pointer: a box far from the finger is on
+     the wrong object. When the concept instance is > 4x that box (the whole object), the box goes first.
   3. `pointed_only` (a pointer, no outline) or `none` (voice-only, no outline, no dot).
 
 Items that are protected (sent, closed or edited by a person) keep their outline and renders.
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from typing import Any
 
 import numpy as np
@@ -84,14 +86,54 @@ def pick_instance(records: list[sam.SamRecord], w: int, h: int, anchor: tuple[fl
     return best[0]
 
 
+_ABSENT_RE = re.compile(r"\b(missing|loose|crooked|twisted|detached|not (attached|tight|placed|seated|secured))\b",
+                        re.IGNORECASE)
+
+
+def is_absent_kind(text: str | None) -> bool:
+    """Missing / loose / crooked defects: the defect is the spot itself (an empty hole, a gap), so the
+    finger points right at it and a box away from the dot is on a neighbouring object."""
+    return bool(_ABSENT_RE.search(text or ""))
+
+
+def box_ok(defect_box: list[float] | None, pointer: tuple[float, float] | None, w: int, absent: bool) -> bool:
+    if not defect_box:
+        return False
+    if pointer is None:
+        return True
+    frac = P.GROUND_BOX_MAX_DIST_FRAC_ABSENT if absent else P.GROUND_BOX_MAX_DIST_FRAC
+    return point_to_box(pointer[0], pointer[1], defect_box) <= frac * w
+
+
+def _box_area(b) -> float:
+    return max(0.0, b[2] - b[0]) * max(0.0, b[3] - b[1])
+
+
+def _box_prompt(raw, defect_box: list[float], w: int, h: int, notes: dict[str, Any]) -> sam.SamRecord | None:
+    box = expand_box(defect_box, P.GROUND_BOX_EXPAND, w, h)
+    try:
+        res = sam.boxes_on_image(raw, [box])
+        recs = [r for r in res.all_records() if r.mask is not None]
+        notes["box_instances"] = len(recs)
+        return max(recs, key=lambda r: r.confidence or 0.0) if recs else None
+    except (ApiError, ValueError) as err:
+        notes["box_error"] = str(err)[:300]
+        return None
+
+
 def ground_one(raw, w: int, h: int, pointer: tuple[float, float] | None, concept: str | None,
-               defect_box: list[float] | None) -> tuple[Grounding, sam.SamRecord | None, dict[str, Any]]:
+               defect_box: list[float] | None, defect_text: str | None = None,
+               ) -> tuple[Grounding, sam.SamRecord | None, dict[str, Any]]:
     """Try concept, then box. Returns (grounding, record or None, notes for the stage output)."""
     radius = P.GROUND_RADIUS_FRAC * w
     notes: dict[str, Any] = {}
     anchor = pointer
     if anchor is None and defect_box:
         anchor = ((defect_box[0] + defect_box[2]) / 2, (defect_box[1] + defect_box[3]) / 2)
+    usable_box = box_ok(defect_box, pointer, w, is_absent_kind(defect_text))
+    if defect_box and not usable_box:
+        notes["box_skipped"] = "defect_box is too far from where the finger pointed"
+    box_tried = False
     if concept:
         try:
             res = sam.concept_on_image(raw, concept)
@@ -99,22 +141,20 @@ def ground_one(raw, w: int, h: int, pointer: tuple[float, float] | None, concept
             notes["concept_instances"] = len(recs)
             rec = pick_instance(recs, w, h, anchor, radius)
             if rec is not None:
+                if usable_box and _box_area(rec.box) > P.GROUND_CONCEPT_MAX_BOX_RATIO * _box_area(defect_box):
+                    # the concept found the whole object (a cooktop for a damaged burner): try the box first
+                    notes["concept_too_big"] = round(_box_area(rec.box) / max(1.0, _box_area(defect_box)), 1)
+                    box_tried = True
+                    brec = _box_prompt(raw, defect_box, w, h, notes)
+                    if brec is not None:
+                        return Grounding.sam_box, brec, notes
                 return Grounding.sam_concept, rec, notes
         except (ApiError, ValueError) as err:
             notes["concept_error"] = str(err)[:300]
-    box_radius = P.GROUND_BOX_MAX_DIST_FRAC * w
-    if defect_box and (pointer is None or point_to_box(pointer[0], pointer[1], defect_box) <= box_radius):
-        box = expand_box(defect_box, P.GROUND_BOX_EXPAND, w, h)
-        try:
-            res = sam.boxes_on_image(raw, [box])
-            recs = [r for r in res.all_records() if r.mask is not None]
-            notes["box_instances"] = len(recs)
-            if recs:
-                return Grounding.sam_box, max(recs, key=lambda r: r.confidence or 0.0), notes
-        except (ApiError, ValueError) as err:
-            notes["box_error"] = str(err)[:300]
-    elif defect_box:
-        notes["box_skipped"] = "defect_box is too far from where the finger pointed"
+    if usable_box and not box_tried:
+        brec = _box_prompt(raw, defect_box, w, h, notes)
+        if brec is not None:
+            return Grounding.sam_box, brec, notes
     return (Grounding.pointed_only if pointer is not None else Grounding.none), None, notes
 
 
@@ -140,7 +180,9 @@ def run(ctx: StageContext) -> StageOutcome:
         pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
         wrow = written.get(item.id) or {}
         concept = ev.sam_concept or (wrow.get("result") or {}).get("sam_concept")
-        grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"))
+        r = wrow.get("result") or {}
+        grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"),
+                                           f"{r.get('title', '')} {r.get('description', '')}")
         defect_svg = defect_box = None
         if rec is not None:
             defect_svg = mask_to_frame_svg(rec, ev.width, ev.height, epsilon_px=P.GROUND_SVG_EPSILON_PX) or None
