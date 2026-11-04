@@ -191,3 +191,30 @@ def test_a_bad_mask_payload_is_still_diagnosed_like_the_strict_parser() -> None:
     old, new = _strict_parse(broken), sam.parse_output(broken, "video", (720, 1280))
     assert [d["code"] for d in new.diagnostics] == [d["code"] for d in old.diagnostics]
     assert len(new.all_records()) == len(old.all_records())
+
+
+@pytest.mark.parametrize("change", ["append_5", "append_1", "drop_5", "drop_1", "flip_last"])
+def test_non_canonical_one_bit_payloads_are_diagnosed_like_the_strict_parser(change: str) -> None:
+    """A one_bit payload with extra or missing tail characters reaches the decode-only path (it still starts
+    with "!"): its diagnostics and records must match the strict parser's (verifier, .verify/v109)."""
+    import re
+
+    key = "51ace85ad407dccca692a81af9e422b7ee125b3dcbbda75383b6573a97e00715"
+    text = (FIXTURES / "cache" / key[:2] / f"{key}.txt").read_text()
+    m = re.search(r"data=\d+,\d+,(![^|]*)\|", text)
+    assert m is not None
+    payload = m.group(1)
+    bad = {
+        "append_5": payload + "00000",
+        "append_1": payload + "0",
+        "drop_5": payload[:-5],
+        "drop_1": payload[:-1],
+        "flip_last": payload[:-1] + ("0" if payload[-1] != "0" else "1"),
+    }[change]
+    broken = text[: m.start(1)] + bad + text[m.end(1) :]
+    old, new = _strict_parse(broken), sam.parse_output(broken, "video", (720, 1280))
+    assert [d["code"] for d in new.diagnostics] == [d["code"] for d in old.diagnostics]
+    assert "invalid_mask_payload" in [d["code"] for d in new.diagnostics]
+    assert [(r.object_id, r.frame_index, r.mask is None) for r in new.all_records()] == [
+        (r.object_id, r.frame_index, r.mask is None) for r in old.all_records()
+    ]

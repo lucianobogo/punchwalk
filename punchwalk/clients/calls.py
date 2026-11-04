@@ -143,8 +143,10 @@ def map_in_order(
 
     Before a result is yielded, the CallRecords its task emitted reach the sinks (in emit order), so a
     consumer sees records and results exactly as a sequential loop would produce them. Exceptions are
-    captured per item (`.error`, re-raised by `.get()`). If the consumer stops early, tasks not started
-    are cancelled, running ones finish, and every finished task's records are still delivered.
+    captured per item (`.error`, re-raised by `.get()`). Items are submitted lazily: at most `workers`
+    tasks are ahead of the consumer, and the next one is submitted only when the consumer asks for the next
+    result, so a consumer that stops at item i (e.g. `.get()` raised) has started at most `workers - 1`
+    items after it. Tasks already started finish, and every finished task's records are still delivered.
     `workers=1` (or one item) runs in the calling thread, one item at a time, without a pool."""
     todo = list(items)
     n = max(1, min(int(workers or POOL_WORKERS), len(todo) or 1))
@@ -160,12 +162,19 @@ def map_in_order(
     pool = ThreadPoolExecutor(max_workers=n, thread_name_prefix="punchwalk-call")
     futures: list[Future[TaskResult[T, R]]] = []
     delivered = 0
+
+    def submit_next() -> None:
+        item = todo[len(futures)]
+        ctx = contextvars.copy_context()  # walk / stage tags, per task
+        futures.append(pool.submit(ctx.run, _run_held, fn, item, TaskResult(item)))
+
     try:
-        for item in todo:
-            ctx = contextvars.copy_context()  # walk / stage tags, per task
-            futures.append(pool.submit(ctx.run, _run_held, fn, item, TaskResult(item)))
-        for fut in futures:
-            res = fut.result()
+        while len(futures) < min(n, len(todo)):
+            submit_next()
+        while delivered < len(todo):
+            if delivered > 0 and len(futures) < len(todo):
+                submit_next()  # the consumer came back for more: keep `n` tasks ahead of it
+            res = futures[delivered].result()
             delivered += 1
             for record in res.records:
                 _deliver(record)

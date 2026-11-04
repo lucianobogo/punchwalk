@@ -28,10 +28,17 @@ GLASSES = {  # footage/walk1_d.MOV as the Meta AI app writes it (ffprobe format 
         ({"COM.APPLE.QUICKTIME.MODEL": "ray-ban meta"}, Device.glasses),  # case doesn't matter
         ({"com.apple.quicktime.make": "Apple", "com.apple.quicktime.model": "iPhone 15 Pro"}, Device.phone),
         ({"com.apple.quicktime.model": "iPad Pro (11-inch)"}, Device.phone),
-        ({"com.android.manufacturer": "Google", "com.android.model": "Pixel 9"}, Device.unknown),
+        ({"com.android.manufacturer": "Google", "com.android.model": "Pixel 9"}, Device.phone),
+        ({"com.android.model": "SM-S928B"}, Device.phone),
+        ({"com.apple.quicktime.make": "Apple", "com.apple.quicktime.software": "18.1"}, Device.phone),
+        ({"make": "OnePlus"}, Device.phone),
+        ({"com.android.version": "15"}, Device.unknown),  # no make/model
+        ({"com.android.model": "  "}, Device.unknown),  # blank
         ({"encoder": "Lavf61.7.100"}, Device.unknown),  # made with ffmpeg: no device
         ({}, Device.unknown),
         (None, Device.unknown),
+        (["not", "a", "dict"], Device.unknown),
+        ("model=iPhone", Device.unknown),
     ],
 )
 def test_device_from_tags(tags, device) -> None:
@@ -48,4 +55,25 @@ def test_clip_device_reads_format_tags_and_never_fails(monkeypatch) -> None:
         raise media.MediaError("ffprobe could not read x.mp4")
 
     monkeypatch.setattr(media, "ffprobe_json", broken)
+    assert prepare.clip_device(Path("x.mp4")) == Device.unknown
+
+
+@pytest.mark.parametrize(
+    "probe",
+    [
+        {"format": {"tags": ["odd"]}},
+        {"format": "odd"},
+        {"format": {"tags": {"model": object()}}},
+    ],
+)
+def test_clip_device_survives_odd_probe_output(monkeypatch, probe) -> None:
+    monkeypatch.setattr(media, "ffprobe_json", lambda path, extra_args=None: probe)
+    assert prepare.clip_device(Path("x.mp4")) in (Device.unknown, Device.phone)
+
+
+def test_clip_device_survives_os_errors(monkeypatch) -> None:
+    def gone(path, extra_args=None):
+        raise FileNotFoundError("x.mp4")
+
+    monkeypatch.setattr(media, "ffprobe_json", gone)
     assert prepare.clip_device(Path("x.mp4")) == Device.unknown

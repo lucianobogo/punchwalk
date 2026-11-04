@@ -27,6 +27,9 @@ _ORDER_PREFIX = re.compile(r"^\d{2,3}_")
 log = logging.getLogger(__name__)
 # Container tags that name the recording device (QuickTime / MP4 metadata; the Meta AI app writes both).
 DEVICE_TAGS = ("com.apple.quicktime.model", "com.apple.quicktime.comment", "comment", "model")
+# Make / model tags a phone camera writes (iOS: com.apple.quicktime.*, Android: com.android.*).
+MAKE_MODEL_TAGS = ("com.apple.quicktime.make", "com.apple.quicktime.model", "com.android.manufacturer",
+                   "com.android.model", "make", "model")
 
 
 def uploaded_clips(wdir: Path) -> list[Path]:
@@ -43,26 +46,29 @@ def original_name(path_or_name: str) -> str:
 
 
 def device_from_tags(tags: Mapping[str, object] | None) -> Device:
-    """The capture device from a clip's format tags: "Ray-Ban Meta" -> glasses, "iPhone" / "iPad" -> phone,
-    anything else -> unknown. Tag names are matched without regard to case."""
-    lower = {str(k).lower(): str(v) for k, v in (tags or {}).items()}
+    """The capture device from a clip's format tags: "Ray-Ban Meta" -> glasses; "iPhone" / "iPad", or any
+    other make/model tag (Android writes com.android.manufacturer / com.android.model) -> phone; no device
+    tag -> unknown. Tag names are matched without regard to case."""
+    lower = {str(k).lower(): str(v) for k, v in tags.items()} if isinstance(tags, Mapping) else {}
     text = " ".join(lower.get(k, "") for k in DEVICE_TAGS).lower()
     if "ray-ban meta" in text:
         return Device.glasses
     if "iphone" in text or "ipad" in text:
+        return Device.phone
+    if any(lower.get(k, "").strip() for k in MAKE_MODEL_TAGS):
         return Device.phone
     return Device.unknown
 
 
 def clip_device(path: Path) -> Device:
     """Device of one clip, from ffprobe's format tags (the same streams + format probe ingest runs).
-    Unreadable tags -> unknown; never fails the walk."""
+    Never fails the walk: anything unexpected (unreadable file, odd tags) is logged and gives unknown."""
     try:
-        tags = (media.ffprobe_json(Path(path)).get("format") or {}).get("tags") or {}
-    except media.MediaError as err:
+        fmt = media.ffprobe_json(Path(path)).get("format") or {}
+        return device_from_tags(fmt.get("tags") if isinstance(fmt, dict) else None)
+    except Exception as err:  # noqa: BLE001 - the device is a detail; the walk goes on
         log.warning("ingest: no device tags for %s: %s", Path(path).name, err)
         return Device.unknown
-    return device_from_tags(tags)
 
 
 def write_poster(wdir: Path, meta: IngestMeta) -> Path:

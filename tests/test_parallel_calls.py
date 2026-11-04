@@ -74,6 +74,50 @@ def test_map_in_order_reraises_in_order_and_still_accounts_for_finished_calls() 
     )  # ...then whatever ran, once
 
 
+def test_a_failure_at_item_4_starts_at_most_3_later_items() -> None:
+    """Lazy submission: at most POOL_WORKERS tasks ahead of the consumer, so stopping at a failed item
+    wastes at most POOL_WORKERS - 1 later calls (here 3), however fast the workers are."""
+    started: list[int] = []
+    lock = threading.Lock()
+
+    def work(i: int) -> int:
+        with lock:
+            started.append(i)
+        _pause(0.05 if i == 4 else 0.0)  # the others finish at once: an eager pool would race ahead
+        if i == 4:
+            raise RuntimeError("item 4 failed")
+        return i
+
+    got = []
+    with (
+        pytest.raises(RuntimeError, match="item 4"),
+        closing(calls.map_in_order(work, range(1, 21), workers=4)) as rs,
+    ):
+        for r in rs:
+            got.append(r.get())
+    assert got == [1, 2, 3]
+    later = sorted(i for i in started if i > 4)
+    assert len(later) <= 3, later
+    assert set(range(1, 5)) <= set(started)
+
+
+def test_lazy_window_keeps_workers_busy_and_order() -> None:
+    active, peak = [0], [0]
+    lock = threading.Lock()
+
+    def work(i: int) -> int:
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        _pause(0.01)
+        with lock:
+            active[0] -= 1
+        return i
+
+    assert [r.get() for r in calls.map_in_order(work, range(16), workers=4)] == list(range(16))
+    assert 2 <= peak[0] <= 4
+
+
 def test_map_in_order_with_one_worker_runs_inline() -> None:
     names = []
     out = [
