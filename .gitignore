@@ -30,3 +30,16 @@ test-results/
 
 # seed snapshots (scripts/seed.py --export): uploaded to Fly with sftp, never committed
 demo/*.tar.gz
+
+# build-process and human-facing files (kept locally, not published)
+HUMAN_TODO.md
+FOOTAGE.md
+docs/DEMO_SCRIPT.md
+PLAN.md
+STATE.md
+PROGRESS.md
+DECISIONS.md
+BACKLOG.md
+CLAUDE.md
+.claude/
+scripts/orchestrate.sh
