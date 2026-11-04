@@ -131,7 +131,7 @@ Track ownership and paths are in the orchestrator's instructions.
     - closure accuracy: predicted signed-off vs. `fixed_in_rewalk`
     - **false-claim catch**: rows with `claimed_fixed_in_rewalk=1` and `fixed_in_rewalk=0` must end `needs_review`
 - [x] **3.3 Report + real mocks.** Write `eval/report.md` (summary table + per-item diffs) on every run; `make eval` uses the cache. Add `scripts/build_mock_api.py`, which regenerates `fixtures/mock_api/` from real pipeline outputs so the UI shows real evidence.
-- [ ] **3.4 Iterate** on prompts and thresholds until walk1 + walk2 reach:
+- [x] **3.4 Iterate** on prompts and thresholds until walk1 + walk2 reach:
   - recall ≥ 0.9, precision ≥ 0.9
   - trade ≥ 0.85, room ≥ 0.9
   - closure ≥ 0.9, false-claim catch = 100%
@@ -208,7 +208,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Claimed fixed + defect still visible → **needs a look: "Marked fixed on the re-walk, but the defect is still visible."** This is the headline demo moment.
   - Open items in visited rooms that were never mentioned → stay open, flagged "not checked on re-walk".
 - [x] **7.4 Before/after + re-walk summary.** Side-by-side renders (Track A) and the re-walk summary screen per DESIGN.md (Track B); re-send still-open items.
-- [ ] **7.5 Eval.** Closure metrics from 3.2 pass.
+- [x] **7.5 Eval.** Closure metrics from 3.2 pass.
 
 ## Phase 8: Demo readiness
 
