@@ -360,6 +360,23 @@ function ReviewRow({ items }: { items: DispatchPreviewOut['to_review'] }) {
   );
 }
 
+/** Never break a Slack channel name ("#punch-electrical") across lines. */
+function KeepChannel({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(#[\w-]+)/).map((part, i) =>
+        part.startsWith('#') ? (
+          <span key={i} className="whitespace-nowrap">
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 function History({ company, dispatches, loading }: { company: string; dispatches: DispatchOut[]; loading: boolean }) {
   const toast = useToast();
   if (loading) return null;
@@ -376,7 +393,7 @@ function History({ company, dispatches, loading }: { company: string; dispatches
             <div key={d.id} className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className={cx('text-body', d.ok ? 'text-graphite' : 'text-safety')}>
-                  {d.ok ? sentSummary(d) : `Didn’t go through. ${d.error ?? ''}`.trim()}
+                  {d.ok ? <KeepChannel text={sentSummary(d)} /> : `Didn’t go through. ${d.error ?? ''}`.trim()}
                 </p>
                 <p className="text-secondary text-pencil">{formatDateTime(d.sent_at)}</p>
               </div>

@@ -6,7 +6,6 @@ import {
   channelLine,
   countsSentence,
   dispatchText,
-  effectiveChannelFor,
   headingFor,
   reviewLine,
   sendButtonLabel,
@@ -41,18 +40,10 @@ describe('one vocabulary per trade (DESIGN.md "Trades")', () => {
 describe('channels', () => {
   it('names channels by what they do, and never says Outbox', () => {
     expect(channelLine({ channel: 'slack', destination: '#punch-electrical' })).toBe('Posts to #punch-electrical.');
-    expect(channelLine({ channel: 'slack', destination: null })).toBe('Posts to your team’s Slack channel.');
+    expect(channelLine({ channel: 'slack', destination: null })).toBe("Posts to your team's Slack channel.");
     expect(channelLine({ channel: 'email', destination: 'maria.chen@example.com' })).toBe('Emails maria.chen@example.com.');
     expect(channelLine({ channel: 'outbox', destination: 'Outbox' })).toBe('Copy a link to share.');
     expect(channelLine({ channel: 'slack', destination: '#x', label: 'From the API.' })).toBe('From the API.');
-  });
-
-  it('picks the effective channel: the trade’s own, else the team’s Slack, else Copy link', () => {
-    const base = { trade: 'electrical' as const, company: 'Ace', contact: null, phone: null, slack_channel: null, email: null, has_slack_webhook: false };
-    expect(effectiveChannelFor({ ...base, has_slack_webhook: true, slack_channel: '#punch-electrical' }).channel).toBe('slack');
-    expect(effectiveChannelFor({ ...base, email: 'a@example.com' }, true).channel).toBe('email');
-    expect(effectiveChannelFor(base, true)).toEqual({ channel: 'slack', label: 'Posts to your team’s Slack channel.' });
-    expect(effectiveChannelFor(base)).toEqual({ channel: 'outbox', label: 'Copy a link to share.' });
   });
 
   it('offers only working channels, effective first; no picker when there is one', async () => {
@@ -61,7 +52,9 @@ describe('channels', () => {
     expect(c[0].value).toBe(p.effective_channel);
     expect(c.map((x) => x.label)).toEqual(['Slack', 'Email', 'Copy link']);
     const glass = await diskMock().api.dispatchPreview('prj_unit2b', 'windows_glazing');
-    expect(channelChoices(glass).map((x) => x.value)).toEqual(['outbox']);
+    const gc = channelChoices(glass).map((x) => x.value);
+    expect(gc[0]).toBe(glass.effective_channel);
+    expect([...gc].sort()).toEqual(glass.channels.filter((x) => x.available).map((x) => x.channel).sort());
   });
 });
 

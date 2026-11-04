@@ -53,7 +53,7 @@ export const MOCK_BASE = '/mock-api/';
 
 /** "Posts to #punch-electrical." / "Emails maria.chen@example.com." / "Copy a link to share." */
 function channelLabelLine(channel: Channel, destination: string | null): string {
-  if (channel === 'slack') return destination ? `Posts to ${destination}.` : 'Posts to your team’s Slack channel.';
+  if (channel === 'slack') return destination ? `Posts to ${destination}.` : "Posts to your team's Slack channel.";
   if (channel === 'email') return destination ? `Emails ${destination}.` : 'Emails the trade.';
   return 'Copy a link to share.';
 }
@@ -202,6 +202,13 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
   async function getItem(itemId: string): Promise<ItemOut> {
     if (dismissed.has(itemId)) throw new ApiError(404, 'This item was dismissed.');
     return overlay(await load<ItemOut>(`items/${itemId}.json`));
+  }
+
+  /** The trade summary's effective channel (fixture value, else from the contact). */
+  async function effectiveChannelOf(projectId: string, trade: Trade): Promise<Channel> {
+    const list = await load<TradeListOut>(`projects/${projectId}/trades.json`);
+    const t = list.trades.find((x) => x.trade === trade);
+    return t?.effective_channel ?? effective(t?.contact ?? null).effective_channel;
   }
 
   async function companyFor(projectId: string, trade: Trade): Promise<string | null> {
@@ -381,30 +388,32 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
         // would log 404s in the console).
         const company = await companyFor(id, trade);
         const preview = await load<DispatchPreviewOut>(`projects/${id}/trades/${trade}/preview.json`);
+        // No channel given -> the trade's effective channel, as the server does.
+        const channel: Channel = body.channel ?? (await effectiveChannelOf(id, trade));
         const base: DispatchOut = {
           id: '',
           project_id: id,
           trade,
           company,
-          channel: body.channel,
-          destination: preview.channels.find((c) => c.channel === body.channel)?.destination ?? null,
+          channel,
+          destination: preview.channels.find((c) => c.channel === channel)?.destination ?? null,
           item_ids: [],
           sent_at: '',
           ok: true,
           error: null,
-          payload: { text: body.channel === 'slack' ? preview.slack_text : preview.message_text },
-          channel_label: CHANNEL_LABEL[body.channel],
+          payload: { text: channel === 'slack' ? preview.slack_text : preview.message_text },
+          channel_label: CHANNEL_LABEL[channel],
           summary: '',
         };
         const key = `${id}/${trade}`;
         const out: DispatchOut = {
           ...base,
           id: `dsp_mock_${trade}_${(sent.get(key)?.length ?? 0) + 1}`,
-          channel: body.channel,
+          channel,
           item_ids: body.item_ids,
           sent_at: nowIso(),
-          channel_label: CHANNEL_LABEL[body.channel],
-          summary: summaryFor(body.channel, body.item_ids.length, company ?? TRADE_LABEL[trade], base.destination),
+          channel_label: CHANNEL_LABEL[channel],
+          summary: summaryFor(channel, body.item_ids.length, company ?? TRADE_LABEL[trade], base.destination),
         };
         sent.set(key, [out, ...(sent.get(key) ?? [])]);
         for (const itemId of body.item_ids) {
@@ -432,10 +441,7 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
     approveAndSend: (itemId, channel) =>
       answer(async () => {
         const item = await api.patchItem(itemId, { status: 'open', review_reason: null });
-        const project = await load<ProjectOut>(`projects/${item.project_id}.json`);
-        const contact = project.trades.find((t) => t.trade === item.trade);
-        const ch = channel ?? (contact?.has_slack_webhook ? 'slack' : contact?.email ? 'email' : 'outbox');
-        return api.dispatch(item.project_id, item.trade, { channel: ch, item_ids: [itemId] });
+        return api.dispatch(item.project_id, item.trade, { channel: channel ?? null, item_ids: [itemId] });
       }),
   };
 

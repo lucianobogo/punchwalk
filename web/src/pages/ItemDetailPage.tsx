@@ -24,7 +24,7 @@ import {
 import { BeforeAfter } from '../features/item/BeforeAfter';
 import { EditSheet } from '../features/item/EditSheet';
 import { EvidencePhoto } from '../features/item/EvidencePhoto';
-import { GROUNDING_LABEL, checkerName, historyText, moreActions, primaryAction, recipient } from '../features/item/actions';
+import { checkerName, groundingLabel, historyText, moreActions, primaryAction, recipient } from '../features/item/actions';
 import { useItemActions } from '../features/item/useItemActions';
 import { PlayMomentSheet } from '../features/play/PlayMomentSheet';
 import { formatClock, formatDateTime, formatShortDate } from '../lib/format';
@@ -104,7 +104,7 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
     ...(walk
       ? [{ label: 'Walk', value: `${WALK_KIND_LABEL[walk.kind]}, ${formatShortDate(walk.recorded_at ?? walk.created_at)}` }]
       : []),
-    ...(item.evidence ? [{ label: 'Found by', value: GROUNDING_LABEL[item.evidence.grounding] }] : []),
+    ...(item.evidence ? [{ label: 'Found by', value: groundingLabel(item.evidence.grounding) }] : []),
   ];
 
   return (

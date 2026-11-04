@@ -5,7 +5,6 @@ import {
   SEVERITY_LABEL,
   STATUS_LABEL,
   TRADE_LABEL,
-  type Channel,
   type Grounding,
   type HistoryEntryOut,
   type ItemOut,
@@ -57,19 +56,19 @@ export function moreActions(item: Pick<ItemOut, 'status' | 'dispatch'>, company:
   ];
 }
 
-/** Slack if the trade has a webhook, then email, then the in-app outbox (always works). */
-export function pickChannel(contact: TradeContactOut | null | undefined): Channel {
-  if (contact?.has_slack_webhook) return 'slack';
-  if (contact?.email) return 'email';
-  return 'outbox';
-}
-
+/** How the defect was located, in plain words (`spark_box`: the model's box, drawn as a rounded rectangle). */
 export const GROUNDING_LABEL: Record<Grounding, string> = {
   sam_concept: 'Outline by SAM 3.1',
   sam_box: "Outline from the model's box",
+  spark_box: 'Box from the model',
   pointed_only: 'Pointed location',
   none: 'Voice only',
 };
+
+/** Safe for values the UI doesn't know yet (a newer server): a neutral phrase instead of a blank. */
+export function groundingLabel(g: string): string {
+  return (GROUNDING_LABEL as Record<string, string>)[g] ?? 'Located by the models';
+}
 
 /** "Muse Spark Open on Baseten", or "Muse Spark 1.3 (fallback)" when Baseten failed twice. */
 export function checkerName(provider: Provider): string {

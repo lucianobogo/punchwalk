@@ -9,7 +9,7 @@ import type { ShareItemOut } from '../api/types';
 import { DetailList, EmptyState, Pill, Skeleton, StatusPill, TapeLogo } from '../components';
 import { BeforeAfter } from '../features/item/BeforeAfter';
 import { EvidencePhoto } from '../features/item/EvidencePhoto';
-import { GROUNDING_LABEL } from '../features/item/actions';
+import { groundingLabel } from '../features/item/actions';
 import { PlayMomentSheet, type Playable } from '../features/play/PlayMomentSheet';
 import { formatClock, formatShortDate } from '../lib/format';
 import { SEVERITY_LABEL, STATUS_LABEL, TRADE_LABEL, capitalize } from '../lib/labels';
@@ -120,7 +120,7 @@ export function ShareBody({ s }: { s: ShareItemOut }) {
             { label: 'Severity', value: SEVERITY_LABEL[s.severity] },
             { label: 'Status', value: STATUS_LABEL[s.status] },
             ...(s.walked_at ? [{ label: 'Walked', value: formatShortDate(s.walked_at) }] : []),
-            ...(s.evidence ? [{ label: 'Found by', value: GROUNDING_LABEL[s.evidence.grounding] }] : []),
+            ...(s.evidence ? [{ label: 'Found by', value: groundingLabel(s.evidence.grounding) }] : []),
           ]}
         />
         <p className="mt-6 text-center">

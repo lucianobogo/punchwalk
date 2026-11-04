@@ -1,19 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { HistoryEntryOut, TradeContactOut } from '../../api/types';
-import { checkerName, historyText, moreActions, pickChannel, primaryAction, recipient } from './actions';
+import type { HistoryEntryOut } from '../../api/types';
+import { checkerName, groundingLabel, historyText, moreActions, primaryAction, recipient } from './actions';
 import { diffPatch } from './EditSheet';
 import { diskMock } from '../../test/fixtures';
-
-const contact = (over: Partial<TradeContactOut> = {}): TradeContactOut => ({
-  trade: 'electrical',
-  company: 'Ace Electric',
-  contact: null,
-  email: null,
-  phone: null,
-  slack_channel: null,
-  has_slack_webhook: false,
-  ...over,
-});
 
 describe('primary action by status (DESIGN.md "Bottom bar")', () => {
   it.each([
@@ -52,11 +41,13 @@ describe('More sheet', () => {
 });
 
 describe('channel and wording', () => {
-  it('sends by Slack, then email, then the in-app outbox', () => {
-    expect(pickChannel(contact({ has_slack_webhook: true, email: 'a@example.com' }))).toBe('slack');
-    expect(pickChannel(contact({ email: 'a@example.com' }))).toBe('email');
-    expect(pickChannel(contact())).toBe('outbox');
-    expect(pickChannel(null)).toBe('outbox');
+  it('names how the defect was located, including the model-box value and unknown future ones', () => {
+    expect(groundingLabel('sam_concept')).toBe('Outline by SAM 3.1');
+    expect(groundingLabel('sam_box')).toBe("Outline from the model's box");
+    expect(groundingLabel('spark_box')).toBe('Box from the model');
+    expect(groundingLabel('pointed_only')).toBe('Pointed location');
+    expect(groundingLabel('none')).toBe('Voice only');
+    expect(groundingLabel('something_new')).toBe('Located by the models');
   });
 
   it('names the checker, including the fallback', () => {

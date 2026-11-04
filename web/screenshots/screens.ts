@@ -274,10 +274,10 @@ export const SCREENS: Screen[] = [
   },
   {
     name: 'trade-to-send',
-    checklist: '8. Trade screen with only items to send (one working channel: Copy link, no picker)',
+    checklist: '8. Trade screen with only items to send (Clearview Glass, via the team Slack channel)',
     path: '/trades/windows_glazing',
     setup: async (page) => {
-      await page.getByRole('button', { name: /^Copy a link for \d+ items?$/ }).waitFor({ timeout: 3000 });
+      await page.getByRole('button', { name: /^(Post \d+ items? to Slack|Email \d+ items? to .+|Copy a link for \d+ items?)$/ }).waitFor({ timeout: 3000 });
     },
   },
   {

@@ -10,12 +10,16 @@ import {
   type DispatchOut,
   type DispatchPreviewOut,
   type Trade,
-  type TradeContactOut,
 } from '../../api/types';
 import { plural } from '../../lib/labels';
 
 /** The request: channel and item ids are both required. To-send items first (preview order), then re-sends. */
-export function buildDispatch(channel: Channel, toSend: string[], excluded: Set<string>, resend: Set<string>): DispatchCreate {
+export function buildDispatch(
+  channel: Channel,
+  toSend: string[],
+  excluded: Set<string>,
+  resend: Set<string>,
+): DispatchCreate & { channel: Channel } {
   return { channel, item_ids: [...toSend.filter((id) => !excluded.has(id)), ...[...resend].filter((id) => !toSend.includes(id))] };
 }
 
@@ -29,17 +33,9 @@ export function countsSentence(c: { to_review: number; to_send: number; sent: nu
 /** Where a channel goes, as the API words it ("Posts to #punch-electrical."); a fallback if it didn't. */
 export function channelLine(ch: Pick<DispatchChannelOut, 'channel' | 'destination'> & { label?: string | null }): string {
   if (ch.label) return ch.label;
-  if (ch.channel === 'slack') return ch.destination ? `Posts to ${ch.destination}.` : 'Posts to your team’s Slack channel.';
+  if (ch.channel === 'slack') return ch.destination ? `Posts to ${ch.destination}.` : "Posts to your team's Slack channel.";
   if (ch.channel === 'email') return ch.destination ? `Emails ${ch.destination}.` : 'Emails the trade.';
   return 'Copy a link to share.';
-}
-
-/** Which channel a send uses, per DESIGN.md: the trade's own if set up, else the team's Slack, else Copy link. */
-export function effectiveChannelFor(contact: TradeContactOut | null | undefined, teamSlack = false): { channel: Channel; label: string } {
-  if (contact?.has_slack_webhook) return { channel: 'slack', label: channelLine({ channel: 'slack', destination: contact.slack_channel }) };
-  if (contact?.email) return { channel: 'email', label: channelLine({ channel: 'email', destination: contact.email }) };
-  if (teamSlack) return { channel: 'slack', label: 'Posts to your team’s Slack channel.' };
-  return { channel: 'outbox', label: channelLine({ channel: 'outbox', destination: null }) };
 }
 
 /** The picker: working channels only, the effective one first. Shown only when there's a choice. */

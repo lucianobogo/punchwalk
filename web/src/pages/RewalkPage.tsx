@@ -3,10 +3,9 @@
 // with Send again, then anything the re-walk didn't check.
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { useItems, useProject, useRewalkSummary, useSendDispatch } from '../api/hooks';
-import { NOT_CHECKED_ON_REWALK, type ItemOut, type RewalkItemOut, type RewalkSummaryOut, type Trade } from '../api/types';
+import { useApproveAndSend, useItems, useRewalkSummary, useSendDispatch } from '../api/hooks';
+import { NOT_CHECKED_ON_REWALK, type ItemOut, type RewalkItemOut, type RewalkSummaryOut } from '../api/types';
 import { Button, ButtonLink, Card, PushedBar, SectionHeader, Skeleton, TapeTab, useToast } from '../components';
-import { pickChannel } from '../features/item/actions';
 import { barLabel, barSegments, openByTrade, rewalkSections } from '../features/rewalk/summary';
 import { useSendToTrade } from '../features/trades/useSend';
 import { formatDateTime, formatShortDate } from '../lib/format';
@@ -50,12 +49,23 @@ export default function RewalkPage() {
 }
 
 function Body({ s }: { s: RewalkSummaryOut }) {
-  const project = useProject(s.project_id);
   const items = useItems(s.project_id);
   const byId = new Map((items.data?.items ?? []).map((i) => [i.id, i]));
-  const contactFor = (t: Trade) => project.data?.trades.find((c) => c.trade === t) ?? null;
   const sender = useSendToTrade();
   const sendMany = useSendDispatch();
+  const approve = useApproveAndSend();
+  // A needs-a-look item can't simply be sent again: approve it and send it (the server picks the channel).
+  const approveOne = async (it: RewalkItemOut) => {
+    setSendingId(it.item_id);
+    try {
+      const out = await approve.mutateAsync({ itemId: it.item_id });
+      toast.show(`${out.summary}. Item ${it.number} approved.`);
+    } catch (e) {
+      toast.show(e instanceof Error && e.message ? e.message : 'That didn’t go through. Try again in a moment.', { tone: 'error' });
+    } finally {
+      setSendingId(null);
+    }
+  };
   const toast = useToast();
   const [busyAll, setBusyAll] = useState(false);
 
@@ -64,7 +74,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
   const sendOne = async (it: RewalkItemOut) => {
     setSendingId(it.item_id);
     try {
-      await sender.run(s.project_id, it.trade, pickChannel(contactFor(it.trade)), [it.item_id]);
+      await sender.run(s.project_id, it.trade, null, [it.item_id]);
     } finally {
       setSendingId(null);
     }
@@ -83,7 +93,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
     let sent = 0;
     try {
       for (const [trade, ids] of groups) {
-        await sendMany.mutateAsync({ projectId: s.project_id, trade, body: { channel: pickChannel(contactFor(trade)), item_ids: ids } });
+        await sendMany.mutateAsync({ projectId: s.project_id, trade, body: { item_ids: ids } });
         sent += ids.length;
       }
       toast.show(`Sent ${plural(sent, 'item')} again to ${plural(groups.size, 'trade')}`);
@@ -108,7 +118,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
       {rewalkSections(s).map((sec) => {
         if (sec.kind === 'needs_a_look') {
           return sec.items.map((it) => (
-            <FlaggedCard key={it.item_id} it={it} onSend={() => sendOne(it)} busy={sendingId === it.item_id} resentAt={resentAt(it)} />
+            <FlaggedCard key={it.item_id} it={it} onApprove={() => approveOne(it)} busy={sendingId === it.item_id} />
           ));
         }
         return (
@@ -149,7 +159,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
   );
 }
 
-function FlaggedCard({ it, onSend, busy, resentAt }: { it: RewalkItemOut; onSend: () => void; busy: boolean; resentAt: string | null }) {
+function FlaggedCard({ it, onApprove, busy }: { it: RewalkItemOut; onApprove: () => void; busy: boolean }) {
   return (
     <Card tone="flagged" className="mt-5">
       <SectionHeader tone="hold" as="div">
@@ -173,13 +183,9 @@ function FlaggedCard({ it, onSend, busy, resentAt }: { it: RewalkItemOut; onSend
         />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3">
-        {resentAt ? (
-          <p className="flex min-h-11 items-center text-secondary text-pencil">Sent again {formatShortDate(resentAt)}</p>
-        ) : (
-          <Button onClick={onSend} busy={busy} busyLabel="Sending…">
-            Send again
-          </Button>
-        )}
+        <Button onClick={onApprove} busy={busy} busyLabel="Sending…">
+          Approve and send
+        </Button>
         <ButtonLink to={`/items/${it.item_id}`} variant="secondary">
           Open item
         </ButtonLink>

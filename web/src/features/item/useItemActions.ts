@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { useApproveAndSend, useDismissItem, usePatchItem, useSendDispatch, useShareItem } from '../../api/hooks';
 import type { ItemOut, ItemPatch, TradeContactOut } from '../../api/types';
 import { useToast } from '../../components';
-import { pickChannel, recipient, type MoreKind, type PrimaryKind } from './actions';
+import { recipient, type MoreKind, type PrimaryKind } from './actions';
 
 const errorText = (e: unknown) =>
   e instanceof Error && e.message ? e.message : 'That didn’t go through. Check the connection and try again.';
@@ -45,7 +45,7 @@ export function useItemActions(item: ItemOut | undefined, contact: TradeContactO
         : await send.mutateAsync({
             projectId: item.project_id,
             trade: item.trade,
-            body: { channel: pickChannel(contact), item_ids: [item.id] },
+            body: { item_ids: [item.id] }, // the server applies the trade's effective channel
           });
       toast.show(out.summary ? `${out.summary}.${approveFirst ? ` Item ${item.number} approved.` : ''}` : `Sent item ${item.number} to ${who}`);
     } catch (e) {

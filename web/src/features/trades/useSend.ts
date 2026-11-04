@@ -19,14 +19,15 @@ export function useSendToTrade() {
   const send = useSendDispatch();
   const toast = useToast();
 
-  async function run(projectId: string, trade: Trade, channel: Channel, itemIds: string[], fallbackText?: string): Promise<DispatchOut | null> {
+  /** `channel` null = let the server use the trade's effective channel. */
+  async function run(projectId: string, trade: Trade, channel: Channel | null, itemIds: string[], fallbackText?: string): Promise<DispatchOut | null> {
     try {
-      const out = await send.mutateAsync({ projectId, trade, body: { channel, item_ids: itemIds } });
+      const out = await send.mutateAsync({ projectId, trade, body: channel ? { channel, item_ids: itemIds } : { item_ids: itemIds } });
       if (!out.ok) {
         toast.show(out.error ?? 'It didn’t go through. Try again, or choose another channel.', { tone: 'error' });
         return out;
       }
-      if (channel === 'outbox') await copy(dispatchText(out) ?? fallbackText ?? null);
+      if (out.channel === 'outbox') await copy(dispatchText(out) ?? fallbackText ?? null);
       toast.show(sentSummary(out));
       return out;
     } catch (e) {
