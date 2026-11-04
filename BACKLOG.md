@@ -28,3 +28,5 @@ Ideas and cut items. Nothing here gets built before every PLAN.md box is done.
 - Re-walk rule: voice "not fixed" wins over vision "fixed" (#010 stays open) — correct per PLAN 7.3; mention in the demo story.
 - Seed replay stores est_cost 0 / latency 0 for cached calls, so the demo's processing screen says 'from recorded model answers (no new cost)' instead of the real ≈ $0.4 per walk; keeping the recording's original cost/latency in the ModelCall rows would show real numbers.
 - #003 stovetop: the concept instance outlines the whole cooktop; a SAM box prompt of ~15% width centered on the dot might isolate the burner (unproven).
+- GET …/trades/{trade}/preview mints share tokens (a write on a GET); mint at send time instead (harmless, idempotent).
+- The demo project lists the holdout walk3 as a second "First walk" (16 s, 2 items); fine, but could be labelled "Holdout walk" in a later pass.

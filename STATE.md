@@ -1,14 +1,14 @@
 # STATE
 
-Status: RUNNING
-Updated: 2026-11-03 22:23 ET
-Current phase: DONE except 9.1 `[~]` — waiting for the human to load the demo snapshot on Fly (then a live iPhone-profile smoke test closes 9.1 → Status COMPLETE). 50/51 boxes `[x]`, 0 `[ ]`.
-Last checkpoint: ckpt-9.4. Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
+Status: COMPLETE
+Updated: 2026-11-03 22:29 ET
+Current phase: COMPLETE — 51/51 PLAN boxes `[x]`, all verified; live demo at https://punchwalk.fly.dev with the seeded project (live smoke test PASS).
+Last checkpoint: ckpt-9.1 (final). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
 ## Next actions
-1. Human: import the demo snapshot on Fly (Needs human) → orchestrator smoke-tests https://punchwalk.fly.dev with the iPhone profile → 9.1 `[x]` → Status COMPLETE.
-2. Human: `make deploy` once more, record the video, fill `<!-- VIDEO_URL -->`, push, make public, submit.
-3. Nothing else is open; BACKLOG.md lists optional polish.
+1. Human only (see Final handoff): `make deploy` once more, iPhone upload check, record the video, fill `<!-- VIDEO_URL -->`, push + make public, submit by Wed 9 PM ET.
+2. Orchestrator: nothing open. If a demo-critical bug shows up before the Wed 12 PM freeze, re-brief a builder + verifier and redeploy.
+3. BACKLOG.md lists optional polish.
 
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
@@ -17,7 +17,7 @@ Last checkpoint: ckpt-9.4. Untagged: 8.1 (verified on synth; tag after real walk
 | 3.4 + 7.5 + 7.x fixes verify (main tree, readonly; needs data/record media) | verifier | 19:40 | read-only | no pipeline edits while this runs |
 
 ## Needs human
-- Demo data on Fly: DONE by the human (22:23 ET) — https://punchwalk.fly.dev/api/projects lists Unit 2B final punch, 14 items, re-walk summary 7/2/3. Live smoke test running.
+- Demo data on Fly: DONE — live smoke test PASS (22:29 ET): every demo beat works on the iPhone profile, 0 console errors. The processing screen's cost line reads "about $0.00" until you redeploy (the fix is in the repo).
 - **Redeploy once after the final pass** (`make deploy` from the repo root) so the live app has the last fixes (model labels, before/after on closures, overlay clamp, polish). The volume keeps the imported demo data across deploys. I'll say in STATE.md when the final pass is done.
 - License: DONE — MIT, copyright 2026 Luciano Bogomolni (LICENSE at the repo root; README's `<!-- LICENSE -->` placeholder gets filled in the final README pass).
 - **Slack on camera (optional):** the seeded Ace Electric webhook is an example-domain placeholder (never contacted). To make the Slack beat real, put your webhook in `.env` as SLACK_WEBHOOK_URL (global) or follow the pre-flight swap in docs/DEMO_SCRIPT.md.
@@ -50,14 +50,14 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - .env was an unmodified copy of .env.example at session start (all keys empty).
 - Agreed Make entry points (used by later briefs): dev=`uvicorn punchwalk.api.app:app`, probe=`scripts/probe.py`, record=`scripts/record.py`, seed=`scripts/seed.py`, eval=`eval/run_eval.py`, build=`pnpm -C web build` → `punchwalk/static/`, screenshots=`pnpm -C web screenshots` → `.verify/screens/`.
 
-## Final handoff (written 20:34 ET Tue; Status flips to COMPLETE when 9.1 and 9.2 close)
-**What works (all verified by independent verifiers, 49/51 PLAN boxes `[x]`):**
+## Final handoff (22:29 ET Tue — Status COMPLETE)
+**What works (all verified by independent verifiers, 51/51 PLAN boxes `[x]`):**
 - Pipeline on real Ray-Ban Meta footage: ingest (5-part HEVC 120 fps walks) → Muse Voice Transcribe → SAM 3.1 hand tracking → pointing events → Muse Spark Open (Baseten) writes items → SAM 3.1 outlines the defect → Spark Open verifies → dispatch → re-walk closures with before/after and the false-fix flag. `make eval` (from the cache, $0): walk1 recall 1.00, precision 1.00, trade 1.00, room 1.00; walk2 closure 0.92, false-claim catch 2/2; holdout walk3 1.00 — every PLAN 3.4 target met.
 - API + job worker, PWA (35 checklist screens verified vs DESIGN.md, 0 console errors), dispatch (Slack/email/Outbox), PDF report, `make seed` (demo project at $0), Docker image (in-image tests green), fresh clone sets up and tests green, no secrets in history, repo 17 MB.
 - Live: https://punchwalk.fly.dev (healthz ok, demo_mode true). Spend: $3.06 of $25.
 **Known issues:** #003 stovetop outline covers the whole cooktop (coarse); #006 knob is pointed-only (dot, no outline; its frame shows the inspector in a mirror); closure numbers are in-sample (walk2 was tuned on); dark mode cut; seeded processing screen shows "from recorded answers (no new cost)" instead of live cost; README's video link is empty.
 **Exactly what you must do next (in order):**
-1. Load the demo data on Fly (commands under Needs human; ~2 min). Check https://punchwalk.fly.dev shows 14 items.
+1. (Done: demo data imported.)
 2. Redeploy once: `make deploy` (picks up every fix since your 19:53 deploy; the volume keeps the data). Then re-open the app on your iPhone and run one fresh upload end to end (Record → clips → Upload).
 3. Optional: a real Slack webhook (docs/DEMO_SCRIPT.md pre-flight) so the "Send to Ace Electric" beat posts for real.
 4. Record the video per docs/DEMO_SCRIPT.md (install the PWA from Safari → Add to Home Screen first), then put the link in README.md line 17 (`<!-- VIDEO_URL -->`).

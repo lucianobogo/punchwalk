@@ -222,7 +222,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 9: Ship (Track C)
 
-- [~] **9.1 Docker + deploy.** *(image + fly.toml + runbook verified; the human deployed it — https://punchwalk.fly.dev is live; the demo seed snapshot still has to reach the volume after 3.4)*
+- [x] **9.1 Docker + deploy.** *(image + fly.toml + runbook verified; deployed by the human; demo snapshot imported; live smoke test PASS on the iPhone profile)*
   - Multi-stage Dockerfile, `fly.toml`, volume at `/data`, health check.
   - Make sure the demo media and cached results that `make seed` needs reach the deployed app (baked into the image or copied to the volume).
   - If `fly auth whoami` works or `FLY_API_TOKEN` is set: deploy, seed, and smoke-test the live URL with the iPhone profile.
