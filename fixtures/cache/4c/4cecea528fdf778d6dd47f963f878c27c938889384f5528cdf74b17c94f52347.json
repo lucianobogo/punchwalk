@@ -1,0 +1,54 @@
+{
+ "key": "4cecea528fdf778d6dd47f963f878c27c938889384f5528cdf74b17c94f52347",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:26:17+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-bb9049164b31482d85ea67bcf70604b6",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true, \"frame_shows_defect\": true, \"issues\": [], \"suggested_fix\": null, \"rationale\": \"Item matches inspector's words about spilled detergent and photo shows a streak on the lower front panel at the blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751974,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 412,
+   "prompt_tokens": 3631,
+   "total_tokens": 4043,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 265,
+    "audio_tokens": 0,
+    "reasoning_tokens": 347,
+    "rejected_prediction_tokens": 764,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

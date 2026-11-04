@@ -1,0 +1,54 @@
+{
+ "key": "d25e827c2a2fa5612492d8698d8ee950aa199b19ee47c13011385718232e0668",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:04:39+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-522a0ca9d13c43c8a577f7c158c37bb9",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Re-walk mirror looks clean, no white toothpaste smudge visible.\", \"rationale\": \"First walk flagged toothpaste on mirror above sink. Re-walk close-up and wide (photos 2 and 4) show the same mirror clear and reflective with no smudge.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750675,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 640,
+   "prompt_tokens": 6757,
+   "total_tokens": 7397,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 424,
+    "audio_tokens": 0,
+    "reasoning_tokens": 558,
+    "rejected_prediction_tokens": 1081,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,52 @@
+{
+ "key": "e02c295be71be6a7c4064697a37e0cf5f96bd3b79ff0bd8c5e59778187d20109",
+ "provider": "meta",
+ "endpoint": "/responses",
+ "model": "sam-3.1",
+ "description": "SAM concept 'detergent dispenser tray' on image raw.jpg",
+ "created_at": "2026-11-04T00:26:02+00:00",
+ "meta": {
+  "media_size": [
+   1080,
+   1436
+  ],
+  "summary": {
+   "model": "sam-3.1",
+   "media": "image",
+   "text": "detergent dispenser tray",
+   "metadata": {
+    "include_confidence": "true",
+    "mask_encoding": "one_bit"
+   },
+   "media_ref": {
+    "image_sha256": "033d92e0f44b55811863579b8973a5d39879a40fb8115c5f173004c3e588103c"
+   }
+  }
+ },
+ "response": {
+  "completed": true,
+  "incomplete": null,
+  "usage": {
+   "images_processed": 1,
+   "input_tokens": 0,
+   "input_tokens_details": {
+    "cached_tokens": 0
+   },
+   "output_tokens": 0,
+   "output_tokens_details": {
+    "reasoning_tokens": 0
+   },
+   "total_tokens": 0
+  },
+  "events": {
+   "response.created": 1,
+   "response.in_progress": 1,
+   "response.output_item.added": 1,
+   "response.content_part.added": 1,
+   "response.output_text.done": 1,
+   "response.content_part.done": 1,
+   "response.output_item.done": 1,
+   "response.completed": 1
+  }
+ }
+}

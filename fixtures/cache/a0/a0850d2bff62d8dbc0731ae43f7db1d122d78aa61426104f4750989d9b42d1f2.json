@@ -1,0 +1,54 @@
+{
+ "key": "a0850d2bff62d8dbc0731ae43f7db1d122d78aa61426104f4750989d9b42d1f2",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:53:18+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-06520b7f51f447249b00ab3ff440703a",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Wall pencil marks and screws above TV\",\"description\":\"Wall above the TV has pencil marks and remaining screws/anchors. The surface needs patching and repainting.\",\"action\":\"Remove screws/anchors, patch holes, clean marks and repaint wall\",\"trade\":\"painting\",\"room\":\"Living room\",\"location_detail\":\"wall above TV\",\"severity\":\"cosmetic\",\"sam_concept\":\"wall surface\",\"defect_box\":[610,865,698,937],\"confidence\":0.86,\"rationale\":\"Narration cites pencil marks and screws needing repaint and photo shows wall anchors/holes with pencil lines near the blue dot above the TV.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749993,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 371,
+   "prompt_tokens": 8990,
+   "total_tokens": 9361,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 220,
+    "audio_tokens": 0,
+    "reasoning_tokens": 232,
+    "rejected_prediction_tokens": 844,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

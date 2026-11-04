@@ -1,0 +1,54 @@
+{
+ "key": "970cc8a9b361b030c7445c6eceb243e8ab4eff08c9c8a318f45decc51b085138",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:05:13+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-9269128c33614f6585e5aeec86655598",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Re-walk wall at blue dot is smooth and uniform, no nick visible.\", \"rationale\": \"First-walk nick outlined in red is not seen in close-up Photo 2 or frame Photo 4; paint looks even at pointed spot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750709,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 453,
+   "prompt_tokens": 5357,
+   "total_tokens": 5810,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 286,
+    "audio_tokens": 0,
+    "reasoning_tokens": 378,
+    "rejected_prediction_tokens": 883,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

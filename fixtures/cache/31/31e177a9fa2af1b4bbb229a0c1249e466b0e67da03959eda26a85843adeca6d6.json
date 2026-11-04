@@ -1,0 +1,54 @@
+{
+ "key": "31e177a9fa2af1b4bbb229a0c1249e466b0e67da03959eda26a85843adeca6d6",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:03:42+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-c5fd08b550364088a65db511f49c14aa",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 3, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Inspector explicitly names 'damaged stove top' in Kitchen, matching item 3's title/location at front left burner.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750619,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 208,
+   "prompt_tokens": 3139,
+   "total_tokens": 3347,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 131,
+    "audio_tokens": 0,
+    "reasoning_tokens": 147,
+    "rejected_prediction_tokens": 408,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

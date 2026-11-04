@@ -1,0 +1,54 @@
+{
+ "key": "61f8c9c795421bdb84028ee2e6df65e28cc14ca6717fbb4de116dc4fc2f5dd57",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:52:51+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-8ba9d2e824f64cdc891de13f04ca72c7",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Light switch cover missing screw\",\"description\":\"The light switch cover plate on the kitchen wall is missing a screw and is not fully secured.\",\"action\":\"Install missing screw and secure light switch cover plate\",\"trade\":\"electrical\",\"room\":\"Kitchen\",\"location_detail\":\"wall above countertop near trash can\",\"severity\":\"cosmetic\",\"sam_concept\":\"light switch cover plate\",\"defect_box\":[474,536,523,581],\"confidence\":0.62,\"rationale\":\"Narration states missing screw on light switch; photo 1 shows a switch plate above the counter with no visible dot but matching location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749966,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 384,
+   "prompt_tokens": 6927,
+   "total_tokens": 7311,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 230,
+    "audio_tokens": 0,
+    "reasoning_tokens": 249,
+    "rejected_prediction_tokens": 855,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

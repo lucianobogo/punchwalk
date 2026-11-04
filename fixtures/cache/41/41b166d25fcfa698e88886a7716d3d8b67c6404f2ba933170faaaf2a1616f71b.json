@@ -1,0 +1,54 @@
+{
+ "key": "41b166d25fcfa698e88886a7716d3d8b67c6404f2ba933170faaaf2a1616f71b",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:57:26+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ca5dda1c2f024429a5f76ba8e1b96fc0",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Re-walk photos 2 and 4 show same outlet now vertical and flush to wall, not twisted like in 1 and 3.\", \"rationale\": \"Original was strongly diagonal/crooked. Re-walk cover is upright and tight, problem is fixed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750240,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 791,
+   "prompt_tokens": 5367,
+   "total_tokens": 6158,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 522,
+    "audio_tokens": 0,
+    "reasoning_tokens": 711,
+    "rejected_prediction_tokens": 1361,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

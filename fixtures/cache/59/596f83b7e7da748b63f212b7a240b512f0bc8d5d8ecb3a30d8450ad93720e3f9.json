@@ -1,0 +1,54 @@
+{
+ "key": "596f83b7e7da748b63f212b7a240b512f0bc8d5d8ecb3a30d8450ad93720e3f9",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixConfirm) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:13:05+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-0b46b7e868ce46c29eceeade7f1aa655",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"shows_fixed\": \"yes\", \"note\": \"Re-walk photo shows the same counter area by the coffee machine clean and white - coffee stains in the marked spot are gone.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751179,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1119,
+   "prompt_tokens": 5253,
+   "total_tokens": 6372,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 756,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1069,
+    "rejected_prediction_tokens": 1785,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

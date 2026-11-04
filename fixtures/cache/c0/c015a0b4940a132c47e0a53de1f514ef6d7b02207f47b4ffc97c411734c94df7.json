@@ -1,0 +1,54 @@
+{
+ "key": "c015a0b4940a132c47e0a53de1f514ef6d7b02207f47b4ffc97c411734c94df7",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:53:29+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-a27798ee07a641eab43485c8e5570754",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Outlet cover loose and crooked in hallway\", \"description\": \"The hallway outlet cover is loose, not tightened, and visibly twisted out of alignment with the wall.\", \"action\": \"Straighten, tighten and secure outlet cover flush to wall\", \"trade\": \"electrical\", \"room\": \"Hallway\", \"location_detail\": \"low on hallway wall above baseboard\", \"severity\": \"functional\", \"sam_concept\": \"outlet cover\", \"defect_box\": [454, 628, 678, 1160], \"confidence\": 0.96, \"rationale\": \"Narration describes twisted loose outlet cover and Photo 1 shows outlet cover clearly rotated at blue dot location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750003,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 757,
+   "prompt_tokens": 8986,
+   "total_tokens": 9743,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 476,
+    "audio_tokens": 0,
+    "reasoning_tokens": 596,
+    "rejected_prediction_tokens": 1491,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

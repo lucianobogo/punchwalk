@@ -1,0 +1,54 @@
+{
+ "key": "f725ca22befdf0e9f897785a4e94ec19fb5dede54785c78db1f43773697183b9",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:01:03+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-5653fff426c74097abe3975fa0384bf8",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Cabinet knob missing on right door\",\"description\":\"Wall-mounted bathroom cabinet has a missing knob on the right door, leaving an empty hardware hole.\",\"action\":\"Install matching knob on right cabinet door\",\"trade\":\"carpentry_millwork\",\"room\":\"Bathroom\",\"location_detail\":\"wall-mounted cabinet, right door\",\"severity\":\"functional\",\"sam_concept\":\"cabinet door knob hole\",\"defect_box\":[595,702,650,758],\"confidence\":0.92,\"rationale\":\"Inspector said knob missing on cabinet and photos show right door hole with left knob present, dot marks the missing knob location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750458,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 423,
+   "prompt_tokens": 8978,
+   "total_tokens": 9401,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 267,
+    "audio_tokens": 0,
+    "reasoning_tokens": 286,
+    "rejected_prediction_tokens": 825,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

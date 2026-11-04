@@ -1,0 +1,54 @@
+{
+ "key": "114b2a999ab9a5334cb835d8f4b01604f9415f639180dfeef1fcf650a86d49e2",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:57:00+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-2ab49c6ed12d422dab72a401a1be20ee",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"White damaged/discolored ring on front left burner still there.\", \"rationale\": \"Re-walk photo shows same white crusty ring on the front left burner under the red outline as in first photo - not cleaned or repaired.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750216,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 557,
+   "prompt_tokens": 2643,
+   "total_tokens": 3200,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 377,
+    "audio_tokens": 0,
+    "reasoning_tokens": 485,
+    "rejected_prediction_tokens": 883,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

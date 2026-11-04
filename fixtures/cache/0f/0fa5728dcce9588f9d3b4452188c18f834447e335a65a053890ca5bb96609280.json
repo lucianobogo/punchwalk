@@ -1,0 +1,54 @@
+{
+ "key": "0fa5728dcce9588f9d3b4452188c18f834447e335a65a053890ca5bb96609280",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:54:22+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-bad7001c02e64d198333746fcff9d5bb",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true,\"frame_shows_defect\": true,\"issues\": [],\"suggested_fix\": null,\"rationale\": \"Inspector's 'bottom left' matches photo's front-left burner discoloration and item location, with no contradictions or invented details.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750058,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 497,
+   "prompt_tokens": 3648,
+   "total_tokens": 4145,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 331,
+    "audio_tokens": 0,
+    "reasoning_tokens": 433,
+    "rejected_prediction_tokens": 831,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

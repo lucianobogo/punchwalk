@@ -1,0 +1,54 @@
+{
+ "key": "9d460a1e7bb52f2725764045ae02d4584c88b1379bb08aeb342c9283c1e28ac5",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:52:46+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-e93821904c714a98a8575b5645d58c6d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Stove top damaged at front left burner\", \"description\": \"The glass cooktop has a damaged/discolored ring on the front left burner area. The marking covers the burner circle on the bottom left of the stove top.\", \"action\": \"Inspect cooktop glass and repair or replace if damaged\", \"trade\": \"appliances\", \"room\": \"Kitchen\", \"location_detail\": \"stove top, front left burner\", \"severity\": \"cosmetic\", \"sam_concept\": \"stovetop burner glass\", \"defect_box\": [325, 661, 751, 879], \"confidence\": 0.88, \"rationale\": \"Narration notes damaged bottom-left stove top; photo 1 shows circular scorch/damage at front left burner aligned with blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749960,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 786,
+   "prompt_tokens": 8983,
+   "total_tokens": 9769,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 511,
+    "audio_tokens": 0,
+    "reasoning_tokens": 607,
+    "rejected_prediction_tokens": 1414,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "79fa4c1febfc014c9baa9f9ed8b70717db05bcb6c5f44df10a10eb85d6c3e15d",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:04:07+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-fb35e6f680604cc2b406655ee1643f5b",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 11, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Words explicitly name the hallway loose/crooked outlet and declare it fixed, matching item 11; photo shows fingertip on that low wall outlet.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750645,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 168,
+   "prompt_tokens": 3146,
+   "total_tokens": 3314,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 107,
+    "audio_tokens": 0,
+    "reasoning_tokens": 101,
+    "rejected_prediction_tokens": 327,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

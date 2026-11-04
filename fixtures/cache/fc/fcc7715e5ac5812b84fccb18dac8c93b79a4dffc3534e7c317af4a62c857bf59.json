@@ -1,0 +1,54 @@
+{
+ "key": "fcc7715e5ac5812b84fccb18dac8c93b79a4dffc3534e7c317af4a62c857bf59",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:25:53+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-bf1198bec3564998ba45f6479bb08d4d",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Mold in washing machine detergent compartment\",\"description\":\"Washing machine detergent compartment has mold growth inside the dispenser tray area.\",\"action\":\"Clean and disinfect detergent compartment thoroughly\",\"trade\":\"cleaning\",\"room\":\"Laundry room\",\"location_detail\":\"washing machine detergent dispenser\",\"severity\":\"functional\",\"sam_concept\":\"detergent dispenser tray\",\"defect_box\":null,\"confidence\":0.6,\"rationale\":\"Narration states mold in detergent compartment and photo 2 shows drawer pulled with pointing, but photo 1 is cropped low and does not show the compartment at the blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751948,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 614,
+   "prompt_tokens": 8981,
+   "total_tokens": 9595,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 383,
+    "audio_tokens": 0,
+    "reasoning_tokens": 481,
+    "rejected_prediction_tokens": 1234,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

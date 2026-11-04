@@ -1,0 +1,54 @@
+{
+ "key": "a6cc003efb8c3a4298d90e2462ef61e06628ad47a5811dfa58b16b279204ae4b",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:04:53+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-f0070cc32521432e850494a694aa6695",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\":\"no\",\"note\":\"Fire alarm now installed.\",\"rationale\":\"Re-walk photos 2 and 4 show a white alarm unit mounted on the ceiling covering the bracket and wires that were exposed in photos 1 and 3.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750690,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 321,
+   "prompt_tokens": 5358,
+   "total_tokens": 5679,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 206,
+    "audio_tokens": 0,
+    "reasoning_tokens": 257,
+    "rejected_prediction_tokens": 599,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

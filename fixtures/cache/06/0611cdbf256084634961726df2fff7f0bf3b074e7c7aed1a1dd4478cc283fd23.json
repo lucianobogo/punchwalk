@@ -1,0 +1,54 @@
+{
+ "key": "0611cdbf256084634961726df2fff7f0bf3b074e7c7aed1a1dd4478cc283fd23",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:01:19+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-f3c28c1a74c243728b9829066680af72",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Small wall nick needing repaint, bedroom\", \"description\": \"The bedroom wall has a small nick that needs touch-up painting.\", \"action\": \"Patch and repaint nick to match wall finish\", \"trade\": \"painting\", \"room\": \"Bedroom\", \"location_detail\": \"center of bedroom wall\", \"severity\": \"cosmetic\", \"sam_concept\": \"wall nick\", \"defect_box\": [453, 796, 503, 847], \"confidence\": 0.67, \"rationale\": \"Inspector noted small wall nick needing repaint in bedroom at the pointed location; photo shows matching wall mark.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750475,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 301,
+   "prompt_tokens": 8990,
+   "total_tokens": 9291,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 190,
+    "audio_tokens": 0,
+    "reasoning_tokens": 158,
+    "rejected_prediction_tokens": 587,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

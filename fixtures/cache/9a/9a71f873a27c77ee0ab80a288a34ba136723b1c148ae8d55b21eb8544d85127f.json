@@ -1,0 +1,54 @@
+{
+ "key": "9a71f873a27c77ee0ab80a288a34ba136723b1c148ae8d55b21eb8544d85127f",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:00:50+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-ca7698813d884f7fb3635b788b7ab0cf",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Coffee stains on counter right side\", \"description\": \"The right side of the kitchen counter has coffee stains near the coffee machine.\", \"action\": \"Clean and remove coffee stains from counter\", \"trade\": \"cleaning\", \"room\": \"Kitchen\", \"location_detail\": \"counter right side near coffee machine\", \"severity\": \"cosmetic\", \"sam_concept\": \"countertop stain\", \"defect_box\": [560, 1220, 780, 1380], \"confidence\": 0.88, \"rationale\": \"Inspector says coffee stains on right side of counter; photos 2-3 show stains at finger point matching blue dot location in photo 1.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750446,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 374,
+   "prompt_tokens": 8983,
+   "total_tokens": 9357,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 245,
+    "audio_tokens": 0,
+    "reasoning_tokens": 218,
+    "rejected_prediction_tokens": 658,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

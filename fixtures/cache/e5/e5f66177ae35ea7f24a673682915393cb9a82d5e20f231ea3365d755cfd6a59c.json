@@ -1,0 +1,54 @@
+{
+ "key": "e5f66177ae35ea7f24a673682915393cb9a82d5e20f231ea3365d755cfd6a59c",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:03:52+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-34c36870ad0d44bd979321ed889c88a9",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 6, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Inspector's words name the missing cabinet knob in the Bathroom and the photo shows the wall-mounted cabinet with both knobs present.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750629,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 166,
+   "prompt_tokens": 3145,
+   "total_tokens": 3311,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 105,
+    "audio_tokens": 0,
+    "reasoning_tokens": 104,
+    "rejected_prediction_tokens": 322,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "5f684bb00223171ddd8203be8d6a5edb9a00f691bb260be64fb2448872ce15cb",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:24:54+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-74977216f8024eae80328048c7896da8",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"First walk shows dark empty hole in outline, re-walk shows solid light surface in same outline with no hole visible\", \"rationale\": \"Look under red outline in photo 2 - the empty mounting hole is gone and area is uniform like cabinet face. Images are very low-res so knob detail not distinct but open hole defect is not still there.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751888,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1660,
+   "prompt_tokens": 753,
+   "total_tokens": 2413,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 1094,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1564,
+    "rejected_prediction_tokens": 2868,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

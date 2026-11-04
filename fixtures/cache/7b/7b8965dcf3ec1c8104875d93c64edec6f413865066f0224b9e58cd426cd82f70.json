@@ -1,0 +1,54 @@
+{
+ "key": "7b8965dcf3ec1c8104875d93c64edec6f413865066f0224b9e58cd426cd82f70",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:04:10+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b978b1c900474fb3b0c43f8c888b6960",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 12, \"claimed\": \"fixed\", \"confidence\": 0.96, \"rationale\": \"Inspector explicitly names pencil marks on the wall in Hallway, matching item 12, and says it is fixed.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750647,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 260,
+   "prompt_tokens": 3143,
+   "total_tokens": 3403,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 162,
+    "audio_tokens": 0,
+    "reasoning_tokens": 200,
+    "rejected_prediction_tokens": 524,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

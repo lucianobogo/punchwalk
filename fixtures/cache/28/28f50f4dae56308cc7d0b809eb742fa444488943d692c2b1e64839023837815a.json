@@ -1,0 +1,54 @@
+{
+ "key": "28f50f4dae56308cc7d0b809eb742fa444488943d692c2b1e64839023837815a",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:02:18+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-10053bb7039443b381c3aa437a9dd3b0",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\": true,\"frame_shows_defect\": true,\"issues\": [],\"suggested_fix\": null,\"rationale\": \"Item accurately describes the small nick on the bedroom wall needing repaint, which is clearly visible at the finger/blue-dot location in both photos.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750534,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 753,
+   "prompt_tokens": 2930,
+   "total_tokens": 3683,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 494,
+    "audio_tokens": 0,
+    "reasoning_tokens": 688,
+    "rejected_prediction_tokens": 1319,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

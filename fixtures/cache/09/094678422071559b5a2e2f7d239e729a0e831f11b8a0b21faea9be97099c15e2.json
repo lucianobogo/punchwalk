@@ -1,0 +1,54 @@
+{
+ "key": "094678422071559b5a2e2f7d239e729a0e831f11b8a0b21faea9be97099c15e2",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:01:57+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-d60eef8120ff40849aa8a7bcf5a3cdc9",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Photo clearly shows empty light socket under range hood where finger points, matching inspector's words and item description.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750514,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 391,
+   "prompt_tokens": 3261,
+   "total_tokens": 3652,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 254,
+    "audio_tokens": 0,
+    "reasoning_tokens": 335,
+    "rejected_prediction_tokens": 705,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

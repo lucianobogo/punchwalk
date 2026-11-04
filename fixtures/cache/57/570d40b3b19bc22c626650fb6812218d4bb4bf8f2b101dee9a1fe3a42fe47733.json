@@ -1,0 +1,54 @@
+{
+ "key": "570d40b3b19bc22c626650fb6812218d4bb4bf8f2b101dee9a1fe3a42fe47733",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:05:01+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-a6dc53393a424de089fe9ae81af39f53",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\":\"no\",\"note\":\"Screen now appears seated in track under the marked area, bottom edge is tight against frame not loose.\",\"rationale\":\"Re-walk photo shows window frame/sill solid under the outline with dark screen properly in place below, no gap/detachment visible like in photo 1.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750697,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 730,
+   "prompt_tokens": 2633,
+   "total_tokens": 3363,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 477,
+    "audio_tokens": 0,
+    "reasoning_tokens": 652,
+    "rejected_prediction_tokens": 1294,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "73297f385dd7c230d4b43bfe629d39422098b1e331328526aa167ecb0b120f45",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:00:57+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-566061c7130440d387fc4793cf5206ad",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Range hood light bulb missing\",\"description\":\"The light bulb is missing from the range hood, leaving an empty socket visible under the hood.\",\"action\":\"Install correct replacement bulb in range hood light\",\"trade\":\"electrical\",\"room\":\"Kitchen\",\"location_detail\":\"range hood over cooktop\",\"severity\":\"functional\",\"sam_concept\":\"range hood light fixture\",\"defect_box\":[605,545,789,725],\"confidence\":0.96,\"rationale\":\"Inspector noted missing bulb on range hood and photo 1 shows empty recessed light socket at hood bottom near blue dot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750451,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 723,
+   "prompt_tokens": 8980,
+   "total_tokens": 9703,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 444,
+    "audio_tokens": 0,
+    "reasoning_tokens": 595,
+    "rejected_prediction_tokens": 1509,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

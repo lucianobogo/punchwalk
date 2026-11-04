@@ -1,0 +1,54 @@
+{
+ "key": "4614c032ccd80ad1f7225c1d54d205f62d43402777b54ea32130289dd1e3a7ba",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:04:46+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-e461cb46af984aa6b168e9cdccbfbd06",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"no\", \"note\": \"Right door now has a matching knob - both doors have knobs in photo 2.\", \"rationale\": \"no: both cabinet doors now show knobs where the right hole was empty, empty hole is gone\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750684,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 378,
+   "prompt_tokens": 1229,
+   "total_tokens": 1607,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 254,
+    "audio_tokens": 0,
+    "reasoning_tokens": 310,
+    "rejected_prediction_tokens": 614,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

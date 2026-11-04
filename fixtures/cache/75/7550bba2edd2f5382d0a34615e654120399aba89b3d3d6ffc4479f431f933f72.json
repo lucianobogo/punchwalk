@@ -1,0 +1,54 @@
+{
+ "key": "7550bba2edd2f5382d0a34615e654120399aba89b3d3d6ffc4479f431f933f72",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-03T23:54:27+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-859a14d06b3f40c29bc63df2809f3187",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Item exactly matches inspector's 'missing a screw' at the light switch shown outlined in photo above trash can.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750062,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 630,
+   "prompt_tokens": 2925,
+   "total_tokens": 3555,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 407,
+    "audio_tokens": 0,
+    "reasoning_tokens": 573,
+    "rejected_prediction_tokens": 1154,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

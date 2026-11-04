@@ -1,0 +1,54 @@
+{
+ "key": "462ef0bf5220e85402e12e1aba4122ce29266cd0624c5e19aba81f82c76e397f",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:24:46+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-347a5e12bf324cf1b180b22939400221",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 2, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Inspector says hallway switch plate fixed, directly matching item 2's crooked switch plate in hallway.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751884,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 187,
+   "prompt_tokens": 1778,
+   "total_tokens": 1965,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 129,
+    "audio_tokens": 0,
+    "reasoning_tokens": 130,
+    "rejected_prediction_tokens": 277,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

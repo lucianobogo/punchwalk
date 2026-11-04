@@ -1,0 +1,54 @@
+{
+ "key": "c3db7bc1a10ef5618150f61f62d6a6b3c38ba6e7e00fbb6c30f211de03d8fca9",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:21:47+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-233ea3cbbb12497aa4444dc90d08a77f",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Switch plate crooked in hallway\",\"description\": \"The wall switch plate in the hallway is crooked/tilted. It needs to be repositioned so it sits straight and level.\",\"action\": \"Straighten and secure switch plate so it is plumb and level\",\"trade\": \"electrical\",\"room\": \"Hallway\",\"location_detail\": \"hallway wall mid-height\",\"severity\": \"cosmetic\",\"sam_concept\": \"wall switch plate\",\"defect_box\": [315,805,355,835],\"confidence\": 0.87,\"rationale\": \"Narration states crooked switch plate; dark square wall plate near blue dot in photo 1 matches described defect and pointing location.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751702,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 441,
+   "prompt_tokens": 5656,
+   "total_tokens": 6097,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 287,
+    "audio_tokens": 0,
+    "reasoning_tokens": 284,
+    "rejected_prediction_tokens": 798,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

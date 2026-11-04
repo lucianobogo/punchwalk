@@ -1,0 +1,54 @@
+{
+ "key": "9cbcccfeab0ab49afbb056b4fc00ce902508329a61fd8f790d22f6b424bad405",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(TurnLabels) stage=classify_turns format=json_schema",
+ "created_at": "2026-11-04T00:24:22+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-97cb855b23fc42b798aa3753e115cf89",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"turns\": [{\"idx\": 0, \"kind\": \"defect\", \"room\": \"Laundry room\", \"continues_previous\": false, \"defects\": [\"detergent compartment: mold\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 1, \"kind\": \"defect\", \"room\": null, \"continues_previous\": false, \"defects\": [\"laundry machine: spilled detergent\"], \"status_target\": null, \"claimed\": null}], \"rationale\": \"Both turns describe distinct defects even though the room is not a listed project room.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751859,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 796,
+   "prompt_tokens": 590,
+   "total_tokens": 1386,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 568,
+    "audio_tokens": 0,
+    "reasoning_tokens": 661,
+    "rejected_prediction_tokens": 1028,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 512,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

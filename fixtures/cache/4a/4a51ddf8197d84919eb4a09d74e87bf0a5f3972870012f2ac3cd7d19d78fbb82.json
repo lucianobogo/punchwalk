@@ -1,0 +1,54 @@
+{
+ "key": "4a51ddf8197d84919eb4a09d74e87bf0a5f3972870012f2ac3cd7d19d78fbb82",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixConfirm) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:13:20+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-f17fdb97d3d044fcb7bd4ee7d4c8e213",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"shows_fixed\":\"yes\",\"note\":\"Re-walk shows bottom screen now seated tight in its track, no looseness or gap at bottom.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751195,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 682,
+   "prompt_tokens": 6661,
+   "total_tokens": 7343,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 431,
+    "audio_tokens": 0,
+    "reasoning_tokens": 640,
+    "rejected_prediction_tokens": 1326,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

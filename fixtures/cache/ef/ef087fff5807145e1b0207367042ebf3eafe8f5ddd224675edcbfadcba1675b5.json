@@ -1,0 +1,54 @@
+{
+ "key": "ef087fff5807145e1b0207367042ebf3eafe8f5ddd224675edcbfadcba1675b5",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:02:13+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-bf4b1f0238b04d93be506036b3afd75c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":false,\"frame_shows_defect\":false,\"issues\":[\"Photo is blurry with reflections and does not clearly show a window screen or track\",\"Description adds 'living room' and 'loose/detached at bottom' not in inspector words and not verifiable in photo\"],\"suggested_fix\":\"Change to generic 'Window screen not attached properly - re-seat/secure per manufacturer' and retake clear close-up of track/detachment\",\"rationale\":\"Photo is too blurry/reflective to confirm a detached screen at the bottom as described.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750527,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1327,
+   "prompt_tokens": 3636,
+   "total_tokens": 4963,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 874,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1202,
+    "rejected_prediction_tokens": 2304,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

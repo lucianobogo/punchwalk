@@ -1,0 +1,54 @@
+{
+ "key": "34b3b8b0981b7a9b05104ea54edad8a38eefaaae3b5a6c79aceff668df493914",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:01:54+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-8252bb71dc914a90b56164ca15d628dc",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":false,\"issues\":[\"Photo is overexposed and washed out so coffee stains are not actually visible\"],\"suggested_fix\":null,\"rationale\":\"Item matches inspector's location and defect, but the overexposed photo does not visibly show coffee stains beyond the artificial outline.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750508,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1107,
+   "prompt_tokens": 2925,
+   "total_tokens": 4032,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 703,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1030,
+    "rejected_prediction_tokens": 2125,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

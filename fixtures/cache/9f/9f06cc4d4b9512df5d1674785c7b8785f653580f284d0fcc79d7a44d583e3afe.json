@@ -1,0 +1,54 @@
+{
+ "key": "9f06cc4d4b9512df5d1674785c7b8785f653580f284d0fcc79d7a44d583e3afe",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:25:59+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-2dc01596fe9e497e8a93ad225195a930",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\":\"Spilled detergent on laundry machine front\",\"description\":\"Detergent has spilled and left a streak on the lower front panel of the laundry machine.\",\"action\":\"Clean and remove spilled detergent from machine surface\",\"trade\":\"cleaning\",\"room\":\"Laundry room\",\"location_detail\":\"lower front panel of laundry machine\",\"severity\":\"cosmetic\",\"sam_concept\":\"laundry machine front panel\",\"defect_box\":[580,1140,660,1350],\"confidence\":0.88,\"rationale\":\"Inspector noted spilled detergent; faint vertical streak visible on lower front of washer near blue dot in photo 1.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751954,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 401,
+   "prompt_tokens": 8983,
+   "total_tokens": 9384,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 252,
+    "audio_tokens": 0,
+    "reasoning_tokens": 264,
+    "rejected_prediction_tokens": 798,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

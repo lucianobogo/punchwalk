@@ -1,0 +1,54 @@
+{
+ "key": "b77f4e7b4d5407aa6a5ce9ab27f88f87d311b2fbaf324533c274181abfbaddc4",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:26:14+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-e224ecc6fea64530878ff2c34c636898",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":false,\"frame_shows_defect\":false,\"issues\":[\"Photo shows bottom front of washer and floor, not detergent dispenser tray - dispenser not visible so mold cannot be verified and blue dot is at wrong location\"],\"suggested_fix\":null,\"rationale\":\"Item matches inspector words but photo shows only lower washer housing/floor with no detergent compartment visible.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751968,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1408,
+   "prompt_tokens": 2924,
+   "total_tokens": 4332,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 968,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1322,
+    "rejected_prediction_tokens": 2119,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

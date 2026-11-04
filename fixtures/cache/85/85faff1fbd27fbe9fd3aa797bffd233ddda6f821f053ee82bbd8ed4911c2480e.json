@@ -1,0 +1,54 @@
+{
+ "key": "85faff1fbd27fbe9fd3aa797bffd233ddda6f821f053ee82bbd8ed4911c2480e",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixConfirm) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:13:14+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-6f1f3e3ca41d4ad0b9f8c6fc837798a7",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"shows_fixed\": \"yes\", \"note\": \"Re-walk photos show both doors now have matching silver knobs. The empty hole on the right door is gone.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751190,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 502,
+   "prompt_tokens": 5257,
+   "total_tokens": 5759,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 333,
+    "audio_tokens": 0,
+    "reasoning_tokens": 454,
+    "rejected_prediction_tokens": 850,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

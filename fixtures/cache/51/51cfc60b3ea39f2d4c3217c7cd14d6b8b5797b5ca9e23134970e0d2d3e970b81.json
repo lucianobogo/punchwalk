@@ -1,0 +1,54 @@
+{
+ "key": "51cfc60b3ea39f2d4c3217c7cd14d6b8b5797b5ca9e23134970e0d2d3e970b81",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-04T00:01:14+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b2179c95148442ee9f02dd65aee682ef",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Window screen not attached properly\",\"description\": \"The window screen in the living room is not seated in its track and is loose/detached at the bottom of the window.\",\"action\": \"Re-seat and secure window screen properly in frame/track\",\"trade\": \"windows_glazing\",\"room\": \"Living room\",\"location_detail\": \"lower window screen on exterior wall\",\"severity\": \"functional\",\"sam_concept\": \"window screen\",\"defect_box\": [10, 420, 970, 870],\"confidence\": 0.84,\"rationale\": \"Narration says screen not attached; photos show lower screen dislodged from track at the Living room window.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750469,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 539,
+   "prompt_tokens": 8978,
+   "total_tokens": 9517,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 340,
+    "audio_tokens": 0,
+    "reasoning_tokens": 388,
+    "rejected_prediction_tokens": 1060,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

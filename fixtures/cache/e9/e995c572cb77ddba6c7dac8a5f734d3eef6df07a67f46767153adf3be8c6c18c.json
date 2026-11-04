@@ -1,0 +1,54 @@
+{
+ "key": "e995c572cb77ddba6c7dac8a5f734d3eef6df07a67f46767153adf3be8c6c18c",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixConfirm) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:09:14+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-36b1435109844ad38a78e523c3f9615c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"shows_fixed\":\"yes\",\"note\":\"Mirror is clear and reflective with no toothpaste smudge visible.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750949,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 526,
+   "prompt_tokens": 6652,
+   "total_tokens": 7178,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 346,
+    "audio_tokens": 0,
+    "reasoning_tokens": 492,
+    "rejected_prediction_tokens": 914,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

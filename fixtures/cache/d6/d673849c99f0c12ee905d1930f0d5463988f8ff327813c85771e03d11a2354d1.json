@@ -1,0 +1,54 @@
+{
+ "key": "d673849c99f0c12ee905d1930f0d5463988f8ff327813c85771e03d11a2354d1",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(FixCheck) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-03T23:57:16+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-b556fb7dca474300a3511f67cd252081",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"defect_still_present\": \"yes\", \"note\": \"Wall above TV still has visible screws/anchors and marks, no patch/paint.\", \"rationale\": \"Photo 2 shows same dark screw holes and lines as Photo 1, wall looks unchanged under red outline.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750233,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 588,
+   "prompt_tokens": 1233,
+   "total_tokens": 1821,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 383,
+    "audio_tokens": 0,
+    "reasoning_tokens": 519,
+    "rejected_prediction_tokens": 1052,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "de1411b912d89a5f2db4e41b60cc04ca0f645369ad744ed441f92a5aeb47f396",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:22:11+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-7396e73984514360880b29395c383378",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":false,\"frame_shows_defect\":false,\"issues\":[\"Photo shows plain wall with light switch and no scuff marks visible\",\"No door visible so 'by the door' location cannot be confirmed\"],\"suggested_fix\":\"Retake photo clearly showing scuff marks with bedroom door/frame in view\",\"rationale\":\"Item matches inspector words but photo shows a clean wall with no visible scuff marks and no door.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751726,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 1104,
+   "prompt_tokens": 2141,
+   "total_tokens": 3245,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 752,
+    "audio_tokens": 0,
+    "reasoning_tokens": 1007,
+    "rejected_prediction_tokens": 1712,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

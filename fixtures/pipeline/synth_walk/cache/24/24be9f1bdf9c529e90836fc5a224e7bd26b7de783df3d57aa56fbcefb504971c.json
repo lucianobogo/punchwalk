@@ -1,0 +1,54 @@
+{
+ "key": "24be9f1bdf9c529e90836fc5a224e7bd26b7de783df3d57aa56fbcefb504971c",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(TurnLabels) stage=classify_turns format=json_schema",
+ "created_at": "2026-11-04T00:21:30+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-539a76a301684cb6ba678166b0e5bfcd",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"turns\": [{\"idx\": 0, \"kind\": \"defect\", \"room\": \"Kitchen\", \"continues_previous\": false, \"defects\": [\"upper cabinet left of sink: knob missing\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 1, \"kind\": \"defect\", \"room\": \"Hallway\", \"continues_previous\": false, \"defects\": [\"switch plate is crooked, needs to be straightened\"], \"status_target\": null, \"claimed\": null}, {\"idx\": 2, \"kind\": \"defect\", \"room\": \"Bedroom\", \"continues_previous\": false, \"defects\": [\"scuff marks on the wall by the door\"], \"status_target\": null, \"claimed\": null}], \"rationale\": \"All three utterances name a room and describe a distinct fixable defect on first walk.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751689,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 391,
+   "prompt_tokens": 627,
+   "total_tokens": 1018,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 282,
+    "audio_tokens": 0,
+    "reasoning_tokens": 193,
+    "rejected_prediction_tokens": 481,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "key": "0fdabfbb4a8d61e173ebcf73af16cc68432cad4fb8f05bde944b244e519817bc",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemWrite) stage=write_items format=json_schema",
+ "created_at": "2026-11-03T23:52:56+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-37d0400dc3d2463d8955ede2047eb88c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"title\": \"Toothpaste smudged on bathroom mirror\", \"description\": \"Toothpaste is smudged on the bathroom mirror above the sink.\", \"action\": \"Clean mirror to remove toothpaste residue\", \"trade\": \"cleaning\", \"room\": \"Bathroom\", \"location_detail\": \"mirror above sink\", \"severity\": \"cosmetic\", \"sam_concept\": \"bathroom mirror\", \"defect_box\": null, \"confidence\": 0.62, \"rationale\": \"Narration reports toothpaste on mirror and photos 2-4 show a light smear on the right side of the mirror, but photo 1's dot is on the person's shirt not the smear.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793749971,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 644,
+   "prompt_tokens": 8984,
+   "total_tokens": 9628,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 434,
+    "audio_tokens": 0,
+    "reasoning_tokens": 485,
+    "rejected_prediction_tokens": 1043,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 640,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

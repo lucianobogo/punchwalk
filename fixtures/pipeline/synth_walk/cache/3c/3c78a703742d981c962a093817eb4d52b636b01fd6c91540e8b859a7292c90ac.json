@@ -1,0 +1,54 @@
+{
+ "key": "3c78a703742d981c962a093817eb4d52b636b01fd6c91540e8b859a7292c90ac",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(ItemCheck) stage=verify format=json_schema",
+ "created_at": "2026-11-04T00:21:59+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-32a487be28d4494d881cb7d30620a9ff",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"consistent\":true,\"frame_shows_defect\":true,\"issues\":[],\"suggested_fix\":null,\"rationale\":\"Item text matches inspector's 'knob missing' location and action, and both frames show the empty mounting hole at the blue-dot spot.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793751714,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 988,
+   "prompt_tokens": 1868,
+   "total_tokens": 2856,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 670,
+    "audio_tokens": 0,
+    "reasoning_tokens": 925,
+    "rejected_prediction_tokens": 1556,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 256,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}

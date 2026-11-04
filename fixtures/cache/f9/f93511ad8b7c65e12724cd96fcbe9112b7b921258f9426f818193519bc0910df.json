@@ -1,0 +1,54 @@
+{
+ "key": "f93511ad8b7c65e12724cd96fcbe9112b7b921258f9426f818193519bc0910df",
+ "provider": "baseten",
+ "endpoint": "/chat/completions",
+ "model": "meta-models/muse-spark-open",
+ "description": "structured(StatusMatch) stage=resolve_closures format=json_schema",
+ "created_at": "2026-11-04T00:03:37+00:00",
+ "meta": {},
+ "response": {
+  "id": "chatcmpl-c024d0d16f1049d092daea578aba163c",
+  "choices": [
+   {
+    "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
+    "message": {
+     "content": "{\"item_number\": 1, \"claimed\": \"fixed\", \"confidence\": 0.98, \"rationale\": \"Words say coffee stain in kitchen is cleaned/fixed, matching item 1's title and location; photo shows finger on clean counter right side near coffee machine.\"}",
+     "refusal": null,
+     "role": "assistant",
+     "annotations": null,
+     "audio": null,
+     "function_call": null,
+     "tool_calls": null
+    }
+   }
+  ],
+  "created": 1793750614,
+  "model": "meta-models/muse-spark-open",
+  "object": "chat.completion",
+  "metadata": null,
+  "moderation": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 190,
+   "prompt_tokens": 3143,
+   "total_tokens": 3333,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 120,
+    "audio_tokens": 0,
+    "reasoning_tokens": 121,
+    "rejected_prediction_tokens": 370,
+    "text_tokens": null
+   },
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cache_write_tokens": null,
+    "cached_tokens": 0,
+    "image_tokens": null,
+    "text_tokens": null
+   }
+  }
+ }
+}
