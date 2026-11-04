@@ -1,8 +1,8 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 20:03 ET
-Current phase: 3.4 tuning (A) → 7.5 eval → 8.1 real seed + Fly import → 8.3 screenshot audit on real data → 9.2/9.3 final → 9.4 final pass. Everything else is done. Far ahead of the PLAN clock (Phase 8 target was Wed 10:30 AM).
+Updated: 2026-11-03 20:05 ET
+Current phase: grounding fix round (A) → re-seed + snapshot FINAL → 9.4 final pass → COMPLETE. 46/51 boxes done; open: 8.1 (tick after the final pass), 9.1 (human import + redeploy), 9.2/9.3 (tick after the final pass), 9.4.
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
 ## Next actions
@@ -18,7 +18,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | 3.4 + 7.5 + 7.x fixes verify (main tree, readonly; needs data/record media) | verifier | 19:40 | read-only | no pipeline edits while this runs |
 
 ## Needs human
-- **Load the demo data on Fly (blocked for me: "Remote Shell Writes").** The seed snapshot is built: `demo/seed_snapshot.tar.gz` (62 MB, gitignored; real walk1/walk2/walk3, 14 items, $0). From the repo root:
+- **Load the demo data on Fly (blocked for me: "Remote Shell Writes").** HOLD until STATE.md says "snapshot FINAL" (a grounding fix is being re-run; the snapshot will be rebuilt within ~1 h, 20:05 ET). The seed snapshot is built: `demo/seed_snapshot.tar.gz` (62 MB, gitignored; real walk1/walk2/walk3, 14 items, $0). From the repo root:
   ```
   printf 'put demo/seed_snapshot.tar.gz /data/seed_snapshot.tar.gz\n' | fly ssh sftp shell -a punchwalk
   fly ssh console -a punchwalk -C "chown punch:punch /data/seed_snapshot.tar.gz"
