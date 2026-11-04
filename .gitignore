@@ -43,3 +43,6 @@ BACKLOG.md
 CLAUDE.md
 .claude/
 scripts/orchestrate.sh
+
+# submission notes (local only)
+SUBMISSION.md
