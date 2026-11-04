@@ -164,6 +164,31 @@ export const SCREENS: Screen[] = [
     path: '/items/itm_2b_01',
   },
   {
+    // Item 5 is signed off on the re-walk. Its original check is turned inconsistent here (as in the demo
+    // data, where the pinned frame was never re-picked): the stale note must not show, and nothing gaps.
+    name: 'item-signed-off-stale-check',
+    checklist: '3. Item detail: signed-off item whose original check said the frame doesn\'t show the defect (no Checked note), scrolled down',
+    path: '/items/itm_2b_05',
+    setup: async (page) => {
+      await page.route('**/mock-api/items/itm_2b_05.json', async (route) => {
+        const item = await (await route.fetch()).json();
+        item.verification = { ...item.verification, consistent: false, note: "The frame doesn't show the defect described.", issues: [] };
+        await route.fulfill({ json: item });
+      });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: 'Reopen' }).waitFor({ timeout: 4000 });
+      await scrollBy(page, 5000);
+    },
+  },
+  {
+    name: 'item-needs-look-details',
+    checklist: '3. Item detail: needs-a-look item, scrolled to Details, Checked (the verifier\'s note) and History',
+    path: '/items/itm_2b_12',
+    setup: async (page) => {
+      await scrollBy(page, 5000);
+    },
+  },
+  {
     name: 'item-more-sheet',
     checklist: '3. Item detail: the More sheet',
     path: '/items/itm_2b_07',

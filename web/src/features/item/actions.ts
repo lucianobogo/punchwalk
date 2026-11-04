@@ -70,6 +70,16 @@ export function groundingLabel(g: string): string {
   return (GROUNDING_LABEL as Record<string, string>)[g] ?? 'Located by the models';
 }
 
+/**
+ * Whether item detail shows the "Checked" section. The verifier checked the original evidence, before any
+ * re-walk. Once an item is signed off, the before/after proof tells the story, and a stale "doesn't match"
+ * note (say, "The frame doesn't show the defect described.") would contradict "Signed off", so it's left
+ * out. Open, sent and needs-a-look items always show the check.
+ */
+export function showsCheck(item: Pick<ItemOut, 'status' | 'verification'>): boolean {
+  return !(item.status === 'closed' && item.verification != null && !item.verification.consistent);
+}
+
 /** "Muse Spark Open on Baseten", or "Muse Spark 1.3 (fallback)" when Baseten failed twice. */
 export function checkerName(provider: Provider): string {
   if (provider === 'meta-fallback') return 'Muse Spark 1.3 (fallback)';

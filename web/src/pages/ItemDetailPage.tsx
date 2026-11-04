@@ -24,7 +24,7 @@ import {
 import { BeforeAfter } from '../features/item/BeforeAfter';
 import { EditSheet } from '../features/item/EditSheet';
 import { EvidencePhoto } from '../features/item/EvidencePhoto';
-import { checkerName, groundingLabel, historyText, moreActions, primaryAction, recipient } from '../features/item/actions';
+import { checkerName, groundingLabel, historyText, moreActions, primaryAction, recipient, showsCheck } from '../features/item/actions';
 import { useItemActions } from '../features/item/useItemActions';
 import { PlayMomentSheet } from '../features/play/PlayMomentSheet';
 import { formatClock, formatDateTime, formatShortDate } from '../lib/format';
@@ -175,35 +175,39 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
 
         <DetailList rows={details} className="mt-4" />
 
-        <SectionHeader className="mt-6 mb-2.5">Checked</SectionHeader>
-        <Card className="flex items-start gap-3">
-          {v == null ? (
-            <p className="text-body text-pencil">Not checked yet.</p>
-          ) : (
-            <>
-              {v.consistent ? (
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-signed text-white" aria-hidden>
-                  <Check size={13} strokeWidth={3.25} />
-                </span>
+        {showsCheck(item) && (
+          <>
+            <SectionHeader className="mt-6 mb-2.5">Checked</SectionHeader>
+            <Card className="flex items-start gap-3">
+              {v == null ? (
+                <p className="text-body text-pencil">Not checked yet.</p>
               ) : (
-                <CircleAlert size={21} strokeWidth={2.25} className="mt-px shrink-0 text-hold-ink" aria-hidden />
+                <>
+                  {v.consistent ? (
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-signed text-white" aria-hidden>
+                      <Check size={13} strokeWidth={3.25} />
+                    </span>
+                  ) : (
+                    <CircleAlert size={21} strokeWidth={2.25} className="mt-px shrink-0 text-hold-ink" aria-hidden />
+                  )}
+                  <span className="min-w-0">
+                    <span className="block text-body text-graphite">
+                      {v.consistent ? 'Matches the photo and what was said.' : (v.note ?? "Doesn't match the photo or what was said.")}
+                    </span>
+                    {!v.consistent && v.issues.length > 0 && (
+                      <ul className="mt-1 list-disc pl-4 text-secondary text-pencil">
+                        {v.issues.map((i) => (
+                          <li key={i}>{i}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <span className="mt-0.5 block text-secondary text-pencil">Checked by {checkerName(v.provider)}</span>
+                  </span>
+                </>
               )}
-              <span className="min-w-0">
-                <span className="block text-body text-graphite">
-                  {v.consistent ? 'Matches the photo and what was said.' : (v.note ?? "Doesn't match the photo or what was said.")}
-                </span>
-                {!v.consistent && v.issues.length > 0 && (
-                  <ul className="mt-1 list-disc pl-4 text-secondary text-pencil">
-                    {v.issues.map((i) => (
-                      <li key={i}>{i}</li>
-                    ))}
-                  </ul>
-                )}
-                <span className="mt-0.5 block text-secondary text-pencil">Checked by {checkerName(v.provider)}</span>
-              </span>
-            </>
-          )}
-        </Card>
+            </Card>
+          </>
+        )}
 
         {item.history.length > 0 && (
           <>
