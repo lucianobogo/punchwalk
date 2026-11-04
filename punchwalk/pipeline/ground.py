@@ -15,7 +15,10 @@ Items that are protected (sent, closed or edited by a person) keep their outline
 
 With GROUNDING_V2=1 (PLAN 10.3) steps 1-3 are replaced by punchwalk/pipeline/ground_v2.py (locate the
 defect itself, SAM box/point prompts, score, Spark Open check, smoothing); its per-item log goes to
-stages/ground_v2.json. Everything else (renders, protection) is the same.
+stages/ground_v2.json. Unpointed items first go through the evidence frame picker (PLAN 10.4,
+frame_pick.py), and so do items whose locate answered visible: false; picks go to stages/frame_pick.json.
+With REGROUND_ALL=1 protected items are re-grounded too: evidence fields and renders only (text, status,
+history and closure decisions untouched); a closed item's before_after.jpg is redrawn from its new crop.
 
 Renders (punchwalk/render/evidence.py, quality 85, no text): evidence.jpg (red outline + 30% fill and
 the blue "pointed here" dot), crop.jpg (4:3 around pointer + defect, outlines drawn), pointing.jpg
@@ -27,6 +30,7 @@ from __future__ import annotations
 import logging
 import math
 import re
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -36,7 +40,7 @@ from punchwalk.clients.base import ApiError
 from punchwalk.config import get_settings
 from punchwalk.core.enums import Grounding, Stage
 from punchwalk.core.models import Box, Evidence
-from punchwalk.pipeline import ground_v2
+from punchwalk.pipeline import frame_pick, ground_v2
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, data_dir, rel_to_data
 from punchwalk.pipeline.frames import scale_svg_path
@@ -177,9 +181,10 @@ def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict
         pointing_raw=(root / pointing_raw) if pointing_raw else None, evidence_raw=raw,
         fingertip_display=tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None,
         notes=notes)
+    hand = ground_v2.hand_mask_at(Path(raw).parents[2], ev.t, ev.width, ev.height) if pointer else None
     res = ground_v2.ground_item(ground_v2.ItemInput(
         item_id=item.id, raw=raw, width=ev.width, height=ev.height, title=item.title,
-        description=item.description or "", quote=item.quote, pointer=pointer, number=item.number))
+        description=item.description or "", quote=item.quote, pointer=pointer, number=item.number, hand_mask=hand))
     res.row.update(notes)
     v2_rows[item.id] = res.row
     if res.grounding == Grounding.pointed_only and ev.pointer is None:
@@ -191,84 +196,147 @@ def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict
     return res.grounding, res.defect_svg, box, res.concept or concept, summary
 
 
-def run(ctx: StageContext) -> StageOutcome:
-    root = data_dir()
+def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Grounding, defect_svg: str | None,
+                     defect_box: list[float] | None, concept: str | None, extra: dict[str, Any],
+                     event: dict[str, Any] | None) -> Evidence:
+    """evidence.jpg, crop.jpg and pointing.jpg for the item's current frame + outline; saves Item.evidence."""
+    meta = ctx.meta
+    sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
+    raw = root / ev.raw
+    pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
+    out = ctx.item_dir(item.id)
+    evidence_jpg = render_evidence(raw, out / "evidence.jpg", defect_svg=defect_svg, pointer=pointer)
+    if pointer is None and defect_box is None:  # nothing located: widest 4:3 crop over the busiest band
+        cb = wide_crop_box(raw)
+    else:
+        cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+    crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
+    pointing_rel = ev.pointing_frame
+    if extra.get("pointing_raw") and (root / extra["pointing_raw"]).is_file():
+        hand_svg = scale_svg_path(event["svg"], sx, sy) if event and event.get("svg") else None
+        pointing_rel = rel_to_data(render_pointing(root / extra["pointing_raw"], out / "pointing.jpg",
+                                                   hand_svg=hand_svg))
+    update = {
+        "image": rel_to_data(evidence_jpg),
+        "crop": rel_to_data(crop_jpg),
+        "crop_box": Box(x1=cb[0], y1=cb[1], x2=cb[2], y2=cb[3]),
+        "defect_svg": defect_svg,
+        "defect_box": Box(x1=defect_box[0], y1=defect_box[1], x2=defect_box[2], y2=defect_box[3])
+        if defect_box else None,
+        "grounding": grounding,
+        "sam_concept": concept,
+        "pointing_frame": pointing_rel,
+    }
+    new_ev = Evidence.model_validate({**ev.model_dump(), **update})
+    with ctx.session() as s:
+        row = s.get(type(item), item.id)
+        row.evidence = new_ev.model_dump(mode="json")
+        s.add(row)
+        s.commit()
+    return new_ev
+
+
+def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[str, Any], extra: dict[str, Any],
+                      event: dict[str, Any] | None, v2: bool, v2_rows: dict[str, Any],
+                      ) -> tuple[Evidence, Grounding, dict[str, Any]]:
+    """Outline one item on its current frame (v1 or v2), render, save. (new evidence, grounding, notes)."""
+    raw = root / ev.raw
+    pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
+    concept = ev.sam_concept or (wrow.get("result") or {}).get("sam_concept")
+    r = wrow.get("result") or {}
+    defect_svg = defect_box = None
+    if v2:
+        grounding, defect_svg, defect_box, concept, notes = _ground_v2(root, raw, ev, item, extra, event,
+                                                                       concept, v2_rows)
+    else:
+        grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"),
+                                           f"{r.get('title', '')} {r.get('description', '')}")
+        if rec is not None:
+            defect_svg = mask_to_frame_svg(rec, ev.width, ev.height, epsilon_px=P.GROUND_SVG_EPSILON_PX) or None
+            defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
+            if not defect_svg:
+                grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
+    new_ev = _render_and_save(ctx, root, item, ev, grounding, defect_svg, defect_box, concept, extra, event)
+    return new_ev, grounding, {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
+
+
+def _not_visible(v2_row: dict[str, Any] | None) -> bool:
+    loc = (v2_row or {}).get("locate") or {}
+    return loc.get("visible") is False
+
+
+def _inputs(ctx: StageContext) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     written = ctx.output(Stage.write_items)["items"]
     extras = ctx.output(Stage.pick_evidence)["items"]
     events = {e["id"]: e for e in ctx.output(Stage.find_points)["events"]}
-    meta = ctx.meta
-    sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
+    return written, extras, events
+
+
+def reground_one(ctx: StageContext, item, ev: Evidence) -> tuple[Evidence, Grounding, dict[str, Any]]:
+    """v2 on one item's (new) frame, outside the stage loop (verify's frame pass). Merges its row into
+    stages/ground_v2.json."""
+    root = data_dir()
+    written, extras, events = _inputs(ctx)
+    event = events.get(item.point_id) if item.point_id else None
+    v2_rows: dict[str, Any] = {}
+    out = ground_and_render(ctx, root, item, ev, written.get(item.id) or {}, extras.get(item.id, {}), event,
+                            True, v2_rows)
+    ground_v2.save_walk_log(ctx.walk_dir, v2_rows, merge=True)
+    return out
+
+
+def run(ctx: StageContext) -> StageOutcome:
+    root = data_dir()
+    written, extras, events = _inputs(ctx)
     with ctx.session() as s:
         items = [i for i in walk_items(ctx, s) if i.evidence and i.id in written]
     counts = {g.value: 0 for g in Grounding}
     rows: dict[str, Any] = {}
-    v2 = get_settings().GROUNDING_V2
+    settings = get_settings()
+    v2 = settings.GROUNDING_V2
+    reground_all = v2 and settings.REGROUND_ALL
     v2_rows: dict[str, Any] = {}
+    pick_rows: dict[str, Any] = {}
+    picker: frame_pick.Picker | None = None
     ctx.report({"outlined": 0, "total": len(items)})
     for n, item in enumerate(items, 1):
         ev = Evidence.model_validate(item.evidence)
-        if is_protected(item):  # sent, closed or edited by a person: keep its outline and renders
+        protected = is_protected(item)
+        if protected and not reground_all:  # sent, closed or edited by a person: keep its outline and renders
             counts[ev.grounding.value] += 1
             rows[item.id] = {"grounding": ev.grounding.value, "kept": True}
             continue
-        raw = root / ev.raw
-        pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
+        before = (ev.t, ev.defect_svg)
         wrow = written.get(item.id) or {}
-        concept = ev.sam_concept or (wrow.get("result") or {}).get("sam_concept")
-        r = wrow.get("result") or {}
         extra = extras.get(item.id, {})
         event = events.get(item.point_id) if item.point_id else None
-        defect_svg = defect_box = None
-        if v2:
-            grounding, defect_svg, defect_box, concept, notes = _ground_v2(root, raw, ev, item, extra, event,
-                                                                           concept, v2_rows)
-        else:
-            grounding, rec, notes = ground_one(raw, ev.width, ev.height, pointer, concept, wrow.get("defect_box"),
-                                               f"{r.get('title', '')} {r.get('description', '')}")
-            if rec is not None:
-                defect_svg = mask_to_frame_svg(rec, ev.width, ev.height, epsilon_px=P.GROUND_SVG_EPSILON_PX) or None
-                defect_box = [round(v, 1) for v in frame_box(rec, ev.width, ev.height)]
-                if not defect_svg:
-                    grounding, defect_box = (Grounding.pointed_only if pointer else Grounding.none), None
+        if v2 and ev.pointer is None:  # unpointed: the frame picker is the normal path (PLAN 10.4)
+            picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
+            ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, frame_pick.REASON_UNPOINTED,
+                                           pick_rows)
+        new_ev, grounding, notes = ground_and_render(ctx, root, item, ev, wrow, extra, event, v2, v2_rows)
+        if v2 and _not_visible(v2_rows.get(item.id)) and item.id not in pick_rows:
+            picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
+            picked = frame_pick.pick_and_adopt(ctx, root, item, new_ev, extra, event, picker,
+                                               frame_pick.REASON_NOT_VISIBLE, pick_rows)
+            if picked.t != new_ev.t:
+                new_ev, grounding, notes = ground_and_render(ctx, root, item, picked, wrow, extra, event, v2, v2_rows)
+        notes["changed"] = (new_ev.t, new_ev.defect_svg) != before
+        if protected:
+            notes["regrounded_protected"] = True
+            if item.closure and notes["changed"]:  # keep before/after framing consistent (after side kept)
+                frame_pick.refresh_before_after(root, item.closure, root / new_ev.crop)
         counts[grounding.value] += 1
-
-        out = ctx.item_dir(item.id)
-        evidence_jpg = render_evidence(raw, out / "evidence.jpg", defect_svg=defect_svg, pointer=pointer)
-        if pointer is None and defect_box is None:  # nothing located: widest 4:3 crop over the busiest band
-            cb = wide_crop_box(raw)
-        else:
-            cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
-        crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
-        pointing_rel = ev.pointing_frame
-        if extra.get("pointing_raw") and (root / extra["pointing_raw"]).is_file():
-            hand_svg = scale_svg_path(event["svg"], sx, sy) if event and event.get("svg") else None
-            pointing_rel = rel_to_data(render_pointing(root / extra["pointing_raw"], out / "pointing.jpg",
-                                                       hand_svg=hand_svg))
-        update = {
-            "image": rel_to_data(evidence_jpg),
-            "crop": rel_to_data(crop_jpg),
-            "crop_box": Box(x1=cb[0], y1=cb[1], x2=cb[2], y2=cb[3]),
-            "defect_svg": defect_svg,
-            "defect_box": Box(x1=defect_box[0], y1=defect_box[1], x2=defect_box[2], y2=defect_box[3])
-            if defect_box else None,
-            "grounding": grounding,
-            "sam_concept": concept,
-            "pointing_frame": pointing_rel,
-        }
-        new_ev = Evidence.model_validate({**ev.model_dump(), **{k: v for k, v in update.items()}})
-        with ctx.session() as s:
-            row = s.get(type(item), item.id)
-            row.evidence = new_ev.model_dump(mode="json")
-            s.add(row)
-            s.commit()
-        rows[item.id] = {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
-        ctx.report({"outlined": counts["sam_concept"] + counts["sam_box"], "done": n, "total": len(items)})
+        rows[item.id] = notes
+        ctx.report({"outlined": counts["sam_concept"] + counts["sam_box"] + counts["spark_box"], "done": n,
+                    "total": len(items)})
     ctx.save_output(Stage.ground_defects, {"version": 2 if v2 else 1, "items": rows})
     if v2:
         ground_v2.save_walk_log(ctx.walk_dir, v2_rows)
-    outlined = counts["sam_concept"] + counts["sam_box"]
+        frame_pick.save_log(ctx.walk_dir, pick_rows, merge=False)
+    outlined = counts["sam_concept"] + counts["sam_box"] + counts["spark_box"]
     return StageOutcome(
         counts={"outlined": outlined, "total": len(items), "concept": counts["sam_concept"], "box": counts["sam_box"],
-                "pointed_only": counts["pointed_only"], "none": counts["none"]},
+                "spark_box": counts["spark_box"], "pointed_only": counts["pointed_only"], "none": counts["none"]},
         message=f"SAM 3.1 outlined {outlined} of {len(items)} defects",
     )

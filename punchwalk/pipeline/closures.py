@@ -71,7 +71,7 @@ from punchwalk.core.enums import (
 )
 from punchwalk.core.models import Closure, Evidence, Item, utcnow
 from punchwalk.pipeline import evidence as ev_mod
-from punchwalk.pipeline import ground, media, verify, write_items
+from punchwalk.pipeline import frame_pick, ground, media, verify, write_items
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, data_dir, rel_to_data
 from punchwalk.pipeline.frames import rasterize_svg, read_frames, svg_polygons
@@ -611,7 +611,11 @@ def run(ctx: StageContext) -> StageOutcome:
         if item_id in locked or not actionable(item):
             continue
         frame = frames.get(m.key)
-        before = Evidence.model_validate(item.evidence) if item.evidence else None
+        shown = Evidence.model_validate(item.evidence) if item.evidence else None
+        # PLAN 10.4: if the frame picker replaced this item's photo, the look uses the photo it was pinned to
+        # (what the closure decided on); before_after.jpg shows the current photo
+        pinned = frame_pick.pinned_before(root / "walks" / item.origin_walk_id / "items" / item.id)
+        before = Evidence.model_validate(pinned) if pinned else shown
         vision, note_v, after_rel, after_frame_rel, ba_rel, after_t = VisionStatus.not_checked, None, None, None, None, None
         look_mode = None
         if frame is not None:
@@ -624,7 +628,8 @@ def run(ctx: StageContext) -> StageOutcome:
             after_crop = render_crop(after_full, out / "after.jpg", cb)
             after_rel, after_frame_rel, after_t = rel_to_data(after_crop), rel_to_data(after_full), frame["t"]
             if before is not None and (root / before.crop).is_file():
-                ba_rel = rel_to_data(render_before_after(root / before.crop, after_crop, out / "before_after.jpg"))
+                ba_crop = root / shown.crop if shown is not None and (root / shown.crop).is_file() else root / before.crop
+                ba_rel = rel_to_data(render_before_after(ba_crop, after_crop, out / "before_after.jpg"))
                 if calls_left > 0:
                     calls_left -= 1
                     images, mode, M = _look_inputs(before, after_raw, after_crop, after_full, frame, out)

@@ -84,6 +84,7 @@ V2_CROP_SCALE = 2.5  # the crop spans this many times the box
 V2_CROP_MIN_SHORT_PX = 640  # ...and at least this many px on its short side
 V2_NEG_OFFSET_FRAC = 0.12  # negative points sit this share of the box size outside each side
 V2_NEG_OFFSET_MIN_PX = 6
+V2_CROP_POINTER_MARGIN_PX = 24  # a small-box crop always keeps the fingertip this far inside it
 # (c) score
 V2_MAX_AREA_RATIO = 2.5  # SPEC: reject masks larger than this x the Spark box area
 V2_MIN_AREA_RATIO = 0.03  # ...and specks smaller than this x the box area
@@ -92,7 +93,14 @@ V2_DUP_IOU = 0.85  # SPEC: near-duplicates (mask IoU above this) keep only the b
 V2_MAX_FINGER_DIST_FRAC = 0.25  # reject masks further than this share of the frame width from the fingertip
 V2_FINGER_SCALE_FRAC = 0.08  # fingertip score falls to 0 at this share of the frame's short side from the mask
 V2_EXPECTED_FILL = {"spot": 0.6, "region": 0.6, "whole_surface": 0.75}  # mask area / box area when tight
+V2_MIN_INSIDE_FRAC = 0.6  # reject masks with less than this share of their pixels inside the located box
+V2_MIN_SOLIDITY = 0.5  # ...or less solid than this (area / convex hull: a C-shaped arc around an object)
+V2_MIN_BBOX_FILL = 0.2  # ...or filling less than this share of their own bbox
+V2_MAX_HAND_OVERLAP = 0.15  # reject masks with more than this share on the tracked hand (track_hands, free)
+V2_HAND_NEAR_FINGER_PX = 30  # hand this close to the fingertip -> no fingertip prompts (they'd segment the finger)  # ...or filling less than this share of their own bbox
+# (10.3 dev run: good masks were >= 0.92 inside / 0.86 solid / 0.52 fill; the #011 arc 0.41 / 0.34 / 0.27)
 V2_W_IOU = 0.40  # score weights (renormalised over the terms that apply: no fingertip -> no finger term)
+V2_W_INSIDE = 0.15
 V2_W_CONF = 0.20
 V2_W_FINGER = 0.25
 V2_W_AREA = 0.15
@@ -112,6 +120,17 @@ V2_BOX_CORNER_FRAC = 0.18  # rounded-rect corner radius as a share of the box's 
 # (g) pointer mapping
 V2_HOMOGRAPHY_MIN_INLIERS = 15
 V2_HOMOGRAPHY_MAX_SHIFT_FRAC = 0.35
+
+# --------------------------------------------------------------------------- 10.4 evidence frame picker (GROUNDING_V2=1)
+V4_WINDOW_BEFORE_S = 1.5  # SPEC: window = turn start - this ...
+V4_WINDOW_AFTER_S = 3.0  # SPEC: ... to turn end + this
+V4_MAX_CANDIDATES = 8  # SPEC: frames shown to the pick call (Spark Open takes <= 8 images)
+V4_BLUR_REL = 0.35  # skip frames whose Laplacian variance is below this share of the window's sharpest...
+V4_MIN_SHARPNESS = 15.0  # ...or below this (SAM 720p frames)
+V4_MAX_HAND_FRAC = 0.03  # skip frames where the hand covers more than this share of the frame
+V4_PICK_EFFORT = "medium"
+V4_PICK_MAX_TOKENS = 2500
+V4_REWRITE_MAX_TOKENS = 1200
 
 # --------------------------------------------------------------------------- 2.5 runner
 STAGE_RETRIES = 2  # SPEC: retries per stage for retryable errors (5xx, timeouts)

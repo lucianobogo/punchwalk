@@ -26,7 +26,8 @@ g) If the evidence frame is not the pointing frame and the fingertip was not car
    the item as unpointed.
 
 Grounding mapping into the contract: mask from a box/point prompt -> sam_box; from the concept
-request -> sam_concept; Spark box picked -> sam_box; nothing -> pointed_only (pointed) / none.
+request -> sam_concept; Spark box picked -> spark_box; nothing -> pointed_only (pointed) / none.
+A model call that hits the cost cap, or fails, leaves the item without an outline (reason in its row).
 
 Only evidence fields change (defect_svg, defect_box, grounding, sam_concept and the renders).
 
@@ -89,6 +90,7 @@ class ItemInput:
     quote: str | None = None
     pointer: Point | None = None  # fingertip in the evidence frame (display px)
     number: int | None = None
+    hand_mask: np.ndarray | None = field(default=None, repr=False)  # 0/1 (height, width): the hand in this frame
 
 
 class DefectLocate(BaseModel):
@@ -137,6 +139,9 @@ class Candidate:
     bbox: BoxF | None = None
     area: int = 0
     iou: float = 0.0
+    inside: float = 0.0  # share of mask pixels inside the Spark box
+    fill: float = 0.0  # mask area / its own bbox area
+    solidity: float = 0.0  # mask area / its convex hull area (a C-shaped arc is low)
     area_ratio: float = 0.0
     frame_frac: float = 0.0
     finger_dist: float | None = None
@@ -144,15 +149,17 @@ class Candidate:
     rejected: str | None = None
     svg: str | None = None  # smoothed outline (set for the ones shown to the check call)
     smooth_box: BoxF | None = None
+    hand_overlap: float = 0.0  # share of the mask on the tracked hand
 
     def as_row(self) -> dict[str, Any]:
         return {
             "id": self.id, "source": self.source, "grounding": self.grounding.value,
             "confidence": None if self.confidence is None else round(float(self.confidence), 3),
-            "bbox": _r(self.bbox), "area": self.area, "iou": round(self.iou, 3),
+            "bbox": _r(self.bbox), "area": self.area, "iou": round(self.iou, 3), "inside": round(self.inside, 3),
+            "fill": round(self.fill, 3), "solidity": round(self.solidity, 3),
             "area_ratio": round(self.area_ratio, 3), "frame_frac": round(self.frame_frac, 4),
             "finger_dist": None if self.finger_dist is None else round(self.finger_dist, 1),
-            "score": round(self.score, 3), "rejected": self.rejected,
+            "score": round(self.score, 3), "hand_overlap": round(self.hand_overlap, 3), "rejected": self.rejected,
         }
 
 
@@ -210,6 +217,22 @@ def point_to_mask(pt: Point, mask: np.ndarray) -> float:
     if not len(xs):
         return math.inf
     return float(np.sqrt(((xs + 0.5 - pt[0]) ** 2 + (ys + 0.5 - pt[1]) ** 2).min()))
+
+
+def mask_inside(mask: np.ndarray, box: Sequence[float]) -> float:
+    total = int(mask.sum())
+    if not total:
+        return 0.0
+    x1, y1, x2, y2 = (int(round(v)) for v in box)
+    return float(mask[max(0, y1):max(0, y2), max(0, x1):max(0, x2)].sum()) / total
+
+
+def mask_solidity(mask: np.ndarray) -> float:
+    found, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not found:
+        return 0.0
+    hull = cv2.convexHull(np.vstack(found))
+    return float(mask.sum()) / max(1.0, float(cv2.contourArea(hull)))
 
 
 def clamp_box(box: Sequence[float], w: int, h: int) -> BoxF | None:
@@ -313,6 +336,20 @@ def jpeg_bytes(img: Image.Image, quality: int = 90) -> bytes:
     return buf.getvalue()
 
 
+def load_frame(item: ItemInput, notes: dict[str, Any] | None = None) -> Image.Image:
+    """The evidence frame as RGB at exactly (item.width, item.height): every coordinate (pointer, boxes,
+    SAM prompts) is in those pixels. A raw file of another size is resized (and noted), never trusted."""
+    with Image.open(item.raw) as im:
+        img = im.convert("RGB")
+    if img.size != (item.width, item.height):
+        if notes is not None:
+            notes["resized_from"] = list(img.size)
+        log.warning("ground_v2: %s raw is %sx%s, expected %sx%s: resizing", item.item_id, *img.size,
+                    item.width, item.height)
+        img = img.resize((item.width, item.height), Image.LANCZOS)
+    return img
+
+
 # --------------------------------------------------------------------------- (a) locate
 
 LOCATE_SYSTEM = (
@@ -363,8 +400,7 @@ def clean_concept(text: str | None) -> str | None:
 
 
 def locate(item: ItemInput, save_dir: Path | None = None) -> Located:
-    with Image.open(item.raw) as im:
-        img = im.convert("RGB")
+    img = load_frame(item)
     if item.pointer is not None:
         img = draw_ring(img, item.pointer)
     s, mw, mh = model_view(item.width, item.height)
@@ -392,9 +428,10 @@ def locate(item: ItemInput, save_dir: Path | None = None) -> Located:
 # --------------------------------------------------------------------------- (b) segment
 
 
-def crop_for_box(box: BoxF, w: int, h: int) -> tuple[int, int, int, int] | None:
+def crop_for_box(box: BoxF, w: int, h: int, pointer: Point | None = None) -> tuple[int, int, int, int] | None:
     """Crop region for a small box (short side < V2_CROP_SMALL_FRAC of the frame's short side), else None.
-    The crop spans V2_CROP_SCALE x the box, >= V2_CROP_MIN_SHORT_PX on its short side, inside the frame."""
+    The crop spans V2_CROP_SCALE x the box, >= V2_CROP_MIN_SHORT_PX on its short side, inside the frame,
+    grown to keep the fingertip (plus V2_CROP_POINTER_MARGIN_PX) inside it."""
     bw, bh = box[2] - box[0], box[3] - box[1]
     if min(bw, bh) >= P.V2_CROP_SMALL_FRAC * min(w, h):
         return None
@@ -408,6 +445,10 @@ def crop_for_box(box: BoxF, w: int, h: int) -> tuple[int, int, int, int] | None:
     x1 = int(round(min(max(0.0, cx - cw / 2), w - cw)))
     y1 = int(round(min(max(0.0, cy - ch / 2), h - ch)))
     x2, y2 = min(w, x1 + int(round(cw))), min(h, y1 + int(round(ch)))
+    if pointer is not None:
+        m = P.V2_CROP_POINTER_MARGIN_PX
+        x1, y1 = max(0, min(x1, int(pointer[0] - m))), max(0, min(y1, int(pointer[1] - m)))
+        x2, y2 = min(w, max(x2, int(pointer[0] + m) + 1)), min(h, max(y2, int(pointer[1] + m) + 1))
     if (x2 - x1) >= w and (y2 - y1) >= h:
         return None
     return x1, y1, x2, y2
@@ -423,10 +464,38 @@ def negative_points(box: BoxF, w: int, h: int) -> list[Point]:
     return [(x, y) for x, y in pts if 0 <= x < w and 0 <= y < h]
 
 
+def hand_at(pointer: Point | None, hand: np.ndarray | None, radius: float) -> bool:
+    """Is the hand within `radius` px of the fingertip? (Then a fingertip point would segment the finger.)"""
+    if pointer is None or hand is None or not hand.any():
+        return False
+    return point_to_mask(pointer, hand) <= radius
+
+
+def hand_mask_at(walk_dir: Path, t: float, w: int, h: int) -> np.ndarray | None:
+    """The tracked hand (stages/track_hands.json, SAM frames) at evidence time `t`, scaled to (h, w)."""
+    from punchwalk.pipeline.frames import rasterize_svg
+
+    p = Path(walk_dir) / "stages" / "track_hands.json"
+    try:
+        track = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    sw, sh, fps = track["sam"]["width"], track["sam"]["height"], float(track["sam"]["fps"])
+    frame = int(round(t * fps))
+    out = None
+    for r in track.get("records") or []:
+        if r.get("frame") == frame and r.get("svg"):
+            m = rasterize_svg(r["svg"], w, h, scale=(w / sw, h / sh))
+            out = m if out is None else np.maximum(out, m)
+    return out
+
+
 def build_objects(box: BoxF, pointer: Point | None, w: int, h: int) -> list[tuple[str, sam.ImageObject]]:
     """Candidate prompts (media px), ids 1..n. See module docstring (b)."""
     neg = tuple(negative_points(box, w, h))
     specs: list[tuple[str, sam.ImageObject]] = []
+    if pointer is not None and not (0 <= pointer[0] < w and 0 <= pointer[1] < h):
+        pointer = None  # off the media (never clamp a fingertip onto the edge): box prompts only
     if pointer is not None:
         fp = ((pointer[0], pointer[1]),)
         specs = [
@@ -464,18 +533,22 @@ def record_to_frame(rec: sam.SamRecord, media_size: tuple[int, int], crop: tuple
 def segment(item: ItemInput, loc: Located, notes: dict[str, Any], save_dir: Path | None = None) -> list[Candidate]:
     assert loc.box is not None
     w, h = item.width, item.height
-    crop = crop_for_box(loc.box, w, h)
-    with Image.open(item.raw) as im:
-        if crop is None:
-            media: bytes | Path = item.raw
-            media_size = im.size
-        else:
-            cimg = im.convert("RGB").crop(crop)
-            media, media_size = jpeg_bytes(cimg, 95), cimg.size
+    crop = crop_for_box(loc.box, w, h, item.pointer)
+    frame = load_frame(item, notes)
+    if crop is None:
+        # the raw file itself when it has the right size (byte-identical to what v1 and the cache saw)
+        media: bytes | Path = jpeg_bytes(frame, 95) if "resized_from" in notes else item.raw
+        media_size = frame.size
+    else:
+        cimg = frame.crop(crop)
+        media, media_size = jpeg_bytes(cimg, 95), cimg.size
     if save_dir is not None and crop is not None:
         (save_dir / "sam_crop.jpg").write_bytes(media)  # type: ignore[arg-type]
     notes["crop"] = list(crop) if crop else None
     mbox, mptr = to_media(loc.box, item.pointer, crop)
+    if hand_at(item.pointer, item.hand_mask, P.V2_HAND_NEAR_FINGER_PX):
+        notes["finger_prompts"] = "dropped: the hand is at the fingertip in this frame"
+        mptr = None
     mw, mh = media_size
     specs = build_objects(mbox, mptr, mw, mh)
     notes["prompts"] = [{"id": o.id, "source": name, "box": _r(o.box), "positive": [list(map(round, p)) for p in o.positive],
@@ -506,6 +579,8 @@ def segment(item: ItemInput, loc: Located, notes: dict[str, Any], save_dir: Path
             notes["concept_error"] = str(err)[:300]
     for c in cands:
         c.mask = (c.soft >= 0.5).astype(np.uint8) if c.soft is not None else None
+        if c.mask is not None and item.hand_mask is not None and c.mask.any():
+            c.hand_overlap = float(np.logical_and(c.mask, item.hand_mask).sum()) / float(c.mask.sum())
     return cands
 
 
@@ -528,6 +603,9 @@ def score_candidates(cands: list[Candidate], spark_box: BoxF, extent: Extent, po
             continue
         c.bbox = mask_bbox(m)
         c.iou = box_iou(c.bbox, spark_box)
+        c.inside = mask_inside(m, spark_box)
+        c.fill = c.area / max(1.0, box_area(c.bbox))
+        c.solidity = mask_solidity(m)
         c.area_ratio = c.area / barea
         c.frame_frac = c.area / frame_area
         if c.area_ratio > P.V2_MAX_AREA_RATIO:
@@ -536,7 +614,16 @@ def score_candidates(cands: list[Candidate], spark_box: BoxF, extent: Extent, po
             c.rejected = f"a speck ({c.area_ratio:.2f}x the located box)"
         elif c.frame_frac > P.V2_MAX_FRAME_FRAC and extent != "whole_surface":
             c.rejected = f"covers {c.frame_frac:.0%} of the frame"
-        terms = [(P.V2_W_IOU, c.iou), (P.V2_W_CONF, float(c.confidence if c.confidence is not None else 0.5))]
+        elif c.hand_overlap > P.V2_MAX_HAND_OVERLAP:
+            c.rejected = f"{c.hand_overlap:.0%} of it is the hand"
+        elif c.inside < P.V2_MIN_INSIDE_FRAC:
+            c.rejected = f"only {c.inside:.0%} of it inside the located box"
+        elif c.solidity < P.V2_MIN_SOLIDITY:
+            c.rejected = f"wrong shape (solidity {c.solidity:.2f})"
+        elif c.fill < P.V2_MIN_BBOX_FILL:
+            c.rejected = f"wrong shape (fills {c.fill:.0%} of its box)"
+        terms = [(P.V2_W_IOU, c.iou), (P.V2_W_INSIDE, c.inside),
+                 (P.V2_W_CONF, float(c.confidence if c.confidence is not None else 0.5))]
         r = c.area_ratio / expected
         terms.append((P.V2_W_AREA, min(r, 1.0 / r) if r > 0 else 0.0))
         if pointer is not None:
@@ -611,8 +698,7 @@ def check_prompt(item: ItemInput, n: int) -> str:
 
 def check(item: ItemInput, offered: list[Candidate], save_dir: Path | None = None) -> tuple[int, str, str | None]:
     """(pick 0..n, rationale, provider). Candidates must carry `svg` (mask) or `bbox` (spark_box)."""
-    with Image.open(item.raw) as im:
-        base = im.convert("RGB")
+    base = load_frame(item)
     shapes = [c.smooth_box or c.bbox for c in offered if (c.smooth_box or c.bbox) is not None]
     region = check_region(shapes, item.pointer, item.width, item.height)
     images: list[bytes] = []
@@ -706,8 +792,21 @@ def _smooth(c: Candidate, item: ItemInput, spark_box: BoxF) -> None:
 
 
 def ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
-    """Run (a)-(f) for one item. Never raises on model/API failures: the item gets no outline and the
-    reason is in the row."""
+    """Run (a)-(f) for one item. Never raises on model/API failures or the cost cap: the item gets no
+    outline and the reason is in the row."""
+    from punchwalk.clients.cost import CostCapReached
+
+    try:
+        return _ground_item(item, save_dir)
+    except CostCapReached as err:
+        nothing = Grounding.pointed_only if item.pointer is not None else Grounding.none
+        row = {"number": item.number, "pointed": item.pointer is not None, "cost_cap": str(err)[:300],
+               "result": {"grounding": nothing.value, "source": None, "reason": "cost cap reached",
+                          "defect_box": None, "defect_svg": None}}
+        return V2Result(nothing, None, None, None, row)
+
+
+def _ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
     nothing = Grounding.pointed_only if item.pointer is not None else Grounding.none
     row: dict[str, Any] = {"number": item.number, "pointed": item.pointer is not None,
                            "pointer": _r(item.pointer) if item.pointer else None}
@@ -736,7 +835,7 @@ def ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
         if c.svg:
             offered.append(c)
     if spark_box_ok(loc.box, loc.extent, item.width, item.height):
-        offered.append(Candidate(id=0, source="spark_box", grounding=Grounding.sam_box, confidence=None,
+        offered.append(Candidate(id=0, source="spark_box", grounding=Grounding.spark_box, confidence=None,
                                  bbox=loc.box, iou=1.0, area_ratio=1.0))
     row["candidates"] = [c.as_row() for c in scored]
     row["offered"] = [{"n": n, "source": c.source, "id": c.id} for n, c in enumerate(offered, 1)]
@@ -758,7 +857,7 @@ def ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
         return V2Result(nothing, None, None, loc.concept, row)
     chosen = offered[pick - 1]
     if chosen.source == "spark_box":
-        svg, box, grounding = mask_smooth.rounded_rect_path(loc.box), loc.box, Grounding.sam_box
+        svg, box, grounding = mask_smooth.rounded_rect_path(loc.box), loc.box, Grounding.spark_box
     else:
         svg, box, grounding = chosen.svg, chosen.smooth_box or chosen.bbox, chosen.grounding
     row["result"] = {"grounding": grounding.value, "source": chosen.source, "id": chosen.id,
@@ -766,13 +865,28 @@ def ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
     return V2Result(grounding, svg, box, loc.concept, row)
 
 
-def save_walk_log(walk_dir: Path, rows: dict[str, Any]) -> Path:
+def save_walk_log(walk_dir: Path, rows: dict[str, Any], merge: bool = False) -> Path:
+    """Write stages/ground_v2.json (merge=True: add/replace these rows, keep the others)."""
     from punchwalk.pipeline.context import STAGES_DIR, write_json
 
-    return write_json(Path(walk_dir) / STAGES_DIR / OUTPUT_NAME, {"version": 1, "items": rows})
+    path = Path(walk_dir) / STAGES_DIR / OUTPUT_NAME
+    old: dict[str, Any] = {}
+    if merge and path.is_file():
+        try:
+            old = json.loads(path.read_text()).get("items", {})
+        except (OSError, json.JSONDecodeError):
+            old = {}
+    return write_json(path, {"version": 1, "items": {**old, **rows}})
 
 
 # --------------------------------------------------------------------------- dry run CLI
+
+
+def clear_jpgs(folder: Path) -> None:
+    """Start a dry-run folder clean (old candidate images from an earlier run would mislead)."""
+    folder.mkdir(parents=True, exist_ok=True)
+    for f in folder.rglob("*.jpg"):
+        f.unlink()
 
 
 def _db_items(db: Path, project: str, numbers: list[int]) -> list[dict[str, Any]]:
@@ -807,7 +921,8 @@ def item_input_from_row(row: dict[str, Any], root: Path, notes: dict[str, Any]) 
         notes=notes)
     return ItemInput(item_id=row["id"], raw=root / ev["raw"], width=int(ev["width"]), height=int(ev["height"]),
                      title=row["title"], description=row.get("description") or "", quote=row.get("quote"),
-                     pointer=pointer, number=row["number"])
+                     pointer=pointer, number=row["number"],
+                     hand_mask=hand_mask_at(wdir, float(ev["t"]), int(ev["width"]), int(ev["height"])))
 
 
 def dry_run(data_dir: Path, project: str, numbers: list[int], out: Path) -> dict[str, Any]:
@@ -819,7 +934,7 @@ def dry_run(data_dir: Path, project: str, numbers: list[int], out: Path) -> dict
         notes: dict[str, Any] = {}
         item = item_input_from_row(r, data_dir, notes)
         idir = out / f"{r['number']:03d}_{r['id']}"
-        idir.mkdir(parents=True, exist_ok=True)
+        clear_jpgs(idir)
         res = ground_item(item, idir)
         res.row.update(notes)
         with Image.open(item.raw) as im:

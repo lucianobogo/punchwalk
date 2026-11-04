@@ -182,7 +182,7 @@ def test_concept_pick_maps_to_sam_concept_and_box_pick_to_rounded_rect(monkeypat
     assert ground_v2.ground_item(_item(tmp_path)).grounding == Grounding.sam_concept
     _patch_pipeline(monkeypatch, [c], pick=2)  # the Spark box
     res = ground_v2.ground_item(_item(tmp_path))
-    assert res.grounding == Grounding.sam_box and res.row["result"]["source"] == "spark_box"
+    assert res.grounding == Grounding.spark_box and res.row["result"]["source"] == "spark_box"
     assert res.defect_box == (400.0, 400.0, 500.0, 500.0) and res.defect_svg.count("L") > 8
 
 
@@ -333,3 +333,71 @@ def test_contact_sheet_orders_by_number_and_reads_overlay(tmp_path):
     idx = json.loads(out.with_suffix(".json").read_text())["items"]
     assert [i["grounding"] for i in idx] == ["sam_concept", "not in overlay"]
     assert Image.open(out).size[0] == 4 * 520 + 5 * 12  # default: 4 tiles of 520 px per row
+
+
+# --------------------------------------------------------------------------- 10.3 fixes (verifier findings)
+
+
+def test_c_shaped_arc_and_off_box_blob_are_rejected_by_shape():
+    spark = (450.0, 870.0, 690.0, 1125.0)
+    arc = np.zeros((H, W), np.uint8)
+    cv2.ellipse(arc, (570, 1000), (130, 140), 0, 20, 300, 1, 18)  # a C-shaped band around the outlet
+    c_arc = Candidate(id=2, source="box+finger", grounding=Grounding.sam_box, confidence=0.8, mask=arc,
+                      soft=arc.astype(np.float32))
+    blob = _cand((700, 860, 760, 920), cid=3)  # beside the box, on blank wall
+    good = _cand((470, 890, 670, 1110), cid=1, disc=True)
+    ground_v2.score_candidates([c_arc, blob, good], spark, "region", (600, 1000), W, H)
+    assert good.rejected is None and good.inside > 0.9 and good.solidity > 0.9
+    assert c_arc.rejected and ("shape" in c_arc.rejected or "inside" in c_arc.rejected)
+    assert blob.rejected and "inside the located box" in blob.rejected
+
+
+def test_small_box_crop_keeps_the_fingertip_inside():
+    box = (500.0, 700.0, 520.0, 720.0)
+    crop = ground_v2.crop_for_box(box, W, H, pointer=(900.0, 1200.0))
+    assert crop[0] <= 500 and crop[2] >= 900 + P.V2_CROP_POINTER_MARGIN_PX and crop[3] >= 1200 + P.V2_CROP_POINTER_MARGIN_PX
+    specs = ground_v2.build_objects((10.0, 10.0, 50.0, 50.0), (-5.0, 20.0), 640, 640)  # fingertip off the media
+    assert [s for s, _ in specs] == ["box", "box+neg"]
+
+
+def test_raw_of_the_wrong_size_is_resized_not_trusted(tmp_path):
+    raw = tmp_path / "raw.jpg"
+    cv2.imwrite(str(raw), np.full((718, 540, 3), 90, np.uint8))  # half size
+    notes: dict = {}
+    img = ground_v2.load_frame(ItemInput("itm", raw, W, H, "t"), notes)
+    assert img.size == (W, H) and notes["resized_from"] == [540, 718]
+
+
+def test_cost_cap_leaves_the_item_without_an_outline(monkeypatch, tmp_path):
+    from punchwalk.clients.cost import CostCapReached
+
+    def capped(item, save_dir=None):
+        raise CostCapReached("spend cap reached")
+
+    monkeypatch.setattr(ground_v2, "locate", capped)
+    res = ground_v2.ground_item(_item(tmp_path))
+    assert res.defect_svg is None and res.row["result"]["reason"] == "cost cap reached"
+    assert res.grounding == Grounding.pointed_only
+
+
+def test_hand_at_the_fingertip_drops_finger_prompts_and_rejects_hand_masks(monkeypatch, tmp_path):
+    hand = np.zeros((H, W), np.uint8)
+    hand[1000:1300, 600:800] = 1  # the hand, its tip at (650, 1000)
+    assert ground_v2.hand_at((650.0, 995.0), hand, P.V2_HAND_NEAR_FINGER_PX)
+    assert not ground_v2.hand_at((100.0, 100.0), hand, P.V2_HAND_NEAR_FINGER_PX)
+    finger_blob = _cand((600, 950, 700, 1060), cid=2, source="box+finger")  # half of it on the finger
+    finger_blob.hand_overlap = float(np.logical_and(finger_blob.mask, hand).sum()) / finger_blob.mask.sum()
+    ground_v2.score_candidates([finger_blob], (590.0, 940.0, 710.0, 1070.0), "region", (650, 995), W, H)
+    assert finger_blob.rejected and "hand" in finger_blob.rejected
+    sent = {}
+
+    def fake_objects(media, objects):
+        sent["sources"] = [o.positive for o in objects]
+        return sam.SamResult(media="image", raw_text="", frames={}, diagnostics=[], media_size=(W, H))
+
+    monkeypatch.setattr(ground_v2.sam, "objects_on_image", fake_objects)
+    item = _item(tmp_path, pointer=(650.0, 995.0))
+    item.hand_mask = hand
+    notes: dict = {}
+    ground_v2.segment(item, Located(True, (500.0, 800.0, 900.0, 1100.0), "region", None, "r"), notes)
+    assert "dropped" in notes["finger_prompts"] and all(not p for p in sent["sources"])

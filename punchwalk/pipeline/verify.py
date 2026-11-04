@@ -113,54 +113,170 @@ def configured_provider() -> Provider:
     return Provider.baseten if get_settings().REASONING_PROVIDER == "baseten" else Provider.meta
 
 
+def apply_check(row, check: ItemCheck | None, provider: str | None, *, protected: bool = False) -> str:
+    """Write one check's result onto an Item row. Returns "matched" | "flagged" | "failed".
+
+    Protected items (REGROUND_ALL re-grounding) only get their `verification` refreshed: status, review
+    note and history stay exactly as people left them."""
+    if check is None:
+        if protected:
+            return "failed"
+        row.status, row.review_reason = ItemStatus.needs_review, REVIEW_CHECK_FAILED
+        row.verification = Verification(consistent=False, note=REVIEW_CHECK_FAILED, provider=configured_provider(),
+                                        checked_at=utcnow()).model_dump(mode="json")
+        add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_CHECK_FAILED)
+        return "failed"
+    prov = Provider(provider)
+    if check.consistent and check.frame_shows_defect:
+        if not protected and ItemStatus(row.status) == ItemStatus.needs_review:  # flagged by an earlier check
+            row.status, row.review_reason = ItemStatus.open, None
+        row.verification = Verification(consistent=True, note=None, issues=[], provider=prov,
+                                        checked_at=utcnow()).model_dump(mode="json")
+        if not protected:
+            add_history(row, HistoryActor.model, HistoryAction.verified, note="Matches the photo and what was said")
+        return "matched"
+    note = review_note(check)
+    row.verification = Verification(consistent=False, note=note, issues=check.issues[:5],
+                                    provider=prov, checked_at=utcnow()).model_dump(mode="json")
+    if not protected:
+        row.status, row.review_reason = ItemStatus.needs_review, note
+        add_history(row, HistoryActor.model, HistoryAction.flagged, note=note)
+    return "flagged"
+
+
+def status_locked(item) -> bool:
+    """Protected items, and items whose status a re-walk decided (they carry a closure): a check may refresh
+    their `verification` but never their status, review note or history."""
+    return is_protected(item) or bool(item.closure)
+
+
+def _check_and_apply(ctx: StageContext, item, *, protected: bool) -> tuple[str, dict[str, Any], ItemCheck | None]:
+    ev = Evidence.model_validate(item.evidence)
+    try:
+        check, provider = check_one(item, ev)
+        out: dict[str, Any] = {"ok": True, "provider": provider, **check.model_dump()}
+    except (llm.StructuredOutputError, ApiError) as err:
+        log.warning("verify: %s failed: %s", item.id, err)
+        check, provider = None, None
+        out = {"ok": False, "error": str(err)[:500]}
+    with ctx.session() as s:
+        row = s.get(type(item), item.id)
+        outcome = apply_check(row, check, provider, protected=protected)
+        s.add(row)
+        s.commit()
+    if protected:
+        out["protected"] = True
+    return outcome, out, check
+
+
+def _regrounded_protected(ctx: StageContext) -> set[str]:
+    """Protected items whose frame or outline the v2 ground pass changed (REGROUND_ALL)."""
+    from punchwalk.pipeline.context import read_stage_output
+
+    try:
+        g = read_stage_output(ctx.walk_dir, Stage.ground_defects).get("items", {})
+    except Exception:  # noqa: BLE001 - no ground output yet
+        return set()
+    return {k for k, v in g.items() if v.get("regrounded_protected") and v.get("changed")}
+
+
 def run(ctx: StageContext) -> StageOutcome:
+    from punchwalk.config import get_settings
+
+    settings = get_settings()
+    v2 = settings.GROUNDING_V2
+    reground_all = v2 and settings.REGROUND_ALL
     with ctx.session() as s:
         items = walk_items(ctx, s)
     written = ctx.output(Stage.write_items)["items"]
     todo = [i for i in items if i.id in written and i.evidence and not is_protected(i)
             and written[i.id].get("ok") and not written[i.id].get("skipped")]
+    if reground_all:  # PLAN 10.4: re-check protected items whose frame or outline changed (verification only)
+        changed = _regrounded_protected(ctx)
+        todo += [i for i in items if i.id in changed and i.evidence and is_protected(i)]
     rows: dict[str, Any] = {}
-    matched = flagged = failed = 0
+    tally = {"matched": 0, "flagged": 0, "failed": 0}
     ctx.report({"checked": 0, "total": len(todo)})
     for n, item in enumerate(todo, 1):
-        ev = Evidence.model_validate(item.evidence)
-        try:
-            check, provider = check_one(item, ev)
-            rows[item.id] = {"ok": True, "provider": provider, **check.model_dump()}
-        except (llm.StructuredOutputError, ApiError) as err:
-            log.warning("verify: %s failed: %s", item.id, err)
-            check, provider = None, None
-            rows[item.id] = {"ok": False, "error": str(err)[:500]}
-        with ctx.session() as s:
-            row = s.get(type(item), item.id)
-            if check is None:
-                failed += 1
-                row.status, row.review_reason = ItemStatus.needs_review, REVIEW_CHECK_FAILED
-                row.verification = Verification(consistent=False, note=REVIEW_CHECK_FAILED, provider=configured_provider(),
-                                                checked_at=utcnow()).model_dump(mode="json")
-                add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_CHECK_FAILED)
-            else:
-                prov = Provider(provider)
-                if check.consistent and check.frame_shows_defect:
-                    matched += 1
-                    if ItemStatus(row.status) == ItemStatus.needs_review:  # flagged by an earlier check
-                        row.status, row.review_reason = ItemStatus.open, None
-                    row.verification = Verification(consistent=True, note=None, issues=[], provider=prov,
-                                                    checked_at=utcnow()).model_dump(mode="json")
-                    add_history(row, HistoryActor.model, HistoryAction.verified,
-                                note="Matches the photo and what was said")
-                else:
-                    flagged += 1
-                    note = review_note(check)
-                    row.status, row.review_reason = ItemStatus.needs_review, note
-                    row.verification = Verification(consistent=False, note=note, issues=check.issues[:5],
-                                                    provider=prov, checked_at=utcnow()).model_dump(mode="json")
-                    add_history(row, HistoryActor.model, HistoryAction.flagged, note=note)
-            s.add(row)
-            s.commit()
+        outcome, rows[item.id], _ = _check_and_apply(ctx, item, protected=status_locked(item))
+        tally[outcome] += 1
         ctx.report({"checked": n, "total": len(todo)})
+    if v2:
+        frame_pass(ctx, items, rows, tally, reground_all)
     ctx.save_output(Stage.verify, {"version": 1, "items": rows})
+    matched, flagged, failed = tally["matched"], tally["flagged"], tally["failed"]
     return StageOutcome(
         counts={"checked": len(todo), "matched": matched, "flagged": flagged, "failed": failed, "total": len(todo)},
         message=f"{matched} of {len(todo)} items match the photo and what was said",
     )
+
+
+def _not_in_frame(item, row: dict[str, Any] | None) -> bool:
+    if row is not None:
+        return bool(row.get("ok")) and row.get("frame_shows_defect") is False
+    note = (item.verification or {}).get("note")
+    return note == REVIEW_NOT_IN_FRAME
+
+
+def frame_pass(ctx: StageContext, items, rows: dict[str, Any], tally: dict[str, int], reground_all: bool) -> None:
+    """PLAN 10.4 after the checks: items whose frame doesn't show the defect get the frame picker (unless
+    the ground stage already tried it in this run). On a new frame: v2 grounding, one more check, and if
+    the frame now shows the defect but the words don't match, the description alone is rewritten (never
+    for protected items) and checked once more. Nothing picked: the item stays as it is."""
+    from punchwalk.pipeline import frame_pick, ground
+
+    root = data_dir()
+    tried = frame_pick.load_log(ctx.walk_dir)
+    extras = ctx.output(Stage.pick_evidence)["items"]
+    events = {e["id"]: e for e in ctx.output(Stage.find_points)["events"]}
+    targets = []
+    for item in items:
+        protected = is_protected(item)
+        if not item.evidence or item.id in tried or (protected and not reground_all):
+            continue
+        if _not_in_frame(item, rows.get(item.id)):
+            targets.append(item)
+    if not targets:
+        return
+    picker = frame_pick.Picker.for_walk(ctx.walk_dir)
+    pick_rows: dict[str, Any] = {}
+    for item in targets:
+        protected = status_locked(item)
+        ev = Evidence.model_validate(item.evidence)
+        event = events.get(item.point_id) if item.point_id else None
+        extra = extras.get(item.id, {})
+        new_ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, frame_pick.REASON_NOT_IN_FRAME,
+                                           pick_rows)
+        if new_ev.t == ev.t:
+            continue  # nothing picked (or the current frame is best): status and photo stay
+        new_ev, _, _ = ground.reground_one(ctx, item, new_ev)
+        if protected and item.closure:
+            frame_pick.refresh_before_after(root, item.closure, root / new_ev.crop)
+        with ctx.session() as s:
+            fresh = s.get(type(item), item.id)
+        outcome, out, check = _check_and_apply(ctx, fresh, protected=protected)
+        out["frame_pick"] = True
+        if check is not None and check.frame_shows_defect and not check.consistent and not protected:
+            try:
+                desc, _ = frame_pick.rewrite_description(fresh, root / new_ev.image, root / new_ev.crop)
+            except (llm.StructuredOutputError, ApiError) as err:
+                out["rewrite_error"] = str(err)[:300]
+            else:
+                with ctx.session() as s:
+                    row = s.get(type(item), item.id)
+                    old = row.description
+                    row.description = desc
+                    add_history(row, HistoryActor.model, HistoryAction.edited, field="description", from_=old,
+                                to=desc, note="Rewritten to match the new evidence photo")
+                    s.add(row)
+                    s.commit()
+                    fresh = s.get(type(item), item.id)
+                out["description_rewritten"] = True
+                outcome, recheck, _ = _check_and_apply(ctx, fresh, protected=False)
+                out["recheck"] = recheck
+        prev = rows.get(item.id)
+        if prev and prev.get("ok"):  # replace the first check's tally with the final one
+            tally["flagged" if not (prev.get("consistent") and prev.get("frame_shows_defect")) else "matched"] -= 1
+        tally[outcome] += 1
+        rows[item.id] = {**out, "first_check": prev}
+    frame_pick.save_log(ctx.walk_dir, pick_rows, merge=True)
