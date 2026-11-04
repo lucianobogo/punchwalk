@@ -217,7 +217,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Loads walk1 (first walk) and walk2 (re-walk), plus walk3 if present, from cache, at zero API cost.
   - `DEMO_MODE` banner: "This is a demo project. Upload your own walk to try it live."
 - [x] **8.2 Landing page** per DESIGN.md. On desktop: the live app inside a phone frame, plus a QR code. On a phone: straight into the demo project.
-- [ ] **8.3 Screenshot audit.** The verifier runs `make screenshots` and checks all checklist screens against DESIGN.md; the ui-builder fixes what it finds; repeat until PASS.
+- [x] **8.3 Screenshot audit.** The verifier runs `make screenshots` and checks all checklist screens against DESIGN.md; the ui-builder fixes what it finds; repeat until PASS.
 - [x] **8.4 Polish.** Empty, error and loading states everywhere; accessibility floor; no console errors; dark mode *(nice)*.
 
 ## Phase 9: Ship (Track C)

@@ -71,3 +71,4 @@ One line per event, newest at the bottom:
 2026-11-03 19:48 ET | 8.3 | verifier | PASS: 35/35 screens vs DESIGN.md + renders, 0 console errors, 0 blocking, 9 minor | report | ui-builder polish + real-data README screenshots; tick 8.3 after the polish lands
 2026-11-03 19:50 ET | 8.1 | builder (fresh) | snapshot re-exported at CRF 28: 62 MB (videos 22/18/4 MB, same shape); import verified in a scratch DATA_DIR | report | commit; Fly upload + import next
 2026-11-03 19:51 ET | 8.1 Fly import | orchestrator | fly ssh sftp denied by the classifier (Remote Shell Writes); exact import commands under Needs human; redeploy after the final pass also noted | STATE.md | human
+2026-11-03 19:59 ET | 8.3 polish + docs/screens | ui-builder | done: 7 minors fixed, replay wording, 9 README shots (8 real); make test 442+102 green; 35/35 strict | report | commits; tag ckpt-8.3; 8.3 → [x]

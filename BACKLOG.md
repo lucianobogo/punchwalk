@@ -23,3 +23,7 @@ Ideas and cut items. Nothing here gets built before every PLAN.md box is done.
 - API: StageState.message carries raw exception text on failure (UI filters it); Track A to map it to plain words (queued).
 - UI low: on a phone /landing shows the demo banner even on an empty server (isDemoSession true); only show it when a project is loaded. Optional: a minimal service worker so a hard reload while offline shows the app shell.
 - Walks processed before the overlay fingertip clamp keep an unclamped cached overlay.json until re-run (seed re-runs walks, so the demo data is fine).
+- Seeded processing screen shows total_cost_usd $0 (all cache hits); consider showing the estimated live cost of the recorded calls instead (ModelCall est_cost from the ledger) — judges should see what a walk costs.
+- walk3 pick_evidence: context_b frame at 15.77 s fails near the clip end (ffmpeg exit 234; non-fatal warning) — retry inside the clip.
+- Re-walk rule: voice "not fixed" wins over vision "fixed" (#010 stays open) — correct per PLAN 7.3; mention in the demo story.
+- Seed replay stores est_cost 0 / latency 0 for cached calls, so the demo's processing screen says 'from recorded model answers (no new cost)' instead of the real ≈ $0.4 per walk; keeping the recording's original cost/latency in the ModelCall rows would show real numbers.
