@@ -124,7 +124,7 @@ def test_pick_of_another_frame_extracts_it_and_maps_or_drops_the_pointer(monkeyp
     # a pointed item whose pointer can't be carried into the new frame is grounded as unpointed
     pk2, _ = _picker(monkeypatch, tmp_path, pick=1)
     res2 = pk2.choose(fp.PickInput("itm", "Stain", "", None, 14.0, (30.0, 20.0)), tmp_path / "out2", "x")
-    assert res2.changed and res2.pointer is None and "unpointed" in res2.row["pointer_map"]
+    assert res2.changed and res2.pointer is None and "no dot" in res2.row["pointer_map"]
 
 
 def test_pick_call_failure_or_cost_cap_degrades(monkeypatch, tmp_path):

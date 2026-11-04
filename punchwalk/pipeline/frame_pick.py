@@ -247,6 +247,7 @@ class PickInput:
     pointer: tuple[float, float] | None  # current pointer (display px), None when unpointed
     pointing_raw: Path | None = None  # the pointing frame (display px), for mapping the pointer
     fingertip_display: tuple[float, float] | None = None
+    event: dict[str, Any] | None = None  # the pointing event (find_points), for its tracked fingertip
 
 
 @dataclass
@@ -382,14 +383,34 @@ class Picker:
         raw, ca, cb = self.extract(t, frame, pick_dir)
         pointer = None
         if item.pointer is not None:
-            notes: dict[str, Any] = {}
-            pointer = ground_v2.resolve_pointer(
-                item.pointer, aligned=False, same_frame=False, pointing_raw=item.pointing_raw, evidence_raw=raw,
-                fingertip_display=item.fingertip_display, notes=notes)
-            row["pointer_map"] = notes.get("pointer_map")
+            pointer, row["pointer_map"] = self.carry_pointer(item, frame, raw)
         row.update(outcome="new frame", t=t, frame=frame, pointer=None if pointer is None else
                    [round(pointer[0], 1), round(pointer[1], 1)])
         return PickResult(True, True, t=t, frame=frame, raw=raw, context_a=ca, context_b=cb, pointer=pointer, row=row)
+
+    def carry_pointer(self, item: PickInput, frame: int, raw: Path) -> tuple[tuple[float, float] | None, Any]:
+        """The dot in the picked frame: the point's own tracked fingertip when the frame is inside its hold;
+        otherwise the ORB + RANSAC homography, kept only with enough inliers and a small shift (a featureless
+        wall gives few, wrong matches); otherwise no dot ("no marker beats a wrong marker")."""
+        from punchwalk.pipeline.evidence import tracked_fingertip
+
+        tip = tracked_fingertip(self.records, item.event, frame, self.sam_w, self.sam_h)
+        if tip is not None:
+            sx, sy = self.meta.scale.sam_to_display_x, self.meta.scale.sam_to_display_y
+            d = (round(tip[0] * sx, 1), round(tip[1] * sy, 1))
+            return d, {"tracked": list(d)}
+        if item.pointing_raw is None or item.fingertip_display is None or not Path(item.pointing_raw).is_file():
+            return None, "no pointing frame: no dot"
+        src, dst = cv2.imread(str(item.pointing_raw)), cv2.imread(str(raw))
+        if src is None or dst is None or src.shape != dst.shape:
+            return None, "pointing frame unreadable: no dot"
+        stats: dict[str, Any] = {}
+        mapped = ground_v2.map_pointer_homography(src, dst, item.fingertip_display, stats=stats)
+        ratio = stats.get("inliers", 0) / max(1, stats.get("matches", 0))
+        if (mapped is None or stats.get("inliers", 0) < P.V4_POINTER_MIN_INLIERS
+                or ratio < P.V4_POINTER_MIN_INLIER_RATIO or stats.get("shift", 1e9) > P.V4_POINTER_MAX_SHIFT_PX):
+            return None, {"homography_rejected": stats, "dot": None}
+        return mapped, {"homography": [round(mapped[0], 1), round(mapped[1], 1)], **stats}
 
     def extract(self, t: float, frame: int, out: Path) -> tuple[Path, Path, Path]:
         display = self.walk_dir / self.meta.display.path
@@ -493,7 +514,7 @@ def pick_and_adopt(ctx, root: Path, item, ev, extra: dict[str, Any], event: dict
         item.id, item.title, item.description or "", item.quote, ev.t,
         (ev.pointer.x, ev.pointer.y) if ev.pointer else None,
         (root / extra["pointing_raw"]) if extra.get("pointing_raw") else None,
-        tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None)
+        tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None, event)
     res = picker.choose(pinput, item_dir, reason)
     rows[item.id] = res.row
     if not res.changed:
@@ -573,7 +594,7 @@ def _dry_item(row: dict[str, Any], data_dir: Path, out: Path) -> dict[str, Any]:
     pin = PickInput(row["id"], row["title"], row.get("description") or "", row.get("quote"), ev.t,
                     (ev.pointer.x, ev.pointer.y) if ev.pointer else None,
                     (data_dir / extra["pointing_raw"]) if extra.get("pointing_raw") else None,
-                    tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None)
+                    tuple(event["fingertip_display"]) if event and event.get("fingertip_display") else None, event)
     res = picker.choose(pin, idir, reason)
     report: dict[str, Any] = {"number": row["number"], "title": row["title"], "pick": res.row}
     raw = res.raw if res.changed else data_dir / ev.raw

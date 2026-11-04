@@ -202,15 +202,44 @@ def _ground_v2(root, raw, ev: Evidence, item, extra: dict[str, Any], event: dict
     return res.grounding, res.defect_svg, box, res.concept or concept, summary
 
 
+def contain_point(cb: tuple[int, int, int, int], pt: tuple[float, float], margin: float, w: int, h: int,
+                  ) -> tuple[int, int, int, int]:
+    """Grow (and shift) a 4:3 crop just enough that `pt` sits at least `margin` px inside it, within the frame."""
+    x1, y1, x2, y2 = cb
+    px, py = pt
+    if x1 + margin <= px <= x2 - margin and y1 + margin <= py <= y2 - margin:
+        return cb
+    a = P.CROP_ASPECT
+    ux1, uy1 = min(x1, px - margin), min(y1, py - margin)
+    ux2, uy2 = max(x2, px + margin), max(y2, py + margin)
+    cw = max(ux2 - ux1, (uy2 - uy1) * a)
+    ch = cw / a
+    if cw > w:
+        cw, ch = w, w / a
+    if ch > h:
+        ch, cw = h, h * a
+    cw, ch = int(round(cw)), int(round(ch))
+    cx, cy = (ux1 + ux2) / 2, (uy1 + uy2) / 2
+    nx = int(round(min(max(0.0, cx - cw / 2), w - cw)))
+    ny = int(round(min(max(0.0, cy - ch / 2), h - ch)))
+    return nx, ny, nx + cw, ny + ch
+
+
 def card_crop_box(ev: Evidence, raw, pointer: tuple[float, float] | None, defect_box: list[float] | None,
-                  focus_box: Sequence[float] | None = None) -> tuple[int, int, int, int]:
+                  focus_box: Sequence[float] | None = None, *, v2: bool = False) -> tuple[int, int, int, int]:
     """The 4:3 card crop: around the outline (+ dot); with no outline, around `focus_box` (the region Muse Spark
-    Open located in a picked photo), else the dot, else the widest crop over the busiest band."""
+    Open located in a picked photo) and the dot, else the dot, else the widest crop over the busiest band.
+    v2: the dot is always inside the card with at least CROP_POINTER_MARGIN_PX around it (v1 crops stay as
+    they were: the eval replays them)."""
     if defect_box is None and focus_box is not None:
-        return crop_box_for(ev.width, ev.height, defect_box=list(focus_box))
-    if pointer is None and defect_box is None:
+        cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=list(focus_box))
+    elif pointer is None and defect_box is None:
         return wide_crop_box(raw)
-    return crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+    else:
+        cb = crop_box_for(ev.width, ev.height, pointer=pointer, defect_box=defect_box)
+    if v2 and pointer is not None:
+        cb = contain_point(cb, pointer, P.CROP_POINTER_MARGIN_PX, ev.width, ev.height)
+    return cb
 
 
 def ground_message(v2: bool, counts: dict[str, int], picked: int = 0) -> str:
@@ -243,7 +272,7 @@ def ground_counts(groundings: list[Grounding]) -> dict[str, int]:
 def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Grounding, defect_svg: str | None,
                      defect_box: list[float] | None, concept: str | None, extra: dict[str, Any],
                      event: dict[str, Any] | None, *, save: bool = True,
-                     focus_box: Sequence[float] | None = None) -> Evidence:
+                     focus_box: Sequence[float] | None = None, v2: bool = False) -> Evidence:
     """evidence.jpg, crop.jpg and pointing.jpg for the item's current frame + outline; saves Item.evidence
     (save=False: the caller saves it, see `save_evidence`)."""
     meta = ctx.meta
@@ -252,7 +281,7 @@ def _render_and_save(ctx: StageContext, root, item, ev: Evidence, grounding: Gro
     pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
     out = ctx.item_dir(item.id)
     evidence_jpg = render_evidence(raw, out / "evidence.jpg", defect_svg=defect_svg, pointer=pointer)
-    cb = card_crop_box(ev, raw, pointer, defect_box, focus_box)
+    cb = card_crop_box(ev, raw, pointer, defect_box, focus_box, v2=v2)
     crop_jpg = render_crop(evidence_jpg, out / "crop.jpg", cb)
     pointing_rel = ev.pointing_frame
     if extra.get("pointing_raw") and (root / extra["pointing_raw"]).is_file():
@@ -311,7 +340,7 @@ def ground_and_render(ctx: StageContext, root, item, ev: Evidence, wrow: dict[st
         focus, notes["crop_focus_from"] = ground_v2.crop_focus(_v2_input(item, ev, root), v2_rows.get(item.id))
         notes["crop_focus"] = [round(v, 1) for v in focus] if focus else None
     new_ev = _render_and_save(ctx, root, item, ev, grounding, defect_svg, defect_box, concept, extra, event,
-                              save=save, focus_box=focus)
+                              save=save, focus_box=focus, v2=v2)
     return new_ev, grounding, {"grounding": grounding.value, "defect_box": defect_box, "concept": concept, **notes}
 
 

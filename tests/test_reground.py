@@ -185,9 +185,13 @@ def test_card_crop_centres_on_the_located_region_when_there_is_no_outline(tmp_pa
     Image.new("RGB", (1080, 1436), (120, 120, 120)).save(raw)
     ev = Evidence(t=1.0, image="i.jpg", raw="raw.jpg", crop="c.jpg", width=1080, height=1436)
     focus = (580.0, 940.0, 670.0, 1035.0)
-    x1, y1, x2, y2 = ground.card_crop_box(ev, raw, (523.0, 1288.0), None, focus)
-    assert x1 <= 580 and x2 >= 670 and y1 <= 940 and y2 >= 1035  # the located region is in the card
-    assert abs((y1 + y2) / 2 - 987.5) < 2 and not (y1 <= 1288 <= y2)  # centred on it, not on the (off) dot
+    x1, y1, x2, y2 = ground.card_crop_box(ev, raw, (523.0, 1288.0), None, focus, v2=True)
+    assert x1 <= 580 and x2 >= 670 and y1 <= 940 and y2 >= 1035  # the located region is in the card...
+    m = ground.P.CROP_POINTER_MARGIN_PX
+    assert x1 + m <= 523 <= x2 - m and y1 + m <= 1288 <= y2 - m  # ...and so is the dot, with a margin
+    assert (x2 - x1) * 3 == (y2 - y1) * 4 or abs((x2 - x1) / (y2 - y1) - 4 / 3) < 0.01
+    no_dot = ground.card_crop_box(ev, raw, None, None, focus, v2=True)
+    assert abs((no_dot[1] + no_dot[3]) / 2 - 987.5) < 2  # unpointed: centred on the located region
     assert ground.card_crop_box(ev, raw, (523.0, 1288.0), None, None) == \
         ground.crop_box_for(1080, 1436, pointer=(523.0, 1288.0), defect_box=None)  # fallback: the fingertip
     outlined = ground.card_crop_box(ev, raw, None, [100.0, 100.0, 200.0, 200.0], focus)
@@ -240,3 +244,87 @@ def test_refresh_display_recrops_picked_items_and_rewrites_the_stage_line(synth_
         st = s.get(Walk, wid).stages["ground_defects"]
     assert st["counts"]["outlined"] == 2 and st["message"] == rep["walks"][wid]["message"]
     assert json.loads((stages / "ground_v2.json").read_text())["items"][target.id]["crop_focus_from"] == "locate"
+
+
+def test_contain_point_grows_a_crop_to_keep_the_dot_inside():
+    from punchwalk.pipeline import ground
+
+    cb = (300, 744, 948, 1230)
+    x1, y1, x2, y2 = ground.contain_point(cb, (523.0, 1288.0), 48, 1080, 1436)
+    assert y2 >= 1288 + 48 and y1 <= 744 and x1 <= 300 and abs((x2 - x1) / (y2 - y1) - 4 / 3) < 0.01
+    assert ground.contain_point(cb, (600.0, 1000.0), 48, 1080, 1436) == cb  # already inside: unchanged
+    x1, y1, x2, y2 = ground.contain_point((0, 0, 400, 300), (1075.0, 1430.0), 48, 1080, 1436)
+    assert x1 >= 0 and y1 >= 0 and x2 <= 1080 and y2 <= 1436  # never outside the frame
+
+
+def _track_record(frame, oid="d:0", tip=(400, 580)):
+    x, y = tip  # a finger: a vertical bar from the bottom edge up to the tip
+    svg = f"M{x - 6} {y} L{x + 6} {y} L{x + 6} 958 L{x - 6} 958 Z"
+    return {"frame": frame, "object_id": oid, "box": [x - 6, y, x + 6, 958], "confidence": 0.9, "svg": svg}
+
+
+def test_tracked_fingertip_only_inside_the_hold():
+    from punchwalk.pipeline.evidence import tracked_fingertip
+
+    event = {"hold_frames": [825, 838], "sam_object_ids": ["d:0"], "entry_edge": "bottom"}
+    records = [_track_record(829), _track_record(840, tip=(300, 500)), _track_record(829, oid="z:9", tip=(10, 10))]
+    x, y = tracked_fingertip(records, event, 829, 720, 958)
+    assert abs(x - 400) < 2 and abs(y - 580) < 3  # the tip of its own hand, not another object's
+    assert tracked_fingertip(records, event, 840, 720, 958) is None  # after the hold: the hand is moving
+    assert tracked_fingertip(records, event, 830, 720, 958) is None  # no mask in that frame
+    assert tracked_fingertip(records, None, 829, 720, 958) is None
+
+
+def test_picker_dot_is_the_tracked_fingertip_or_a_strict_homography_or_none(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    meta = SimpleNamespace(clips=[], sam=SimpleNamespace(frame_count=1000, path="sam.mp4"),
+                           display=SimpleNamespace(path="display.mp4"),
+                           scale=SimpleNamespace(sam_to_display_x=1.5, sam_to_display_y=1.5))
+    event = {"hold_frames": [825, 838], "sam_object_ids": ["d:0"], "entry_edge": "bottom"}
+    pk = frame_pick.Picker(tmp_path, meta, {"records": [_track_record(829)], "sam": {"width": 720, "height": 958,
+                                                                                     "fps": 10}}, [])
+    raw = tmp_path / "raw.jpg"
+    Image.new("RGB", (1080, 1437), (128, 128, 128)).save(raw)
+    pin = frame_pick.PickInput("itm", "Nick", "", None, 83.2, (584.3, 869.3), tmp_path / "pointing.jpg",
+                               (584.3, 869.3), event)
+    dot, how = pk.carry_pointer(pin, 829, raw)
+    assert abs(dot[0] - 600) < 3 and abs(dot[1] - 870) < 5 and "tracked" in how
+    Image.new("RGB", (1080, 1437), (128, 128, 128)).save(tmp_path / "pointing.jpg")
+    for stats, expect_dot in (({"matches": 300, "inliers": 200, "shift": 12.0}, True),
+                              ({"matches": 300, "inliers": 20, "shift": 12.0}, False),  # few inliers
+                              ({"matches": 300, "inliers": 200, "shift": 105.0}, False)):  # slid on the wall
+        def fake_h(src, dst, pt, src_mask=None, dst_mask=None, stats=None, _s=stats):
+            stats.update(_s)
+            return (pt[0] + _s["shift"], pt[1])
+
+        monkeypatch.setattr(ground_v2, "map_pointer_homography", fake_h)
+        dot, how = pk.carry_pointer(pin, 900, raw)  # outside the hold: no tracked fingertip
+        assert (dot is not None) == expect_dot, (stats, how)
+
+
+def test_refresh_display_repairs_a_dot_that_is_off_the_finger(synth_walk, monkeypatch):
+    from punchwalk import db
+    from punchwalk.pipeline import evidence as ev_mod
+
+    data, pid, wid = synth_walk
+    _fake_models(monkeypatch, {})
+    reground.reground_project(data, pid)
+    items = _items(pid)
+    target = next(i for i in items.values() if i.evidence.get("pointer"))
+    good = target.evidence["pointer"]
+    monkeypatch.setattr(ev_mod, "tracked_fingertip",
+                        lambda records, event, frame, w, h: (good["x"] / 1.0, good["y"] / 1.0)
+                        if event and event.get("id") == target.point_id else None)
+    with db.session_factory() as s:  # a dot that slid ~120 px on a plain wall
+        row = s.get(Item, target.id)
+        row.evidence = {**row.evidence, "pointer": {"x": good["x"] - 100, "y": good["y"] - 70}}
+        s.add(row)
+        s.commit()
+    meta_scale = json.loads((data / "walks" / wid / "meta.json").read_text())["scale"]
+    rep = reground.refresh_display(data, pid)
+    fixed = _items(pid)[target.number].evidence["pointer"]
+    assert abs(fixed["x"] - good["x"] * meta_scale["sam_to_display_x"]) < 1
+    assert rep["crops"][target.id]["pointer"]["to"] == [fixed["x"], fixed["y"]]
+    others = [n for n, i in _items(pid).items() if n != target.number and i.evidence != items[n].evidence]
+    assert not others

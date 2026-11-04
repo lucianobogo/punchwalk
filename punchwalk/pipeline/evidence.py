@@ -34,7 +34,7 @@ import math
 import os
 from collections.abc import Iterable, Iterator
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -141,6 +141,27 @@ def align_point(
         return pt, False
     nx, ny = pt[0] + shift[0], pt[1] + shift[1]
     return (float(min(max(nx, 0.0), w - 1)), float(min(max(ny, 0.0), h - 1))), True
+
+
+def tracked_fingertip(records: list[dict[str, Any]], event: dict[str, Any] | None, frame: int, w: int, h: int,
+                      ) -> tuple[float, float] | None:
+    """The point's own fingertip in `frame` (SAM px), when `frame` lies inside the point's hold and its hand
+    track has a mask there: the hand is still, so this is where the finger points in that very frame (no
+    carrying across frames, which can slide on a featureless wall). None otherwise."""
+    from punchwalk.pipeline.points import fingertip
+
+    if not event or not event.get("hold_frames"):
+        return None
+    lo, hi = event["hold_frames"]
+    if not lo <= frame <= hi:
+        return None
+    oids = set(event.get("sam_object_ids") or [])
+    for r in records:
+        if r.get("frame") == frame and r.get("object_id") in oids:
+            mask = rasterize_svg(r["svg"], w, h) if r.get("svg") else None
+            x, y, _ = fingertip(mask, tuple(r["box"]), w, h, event.get("entry_edge"))
+            return float(x), float(y)
+    return None
 
 
 def choose_pointed_frame(
@@ -351,6 +372,7 @@ def _part_range(ctx: StageContext, frame: int) -> tuple[int, int]:
 
 def run(ctx: StageContext) -> StageOutcome:
     voice_only = get_settings().GROUNDING_MODE == "voice_only"
+    v2 = get_settings().GROUNDING_V2  # v1 (and the eval replay) keep the carried-over pointer byte for byte
     meta = ctx.meta
     drafts = ctx.output(Stage.fuse)["drafts"]
     events = {e["id"]: e for e in ctx.output(Stage.find_points)["events"]}
@@ -390,6 +412,9 @@ def run(ctx: StageContext) -> StageOutcome:
                 choice = choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
                                               fingertip=tuple(ev["fingertip"]), hold_last=ev["hold_frames"][1])
                 del masks
+                tip = tracked_fingertip(track["records"], ev, choice.frame, w, h) if v2 else None
+                if tip is not None:  # PLAN 10 audit: inside the hold, the tracked fingertip beats a carried one
+                    choice = replace(choice, pointer=tip, aligned=True)
             else:
                 choice = choose_sharpest(got)
             del got

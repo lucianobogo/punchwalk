@@ -59,6 +59,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from dataclasses import dataclass
@@ -546,6 +547,9 @@ def import_snapshot(path: Path) -> list[str]:
             raise SeedError(f"{path} isn't a demo snapshot this version can read.")
         # Check everything before touching the demo project, so a bad snapshot leaves it as it was.
         rows = _validate_rows(path, manifest.get("rows") or {})
+        base_url = get_settings().APP_BASE_URL  # on Fly: https://punchwalk.fly.dev (fly.toml)
+        for d in rows["dispatches"]:
+            d.payload = rewrite_share_origin(d.payload, base_url)
         members = [m for m in tar.getmembers() if m.isfile() and m.name.startswith("walks/")]
         for m in members:
             parts = Path(m.name).parts
@@ -563,6 +567,23 @@ def import_snapshot(path: Path) -> list[str]:
 
 
 SNAPSHOT_TABLES = ("projects", "walks", "turns", "points", "items", "dispatches", "model_calls", "jobs")
+
+# The origin in front of a share link ("http://localhost:8000/share/item/shr_..."): the snapshot is made
+# locally, so its dispatch payloads carry the local origin; the importing app swaps in its own.
+_SHARE_ORIGIN_RE = re.compile(r"https?://[^\s/\"'<>|]+(?=/share/)")
+
+
+def rewrite_share_origin(value: Any, base_url: str) -> Any:
+    """`value` (a dispatch payload: text, blocks, links ...) with every share link's origin replaced by
+    `base_url`. Other URLs (webhooks, images) and everything else are left as they are."""
+    base = base_url.rstrip("/")
+    if isinstance(value, str):
+        return _SHARE_ORIGIN_RE.sub(base, value)
+    if isinstance(value, list):
+        return [rewrite_share_origin(v, base) for v in value]
+    if isinstance(value, dict):
+        return {k: rewrite_share_origin(v, base) for k, v in value.items()}
+    return value
 
 
 def _validate_rows(path: Path, raw_rows: dict[str, Any]) -> dict[str, list[Any]]:

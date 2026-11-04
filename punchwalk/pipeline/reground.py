@@ -16,9 +16,11 @@ For every walk of the project (first walks before re-walks), with GROUNDING_V2=1
 Writes stages/ground_v2.json and stages/frame_pick.json per walk, and every model call to model_calls.
 Text, status, history and closure decisions are never changed on protected items (REGROUND_ALL rules).
 
---refresh-display: no new model calls (the ring-free locate of crop_focus replays from the cache). Re-applies
-the card-crop rule to items whose photo came from the picker and that have no outline (centre on what Muse
-Spark Open located), redraws those items' re-walk images, and rewrites each walk's ground_defects checklist
+--refresh-display: no new model calls (the ring-free locate of crop_focus replays from the cache). Repairs a
+dot that is clearly off the finger (more than V4_POINTER_REPAIR_PX from the point's own tracked fingertip in
+a frame inside its hold: evidence.jpg redrawn with the same outline), re-applies the card-crop rule to
+items whose photo came from the picker and that have no outline (the located region + the dot, with a
+margin), redraws those items' re-walk images, and rewrites each walk's ground_defects checklist
 line + counts from the stored evidence, exactly as a fresh v2 run writes them. Nothing else changes.
 
 The ground_defects stage state (counts + message) is written after every re-ground, as the runner would.
@@ -33,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import os
 import sys
 from pathlib import Path
@@ -177,8 +180,10 @@ def refresh_display(data_dir: Path, project: str, walks: list[str] | None = None
     from punchwalk.core.enums import Grounding, Stage
     from punchwalk.core.models import Evidence, Item, Walk
     from punchwalk.pipeline import frame_pick, ground, ground_v2, runner
+    from punchwalk.pipeline import params as P
     from punchwalk.pipeline.context import data_dir as root_dir
-    from punchwalk.render.evidence import render_crop
+    from punchwalk.pipeline.evidence import tracked_fingertip
+    from punchwalk.render.evidence import render_crop, render_evidence
 
     sf, root = db.session_factory, root_dir()
     report: dict[str, Any] = {"project": project, "walks": {}, "crops": {}}
@@ -195,32 +200,56 @@ def refresh_display(data_dir: Path, project: str, walks: list[str] | None = None
         picks = frame_pick.load_log(ctx.walk_dir)
         v2_rows = _read_items(ctx.walk_dir / "stages" / ground_v2.OUTPUT_NAME)
         groundings, focus_rows = [], {}
+        events = {e["id"]: e for e in ctx.output(Stage.find_points)["events"]}
+        track = ctx.output(Stage.track_hands)
+        sw, sh, fps = track["sam"]["width"], track["sam"]["height"], float(track["sam"]["fps"])
+        sx, sy = ctx.meta.scale.sam_to_display_x, ctx.meta.scale.sam_to_display_y
         for item in items:
             if not item.evidence or item.id not in written:
                 continue
             ev = Evidence.model_validate(item.evidence)
             groundings.append(Grounding(ev.grounding))
-            if not (ground.was_picked(picks.get(item.id))
-                    and ev.grounding in (Grounding.pointed_only, Grounding.none)):
-                continue
-            focus, src = ground_v2.crop_focus(ground._v2_input(item, ev, root), v2_rows.get(item.id))
             pointer = (ev.pointer.x, ev.pointer.y) if ev.pointer else None
-            cb = ground.card_crop_box(ev, root / ev.raw, pointer, None, focus)
-            focus_rows[item.id] = {"crop_focus": [round(v, 1) for v in focus] if focus else None,
-                                   "crop_focus_from": src}
-            old = ev.crop_box
-            if old is not None and (old.x1, old.y1, old.x2, old.y2) == tuple(float(v) for v in cb):
+            note: dict[str, Any] = {"number": item.number}
+            # 1. a dot clearly off the finger, in a frame where the hand is tracked holding still: repair it
+            event = events.get(item.point_id) if item.point_id else None
+            tip = tracked_fingertip(track["records"], event, int(round(ev.t * fps)), sw, sh) if pointer else None
+            new_pointer = pointer
+            if tip is not None:
+                tip_d = (round(tip[0] * sx, 1), round(tip[1] * sy, 1))
+                if math.hypot(tip_d[0] - pointer[0], tip_d[1] - pointer[1]) > P.V4_POINTER_REPAIR_PX:
+                    new_pointer = tip_d
+                    note["pointer"] = {"from": list(pointer), "to": list(tip_d)}
+            # 2. the card crop of a picked photo with no outline: the located region + the dot
+            focus = None
+            if ground.was_picked(picks.get(item.id)) and ev.grounding in (Grounding.pointed_only, Grounding.none):
+                focus, src = ground_v2.crop_focus(ground._v2_input(item, ev, root), v2_rows.get(item.id))
+                focus_rows[item.id] = {"crop_focus": [round(v, 1) for v in focus] if focus else None,
+                                       "crop_focus_from": src}
+                note["focus"] = src
+            elif "pointer" not in note:
                 continue
-            render_crop(root / ev.image, ctx.item_dir(item.id) / "crop.jpg", cb)
-            new_ev = Evidence.model_validate({**ev.model_dump(), "crop_box": {"x1": cb[0], "y1": cb[1],
-                                                                             "x2": cb[2], "y2": cb[3]}})
-            ground.save_evidence(ctx, item, new_ev)
+            defect_box = [ev.defect_box.x1, ev.defect_box.y1, ev.defect_box.x2, ev.defect_box.y2] \
+                if ev.defect_box else None
+            cb = ground.card_crop_box(ev, root / ev.raw, new_pointer, defect_box, focus, v2=True)
+            old = ev.crop_box
+            same_crop = old is not None and (old.x1, old.y1, old.x2, old.y2) == tuple(float(v) for v in cb)
+            if same_crop and "pointer" not in note:
+                continue
+            out = ctx.item_dir(item.id)
+            if "pointer" in note:
+                render_evidence(root / ev.raw, out / "evidence.jpg", defect_svg=ev.defect_svg, pointer=new_pointer)
+            render_crop(root / ev.image, out / "crop.jpg", cb)
+            update: dict[str, Any] = {"crop_box": {"x1": cb[0], "y1": cb[1], "x2": cb[2], "y2": cb[3]}}
+            if "pointer" in note:
+                update["pointer"] = {"x": new_pointer[0], "y": new_pointer[1]}
+            ground.save_evidence(ctx, item, Evidence.model_validate({**ev.model_dump(), **update}))
             with sf() as s:
                 fresh = s.get(Item, item.id)
             if fresh.closure:
                 rerender_after(root, fresh)
-            report["crops"][item.id] = {"number": item.number, "from": None if old is None else
-                                        [old.x1, old.y1, old.x2, old.y2], "to": list(cb), "focus": src}
+            note.update({"from": None if old is None else [old.x1, old.y1, old.x2, old.y2], "to": list(cb)})
+            report["crops"][item.id] = note
         if focus_rows:
             merged = {k: {**v2_rows.get(k, {}), **v} for k, v in focus_rows.items()}
             ground_v2.save_walk_log(ctx.walk_dir, merged, merge=True)
@@ -231,7 +260,9 @@ def refresh_display(data_dir: Path, project: str, walks: list[str] | None = None
         report["walks"][walk.id] = {"counts": counts, "message": message}
         print(f"{walk.id}: {message}")
     for k, v in report["crops"].items():
-        print(f"crop #{v['number']:03d} {k}: {v['from']} -> {v['to']} ({v['focus']})")
+        print(f"#{v['number']:03d} {k}: crop {v['from']} -> {v['to']}"
+              + (f"; focus {v['focus']}" if v.get("focus") else "")
+              + (f"; dot {v['pointer']['from']} -> {v['pointer']['to']}" if v.get("pointer") else ""))
     return report
 
 

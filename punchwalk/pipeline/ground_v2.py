@@ -746,9 +746,11 @@ def check(item: ItemInput, offered: list[Candidate], save_dir: Path | None = Non
 
 
 def map_pointer_homography(src: np.ndarray, dst: np.ndarray, pt: Point,
-                           src_mask: np.ndarray | None = None, dst_mask: np.ndarray | None = None) -> Point | None:
+                           src_mask: np.ndarray | None = None, dst_mask: np.ndarray | None = None,
+                           stats: dict[str, Any] | None = None) -> Point | None:
     """Carry `pt` from image `src` to image `dst` (same size, BGR or gray) with ORB + RANSAC homography.
-    `*_mask` are 0/1 arrays of pixels to ignore (the hand). None when the fit is unreliable."""
+    `*_mask` are 0/1 arrays of pixels to ignore (the hand). None when the fit is unreliable. `stats` (if
+    given) gets matches / inliers / shift (px) of the fit."""
     g1 = src if src.ndim == 2 else cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     g2 = dst if dst.ndim == 2 else cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
     m1 = None if src_mask is None else ((1 - src_mask) * 255).astype(np.uint8)
@@ -766,9 +768,13 @@ def map_pointer_homography(src: np.ndarray, dst: np.ndarray, pt: Point,
     a = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
     b = np.float32([k2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
     H, inl = cv2.findHomography(a, b, cv2.RANSAC, 4.0)
+    if stats is not None:
+        stats.update(matches=len(good), inliers=int(inl.sum()) if inl is not None else 0)
     if H is None or inl is None or int(inl.sum()) < need:
         return None
     q = cv2.perspectiveTransform(np.float32([[pt]]), H)[0, 0]
+    if stats is not None:
+        stats["shift"] = round(math.hypot(q[0] - pt[0], q[1] - pt[1]), 1)
     h, w = g2.shape[:2]
     if not (0 <= q[0] < w and 0 <= q[1] < h):
         return None

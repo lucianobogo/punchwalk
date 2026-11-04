@@ -52,6 +52,7 @@ POSTER_WINDOW_S = (0.5, 1.5)  # poster.jpg: sharpest frame in this window
 CROP_ASPECT = 4 / 3  # card crop, width / height (pick_evidence's provisional crop and the rendered crop)
 CROP_MIN_FRAC = 0.45  # crop height at least this fraction of the frame's short side
 CROP_MARGIN = 1.8  # the crop spans the pointer + defect extent times this
+CROP_POINTER_MARGIN_PX = 48  # v2: the dot always sits at least this far inside the card crop
 DOT_RADIUS_PX = (6, 8)  # DESIGN.md: the "pointed here" dot is 6-8 px at full frame
 DOT_RADIUS_DIV = 150  # radius = short side / this, clamped to DOT_RADIUS_PX
 EVIDENCE_JPEG_QUALITY = 2  # ffmpeg -q:v (2 = best)
@@ -133,6 +134,12 @@ V4_BLUR_REL = 0.35  # skip frames whose Laplacian variance is below this share o
 V4_MIN_SHARPNESS = 15.0  # ...or below this (SAM 720p frames)
 V4_MAX_HAND_FRAC = 0.03  # skip frames where the hand covers more than this share of the frame
 V4_PICK_EFFORT = "medium"
+# The dot in a picked frame (outside the point's hold, where there is no tracked fingertip): a homography is
+# kept only with this many RANSAC inliers, this inlier share and a shift of at most this many px; else no dot
+V4_POINTER_MIN_INLIERS = 40
+V4_POINTER_MIN_INLIER_RATIO = 0.5
+V4_POINTER_MAX_SHIFT_PX = 40.0
+V4_POINTER_REPAIR_PX = 60.0  # reground --refresh-display: repair a stored dot this far from the tracked fingertip
 V4_PICK_MAX_TOKENS = 2500
 V4_REWRITE_MAX_TOKENS = 1200
 
