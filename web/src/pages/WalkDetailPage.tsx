@@ -63,6 +63,7 @@ function ReadyWalk({ detail, startAt }: { detail: NonNullable<ReturnType<typeof 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [time, setTime] = useState(startAt ?? 0);
   const [tab, setTab] = useState<Tab>('items');
+  const [collapsed, setCollapsed] = useState(false);
   const itemsById = useMemo(() => new Map(detail.items.map((i) => [i.id, i])), [detail.items]);
   const events = useMemo(() => {
     const ev = overlay.data?.events ?? [];
@@ -74,6 +75,8 @@ function ReadyWalk({ detail, startAt }: { detail: NonNullable<ReturnType<typeof 
     return [...ev, ...extra].sort((a, b) => a.t - b.t);
   }, [overlay.data, detail.items]);
   const moments = momentState(events, time);
+  // The "New" card isn't drawn over the mini-player, so its item is listed right away.
+  const listed = collapsed ? [...moments.soFar].reverse() : moments.listed;
   const seek = (t: number) => {
     const v = videoRef.current;
     if (v) v.currentTime = Math.max(0, t);
@@ -90,6 +93,7 @@ function ReadyWalk({ detail, startAt }: { detail: NonNullable<ReturnType<typeof 
         itemsById={itemsById}
         startAt={startAt}
         onTime={setTime}
+        onCollapsedChange={setCollapsed}
       />
       <div className="px-4 pt-4">
         <SegmentedControl<Tab>
@@ -103,9 +107,9 @@ function ReadyWalk({ detail, startAt }: { detail: NonNullable<ReturnType<typeof 
         />
         <div className="mt-3">
           {tab === 'items' ? (
-            moments.listed.length ? (
+            listed.length ? (
               <Card padded={false} className="divide-y divide-hairline overflow-hidden">
-                {moments.listed.map((e) => {
+                {listed.map((e) => {
                   const it = itemsById.get(e.item_id);
                   return (
                     <MiniRow
@@ -129,7 +133,7 @@ function ReadyWalk({ detail, startAt }: { detail: NonNullable<ReturnType<typeof 
           ) : (
             <Transcript turns={detail.turns} time={time} itemsById={itemsById} onSeek={seek} />
           )}
-          {tab === 'items' && moments.later > 0 && moments.listed.length > 0 && (
+          {tab === 'items' && moments.later > 0 && listed.length > 0 && (
             <p className="mt-3 text-secondary text-pencil">{plural(moments.later, 'more item')} later in the walk.</p>
           )}
         </div>

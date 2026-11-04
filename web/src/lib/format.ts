@@ -18,6 +18,7 @@ export function formatClock(seconds: number): string {
 
 /** 112000 -> "1 min 52 s", 41000 -> "41 s", 2300 -> "2.3 s". */
 export function formatDuration(ms: number): string {
+  if (ms < 100) return 'under 0.1 s';
   if (ms < 10_000) return `${Math.round(ms / 100) / 10} s`;
   const total = Math.round(ms / 1000);
   const m = Math.floor(total / 60);

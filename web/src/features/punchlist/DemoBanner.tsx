@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useHealth } from '../../api/hooks';
+import { useProject } from '../../api/hooks';
 import { useCurrentProject } from '../../api/project';
 import { isDemoSession } from '../landing/landing';
 
@@ -21,18 +22,20 @@ function hidden(): boolean {
 export function DemoBanner() {
   const [gone, setGone] = useState(hidden);
   const health = useHealth();
-  const { status } = useCurrentProject();
+  const { status, projectId } = useCurrentProject();
+  const project = useProject(projectId);
   const demo = health.data?.demo_mode === true || import.meta.env.VITE_DEMO === '1' || isDemoSession();
   // Only over a loaded project: an empty or unreachable server has no demo project to talk about.
-  if (!demo || gone || status !== 'ready') return null;
+  // ...and not on the first-run screen (no walks yet), which has its own message.
+  if (!demo || gone || status !== 'ready' || !project.data?.walk_count) return null;
   return (
     <div className="mx-4 mt-2 flex items-center gap-2 rounded-card border border-hairline bg-sheet py-1 pr-1 pl-3">
       <p className="flex-1 text-secondary text-graphite">
-        This is a demo project.{' '}
+        Demo project.{' '}
         <Link to="/record" className="font-medium text-tape-ink underline">
           Upload your own walk
-        </Link>{' '}
-        to try it live.
+        </Link>
+        .
       </p>
       <button
         type="button"

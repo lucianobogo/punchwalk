@@ -16,9 +16,15 @@ import { ErrorState } from './common';
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
 
 /** "Done in 1 min 52 s for about $0.44, using three Meta models." */
-export function summaryLine(p: Pick<ProcessingSummaryOut, 'total_duration_ms' | 'total_cost_usd' | 'models_used'>): string {
+export function summaryLine(
+  p: Pick<ProcessingSummaryOut, 'total_duration_ms' | 'total_cost_usd' | 'models_used'> & { calls?: Pick<ModelCallOut, 'cached'>[] },
+): string {
   const n = p.models_used.length;
   const models = `${NUMBER_WORDS[n] ?? n} Meta ${n === 1 ? 'model' : 'models'}`;
+  // A walk replayed from recorded model answers cost nothing this time; "about $0.00" would mislead.
+  if (p.total_cost_usd === 0 && p.calls?.length && p.calls.every((c) => c.cached)) {
+    return `Done in ${formatDuration(p.total_duration_ms)} from recorded model answers (no new cost), using ${models}.`;
+  }
   return `Done in ${formatDuration(p.total_duration_ms)} for about ${formatCost(p.total_cost_usd)}, using ${models}.`;
 }
 
@@ -65,7 +71,7 @@ function Body({ p }: { p: ProcessingSummaryOut }) {
       <Card padded={false} className="py-2">
         <ol aria-label="Steps">
           {p.steps.map((s) => (
-            <Step key={s.stage} s={s} />
+            <Step key={s.stage} s={s} replayed={p.calls.filter((c) => c.stage === s.stage).every((c) => c.cached)} />
           ))}
         </ol>
       </Card>
@@ -102,7 +108,7 @@ function Body({ p }: { p: ProcessingSummaryOut }) {
   );
 }
 
-function Step({ s }: { s: ProcessingStepOut }) {
+function Step({ s, replayed }: { s: ProcessingStepOut; replayed: boolean }) {
   return (
     <li className="flex gap-4 px-4 py-3.5">
       <span className="mt-[7px] size-3 shrink-0 rounded-full bg-graphite" aria-hidden />
@@ -120,7 +126,7 @@ function Step({ s }: { s: ProcessingStepOut }) {
         <p className="mt-1.5 text-body text-pencil">{s.detail}</p>
         {s.calls > 0 && (
           <p className="mt-0.5 text-secondary tabular-nums text-pencil">
-            {plural(s.calls, 'call')}, about {formatCost(s.cost_usd)}
+            {plural(s.calls, 'call')}, {replayed && s.cost_usd === 0 ? 'replayed from the recording' : `about ${formatCost(s.cost_usd)}`}
           </p>
         )}
       </div>
@@ -153,7 +159,8 @@ function Calls({ calls }: { calls: ModelCallOut[] }) {
               <div className="min-w-0 flex-1">
                 <p className="text-body font-medium text-graphite">{callModel(c)}</p>
                 <p className="text-secondary text-pencil">
-                  {c.stage ? STAGE_LABEL[c.stage] : 'Other'}
+                  {/* The model is the row's title, so drop "(SAM 3.1)" from the step name here. */}
+                  {c.stage ? STAGE_LABEL[c.stage].replace(/\s*\([^)]*\)$/, '') : 'Other'}
                   {c.frames ? `, ${c.frames} frames` : ''}
                   {c.tokens_in != null ? `, ${c.tokens_in + (c.tokens_out ?? 0)} tokens` : ''}
                   {c.cached ? ', from cache' : ''}

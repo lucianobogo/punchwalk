@@ -1,6 +1,6 @@
 // Re-walk summary (DESIGN.md, 07-rewalk-summary.png): flagged items first, then Signed off, then still
 // open, then not checked. Pure grouping, so it's tested without rendering.
-import type { RewalkItemOut, RewalkSummaryOut, Trade } from '../../api/types';
+import { NOT_CHECKED_ON_REWALK, type RewalkItemOut, type RewalkSummaryOut, type Trade } from '../../api/types';
 
 export type RewalkSectionKind = 'needs_a_look' | 'signed_off' | 'still_open' | 'not_checked';
 
@@ -14,7 +14,7 @@ const TITLES: Record<RewalkSectionKind, string> = {
   needs_a_look: 'Needs a look',
   signed_off: 'Signed off',
   still_open: 'Still open',
-  not_checked: 'Not checked on the re-walk',
+  not_checked: NOT_CHECKED_ON_REWALK,
 };
 
 export function rewalkSections(s: RewalkSummaryOut): RewalkSection[] {

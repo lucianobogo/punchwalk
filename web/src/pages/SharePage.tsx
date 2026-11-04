@@ -12,7 +12,7 @@ import { EvidencePhoto } from '../features/item/EvidencePhoto';
 import { GROUNDING_LABEL } from '../features/item/actions';
 import { PlayMomentSheet, type Playable } from '../features/play/PlayMomentSheet';
 import { formatClock, formatShortDate } from '../lib/format';
-import { SEVERITY_LABEL, STATUS_LABEL, TRADE_LABEL } from '../lib/labels';
+import { SEVERITY_LABEL, STATUS_LABEL, TRADE_LABEL, capitalize } from '../lib/labels';
 
 export default function SharePage() {
   const { token } = useParams();
@@ -115,7 +115,7 @@ export function ShareBody({ s }: { s: ShareItemOut }) {
           rows={[
             { label: 'Project', value: s.project_address ?? s.project_name },
             { label: 'Room', value: s.room ?? 'Not set' },
-            ...(s.location_detail ? [{ label: 'Where', value: s.location_detail }] : []),
+            ...(s.location_detail ? [{ label: 'Where', value: capitalize(s.location_detail) }] : []),
             { label: 'Trade', value: s.company ? `${TRADE_LABEL[s.trade]}, ${s.company}` : TRADE_LABEL[s.trade] },
             { label: 'Severity', value: SEVERITY_LABEL[s.severity] },
             { label: 'Status', value: STATUS_LABEL[s.status] },

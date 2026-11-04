@@ -189,8 +189,9 @@ export const SCREENS: Screen[] = [
     setup: async (page) => {
       await tapButton(page, /Play this moment/);
       await sheetOpen(page);
-      // Mid-moment, paused, inside the quote: the caption is on screen and the frame is deterministic.
-      await seekVideo(page, 15.2);
+      // Mid-play inside the quote (pause icon showing): start at 14.8 s; the capture lands around 15.5 s,
+      // well inside the caption (14.0-17.8 s) and before the moment ends (18.2 s).
+      await seekVideo(page, 14.8, true);
     },
   },
   // 5. Walks list
@@ -202,8 +203,9 @@ export const SCREENS: Screen[] = [
     path: '/walks/wlk_2b_first',
     render: '04-walk-detail.png',
     setup: async (page) => {
-      // Item 6 "Door doesn't latch" is called out at 92.0 s; the finger holds still 91.6-93.6 s.
-      await seekVideo(page, 92.8);
+      // Item 6 "Door doesn't latch" is called out at 92.0 s; the finger holds still 91.6-93.6 s and the
+      // card shows until 94.5 s. Play from 92.2 s so the capture (~1 s later) is mid-play with both on screen.
+      await seekVideo(page, 92.2, true);
       await page.getByText('New', { exact: true }).waitFor({ timeout: 3000 });
       await page.waitForTimeout(400);
     },
@@ -334,7 +336,7 @@ export const SCREENS: Screen[] = [
     path: '/landing',
     setup: async (page) => {
       await page.waitForURL((u) => u.pathname === '/', { timeout: 3000 });
-      await page.getByText('This is a demo project.').waitFor({ timeout: 3000 });
+      await page.getByText('Demo project.').waitFor({ timeout: 3000 });
     },
   },
   // Design-system check (PLAN 5.1 AC) and extras

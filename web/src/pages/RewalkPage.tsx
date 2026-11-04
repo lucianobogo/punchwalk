@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useItems, useProject, useRewalkSummary, useSendDispatch } from '../api/hooks';
-import type { ItemOut, RewalkItemOut, RewalkSummaryOut, Trade } from '../api/types';
+import { NOT_CHECKED_ON_REWALK, type ItemOut, type RewalkItemOut, type RewalkSummaryOut, type Trade } from '../api/types';
 import { Button, ButtonLink, Card, PushedBar, SectionHeader, Skeleton, TapeTab, useToast } from '../components';
 import { pickChannel } from '../features/item/actions';
 import { barLabel, barSegments, openByTrade, rewalkSections } from '../features/rewalk/summary';
@@ -226,7 +226,10 @@ function Row({
             {it.title}
           </span>
           {kind === 'still_open' && it.quote && <span className="block truncate text-secondary text-pencil">“{it.quote}”</span>}
-          {kind === 'not_checked' && <span className="block text-secondary text-pencil">{it.reason ?? 'Not checked on the re-walk'}</span>}
+          {/* The section header already says "Not checked on re-walk"; only a different reason is worth a line. */}
+          {kind === 'not_checked' && it.reason && it.reason !== NOT_CHECKED_ON_REWALK && (
+            <span className="block text-secondary text-pencil">{it.reason}</span>
+          )}
         </span>
       </Link>
       {kind === 'signed_off' && <span className="shrink-0 pr-2 text-body text-signed-ink">Signed off</span>}

@@ -28,6 +28,7 @@ export function WalkPlayer({
   itemsById,
   startAt,
   onTime,
+  onCollapsedChange,
 }: {
   walk: WalkOut;
   overlay: OverlayOut | undefined;
@@ -37,6 +38,8 @@ export function WalkPlayer({
   /** ?t= deep link: seconds to seek to once the video can. */
   startAt: number | null;
   onTime: (t: number) => void;
+  /** Told when the video collapses into the mini-player (the page then lists the card's item too). */
+  onCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const slot = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -47,10 +50,17 @@ export function WalkPlayer({
   useEffect(() => {
     const el = slot.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([e]) => setCollapsed(e.intersectionRatio < 0.45), { threshold: [0, 0.45, 1] });
+    const io = new IntersectionObserver(
+      ([e]) => {
+        const c = e.intersectionRatio < 0.45;
+        setCollapsed(c);
+        onCollapsedChange?.(c);
+      },
+      { threshold: [0, 0.45, 1] },
+    );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [onCollapsedChange]);
 
   // Deep link: seek once metadata is in.
   useEffect(() => {
@@ -83,7 +93,7 @@ export function WalkPlayer({
         className={cx(
           'overflow-hidden bg-night',
           collapsed
-            ? 'fixed inset-x-0 top-0 z-30 mx-auto aspect-video max-w-[var(--app-width)] animate-fade-in pt-safe shadow-lift'
+            ? 'fixed inset-x-0 top-0 z-30 mx-auto aspect-video max-w-[var(--app-width)] animate-fade-in border-b border-hairline pt-safe'
             : 'absolute inset-0',
         )}
       >

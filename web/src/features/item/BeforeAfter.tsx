@@ -86,7 +86,8 @@ export function BeforeAfter({
           aria-valuenow={Math.round(pos * 100)}
           aria-valuetext={pos < 0.5 ? 'Showing mostly the after photo' : 'Showing mostly the before photo'}
           onKeyDown={onKey}
-          className="absolute top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-graphite"
+          // Low on the photo, so it doesn't cover the defect and the dot (usually near the middle).
+          className="absolute top-[76%] flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-graphite"
           style={{ left: pct }}
         >
           <ChevronsLeftRight size={20} aria-hidden />

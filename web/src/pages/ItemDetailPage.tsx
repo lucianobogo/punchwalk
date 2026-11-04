@@ -28,7 +28,7 @@ import { GROUNDING_LABEL, checkerName, historyText, moreActions, primaryAction, 
 import { useItemActions } from '../features/item/useItemActions';
 import { PlayMomentSheet } from '../features/play/PlayMomentSheet';
 import { formatClock, formatDateTime, formatShortDate } from '../lib/format';
-import { SEVERITY_LABEL, TRADE_LABEL, WALK_KIND_LABEL, statusDetail } from '../lib/labels';
+import { SEVERITY_LABEL, TRADE_LABEL, WALK_KIND_LABEL, capitalize, statusDetail } from '../lib/labels';
 import { cx } from '../lib/cx';
 import { ErrorState } from './common';
 
@@ -89,7 +89,7 @@ function ItemBody({ item, sheet, setSheet }: { item: ItemOut; sheet: ItemSheet; 
 
   const details = [
     { label: 'Room', value: item.room ?? 'Not set' },
-    ...(item.location_detail ? [{ label: 'Where', value: item.location_detail }] : []),
+    ...(item.location_detail ? [{ label: 'Where', value: capitalize(item.location_detail) }] : []),
     {
       label: 'Trade',
       value: (

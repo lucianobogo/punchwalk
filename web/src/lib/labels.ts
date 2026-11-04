@@ -64,3 +64,8 @@ export function sendLabel(count: number, company: string): string {
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+/** "wall-mounted cabinet, right door" -> "Wall-mounted cabinet, right door" (model text isn't always capitalized). */
+export function capitalize(s: string): string {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
+}
