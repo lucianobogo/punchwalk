@@ -9,13 +9,13 @@ the dot (or nothing, for the voice-only #004).
 
 | File | Screen | Data |
 |---|---|---|
-| `01-punch-list.png` | Punch list, To do 7: Needs a look 3 first (#003 with its outline on the burnt burner ring, #004, #012), then rooms | real |
-| `02-item-detail.png` | Item 11, outlet cover loose and crooked: before/after slider dragged to show the before photo (red outline on the crooked cover plate + blue dot), the action, the inspector's quote, details | real |
+| `01-punch-list.png` | Punch list, To do 7: Needs a look 3 first (#003 with its outline on the burnt burner ring, #004 cropped to the switch plates, #012), then rooms | real |
+| `02-item-detail.png` | Item 11, outlet cover loose and crooked: before/after slider dragged to show the before photo (red outline on the crooked cover plate + blue dot; captions "Nov 3" / "Nov 3, re-walk"), the action, the inspector's quote, details | real |
 | `03-play-this-moment.png` | Play this moment for item 6, mid-play at 0:44: hand outlined, tab 6 at the fingertip, quote as caption | real |
 | `04-walk-detail.png` | First walk, mid-play at 0:44 (item 6): hand outline + tab, the "New" card over the video | real |
 | `05-record-processing-mock.png` | Record: the live processing checklist mid-run | **mock** (no walk is processing in the real data) |
-| `06-rewalk-summary.png` | Re-walk: "7 signed off. 2 still open. 3 need a look." and the #003 stovetop false-fix card (before with the outline on the burnt ring, after, "Approve and send to Appliances"), then #004 | real |
-| `07-how-processed.png` | How the first walk was processed: the three Meta models, calls per step | real (replayed from recorded model answers, so it shows no new cost) |
+| `06-rewalk-summary.png` | Re-walk: "7 signed off. 2 still open. 3 need a look." and the #003 stovetop false-fix card (before with the outline on the burnt ring, after, "Approve and send to Northline Appliance Service"), then #004 | real |
+| `07-how-processed.png` | How the first walk was processed, scrolled to the "Outline the defect" step ("Muse Spark Open located each defect; SAM 3.1 outlined 5 of 12 and Muse Spark Open boxed 2 more…"), the check step and the eval block | real (replayed from recorded model answers, so it shows no new cost) |
 | `08-landing-desktop.png` | Landing page (1440 × 900) with the app in the phone frame and the QR code | real |
 | `09-trade-preview.png` | Brightline Painting: "1 to review, 2 to send.", the review row for #012, Slack ("Posts to your team's Slack channel.") or Copy link, the message exactly as it will be sent, "Post 2 items to Slack" | real |
 
