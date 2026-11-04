@@ -56,7 +56,9 @@ fly deploy --remote-only             # later deploys: make deploy (= fly deploy)
 ```
 
 `fly.toml` keeps one machine always on (`auto_stop_machines = false`, `min_machines_running = 1`), because
-the job worker runs inside the web process. It mounts `punchwalk_data` at `/data` and health-checks
+the job worker runs inside the web process. On a trial account, Fly stops the machine after 5 minutes
+regardless of these settings: add a card (https://fly.io/trial) so `min_machines_running = 1` is honoured,
+and then `fly status -a punchwalk` should stay "started". It mounts `punchwalk_data` at `/data` and health-checks
 `/healthz`. Deploys use `strategy = "immediate"`, since one volume can attach to only one machine. On Fly,
 `FLY_APP_NAME` is set, so the demo upload limit keys on `Fly-Client-IP`.
 
