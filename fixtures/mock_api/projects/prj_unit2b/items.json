@@ -1461,7 +1461,7 @@
           "field": null,
           "from": null,
           "to": null,
-          "note": "Not sent automatically: no email or Slack on file for Clearview Glass."
+          "note": "Not sent automatically: Slack didn't accept the message (no_service). Nothing was marked as sent; check the webhook in the trades directory or copy a link instead."
         },
         {
           "at": "2026-11-04T13:21:15.800000Z",

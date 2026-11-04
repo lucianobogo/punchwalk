@@ -65,7 +65,9 @@ class TurnKind(StrEnum):
 class Grounding(StrEnum):
     """How the defect was located in the evidence frame (PLAN 2.2).
 
-    `sam_concept` / `sam_box`: SAM 3.1 outlined the defect (concept prompt, else box prompt).
+    `sam_concept` / `sam_box`: SAM 3.1 outlined the defect (concept prompt, else box/point prompt).
+    `spark_box`: grounding v2 (PLAN 10.3) found no SAM outline that passed its checks, and the check call
+    picked Muse Spark Open's own box instead (drawn as a rounded rectangle; UI "Box from the model").
     `pointed_only`: no defect outline, only the "pointed here" marker from the fingertip.
     `none`: no outline and no marker (a voice-only item that SAM couldn't ground). Voice-only items still
     go through PLAN 2.1-2.3 on a sampled frame and may get `sam_concept` / `sam_box`.
@@ -73,6 +75,7 @@ class Grounding(StrEnum):
 
     sam_concept = "sam_concept"
     sam_box = "sam_box"
+    spark_box = "spark_box"
     pointed_only = "pointed_only"
     none = "none"
 

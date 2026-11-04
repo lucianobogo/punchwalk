@@ -530,8 +530,9 @@ class TradeSummaryOut(Schema):
     company: str | None  # the directory's company; null -> the UI shows the trade name + "No company yet"
     contact: TradeContactOut | None  # null when the trade isn't in the directory
     to_review: int  # needs a look (status needs_review)
-    to_send: int  # open, never sent (status open)
-    sent: int  # sent on any channel, a copied link included, and not signed off (status dispatched)
+    to_send: int  # open and never sent
+    sent: int  # sent on any channel, a copied link included, and not signed off (dispatched, or open
+    #   again after an earlier send)
     caught_up: bool  # to_review == 0 and to_send == 0 -> listed under "All caught up"
     effective_channel: Channel  # where a send goes now; `outbox` is shown as "Copy link"
     effective_channel_label: str  # "Posts to #punch-electrical." / "Posts to your team's Slack channel." /
@@ -567,7 +568,7 @@ class DispatchItemRefOut(Schema):
 
 
 class DispatchSentItemOut(Schema):
-    """An item already sent and not signed off ("Already sent", unchecked by default)."""
+    """An item already sent and not signed off ("Already sent", unchecked by default); open or dispatched."""
 
     item_id: str
     number: int
@@ -608,7 +609,7 @@ class DispatchPreviewOut(Schema):
 
 # POST /api/projects/{project_id}/trades/{trade}/dispatch  (body)
 class DispatchCreate(Schema):
-    channel: Channel
+    channel: Channel | None = None  # omitted / null -> the trade's effective channel
     item_ids: list[str] = Field(min_length=1)
 
 

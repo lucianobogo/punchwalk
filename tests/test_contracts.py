@@ -6,7 +6,7 @@
 - web/src/api/types.ts mirrors schemas.py (same interfaces, fields, types, nullability) and enums.py
   (same enum values and *_LABEL maps).
 - Every SQLModel table round-trips through SQLite.
-- The contract describes the pointing-hand product: no tape or mark fields anywhere, four grounding values,
+- The contract describes the pointing-hand product: no tape or mark fields anywhere, five grounding values,
   and every pointed item in the mocks has its Point and a "pointed here" marker.
 
 Offline and fast: no network, no ffmpeg needed (the video probe test skips without ffprobe).
@@ -66,7 +66,7 @@ MOCK_ROUTES: list[tuple[str, type[BaseModel]]] = [
     (r"requests/projects\.post\.json", S.ProjectCreate),
     (r"requests/projects\.patch\.json", S.ProjectPatch),
     (r"requests/items\.patch\.[a-z_]+\.json", S.ItemPatch),
-    (r"requests/dispatch\.post\.json", S.DispatchCreate),
+    (r"requests/dispatch\.post(\.[a-z_]+)?\.json", S.DispatchCreate),
     (r"requests/rewalk-link\.post\.json", S.RewalkLinkIn),
 ]
 
@@ -214,7 +214,8 @@ def test_scenario_has_what_every_screen_needs() -> None:
     )
     assert any(i.dispatch and i.history for i in by_status[E.ItemStatus.dispatched])
     assert any(h.actor == E.HistoryActor.human for i in items for h in i.history), "need a human override"
-    assert {g for i in items if i.evidence for g in [i.evidence.grounding]} == set(E.Grounding)
+    # spark_box (grounding v2, PLAN 10.3) only appears after a v2 re-ground; the mock API predates it
+    assert {g for i in items if i.evidence for g in [i.evidence.grounding]} == set(E.Grounding) - {E.Grounding.spark_box}
     assert any(i.verification and i.verification.provider == E.Provider.meta_fallback for i in items)
     # counts and facets agree with the list
     assert lst.counts.all == len(items) == lst.total
@@ -342,8 +343,8 @@ def _keys(node: Any) -> list[str]:
     return []
 
 
-def test_grounding_has_exactly_four_values() -> None:
-    assert [g.value for g in E.Grounding] == ["sam_concept", "sam_box", "pointed_only", "none"]
+def test_grounding_has_exactly_five_values() -> None:
+    assert [g.value for g in E.Grounding] == ["sam_concept", "sam_box", "spark_box", "pointed_only", "none"]
 
 
 def test_no_tape_or_marks_in_the_contract() -> None:
@@ -384,7 +385,7 @@ def test_no_tape_or_marks_in_the_mocks() -> None:
     assert not problems, "\n".join(problems[:20])
 
 
-VOICE_ONLY_GROUNDING = {E.Grounding.sam_concept, E.Grounding.sam_box, E.Grounding.none}
+VOICE_ONLY_GROUNDING = {E.Grounding.sam_concept, E.Grounding.sam_box, E.Grounding.spark_box, E.Grounding.none}
 
 
 def test_every_pointed_item_has_a_point_and_a_pointer() -> None:

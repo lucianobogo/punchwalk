@@ -375,3 +375,35 @@ def test_no_string_says_outbox(api: TestClient) -> None:
     for body in bodies:
         assert "Outbox" not in body and "outbox " not in body.lower().replace('"outbox"', ""), body[:300]
 
+
+def test_dispatch_without_a_channel_uses_the_effective_one(api: TestClient) -> None:
+    pid = make_project(api, webhook=None)["id"]  # Ace Electric: no webhook, email not set up -> Copy link
+    _, ids = seed_walk(pid)
+    url = f"/api/projects/{pid}/trades/electrical/dispatch"
+    res = api.post(url, json={"item_ids": [ids[1]]})
+    assert res.status_code == 201, res.text
+    out = check(S.DispatchOut, res.json())
+    assert out.channel == "outbox" and out.summary == "Copied a link for 1 item"
+    assert api.post(url, json={"channel": None, "item_ids": [ids[2]]}).status_code == 201
+    res = api.post(url, json={"channel": "slack", "item_ids": [ids[2]]})  # a channel that doesn't work
+    assert res.status_code == 400 and "No Slack channel set up for Ace Electric." in res.json()["detail"]
+
+
+def test_a_reopened_item_counts_as_sent_not_to_send(api: TestClient) -> None:
+    from punchwalk.core.enums import ItemStatus
+    from punchwalk.core.models import Item
+    from punchwalk.db import session_factory
+
+    pid = make_project(api, webhook=None)["id"]
+    _, ids = seed_walk(pid)
+    api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"item_ids": [ids[1]]})
+    with session_factory() as s:  # e.g. a re-walk said "still open" and set it back to open
+        item = s.get(Item, ids[1])
+        item.status = ItemStatus.open
+        s.add(item)
+        s.commit()
+    elec = next(t for t in api.get(f"/api/projects/{pid}/trades").json()["trades"] if t["trade"] == "electrical")
+    assert (elec["to_send"], elec["sent"]) == (1, 1)  # #3 never sent; #2 sent before, open again
+    p = preview(api, pid, "electrical")
+    assert [a.number for a in p.already_sent] == [2]
+

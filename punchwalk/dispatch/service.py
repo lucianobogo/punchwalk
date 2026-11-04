@@ -257,7 +257,7 @@ def preview(session: Session, project: Project, trade: Trade, channel: Channel |
     already_sent = [
         S.DispatchSentItemOut(item_id=i.id, number=i.number, title=i.title, sent_at=as_utc(sent_by[i.id].sent_at),
                               channel=sent_by[i.id].channel)
-        for i in mine if i.status == ItemStatus.dispatched and i.id in sent_by
+        for i in mine if i.status in SENDABLE and i.id in sent_by  # a reopened (open, sent before) item too
     ]  # fmt: skip
     msg = message_for(session, project, trade, sendable_items(session, project.id, trade))
     return S.DispatchPreviewOut(

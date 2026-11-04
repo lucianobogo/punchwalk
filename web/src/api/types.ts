@@ -34,10 +34,11 @@ export type WalkStatus = 'uploaded' | 'processing' | 'ready' | 'failed';
 export type TurnKind = 'location' | 'defect' | 'status_update' | 'other';
 
 /**
- * How the defect was located. sam_concept / sam_box = SAM outlined it; pointed_only = only the
+ * How the defect was located. sam_concept / sam_box = SAM outlined it; spark_box = Spark Open's box
+ * (grounding v2, no SAM outline passed); pointed_only = only the
  * "pointed here" marker (no outline); none = voice-only item (no outline, no marker).
  */
-export type Grounding = 'sam_concept' | 'sam_box' | 'pointed_only' | 'none';
+export type Grounding = 'sam_concept' | 'sam_box' | 'spark_box' | 'pointed_only' | 'none';
 
 export type Channel = 'slack' | 'email' | 'outbox';
 
@@ -645,9 +646,9 @@ export interface TradeSummaryOut {
   contact: TradeContactOut | null;
   /** needs a look (status needs_review) */
   to_review: number;
-  /** open, never sent (status open) */
+  /** open and never sent */
   to_send: number;
-  /** sent on any channel (a copied link included), not signed off (status dispatched) */
+  /** sent on any channel (a copied link included), not signed off: dispatched, or open again after a send */
   sent: number;
   /** to_review == 0 && to_send == 0 -> "All caught up" */
   caught_up: boolean;
@@ -724,7 +725,8 @@ export interface DispatchPreviewOut {
 
 /** POST /api/projects/{project_id}/trades/{trade}/dispatch (body) */
 export interface DispatchCreate {
-  channel: Channel;
+  /** omitted / null -> the trade's effective channel */
+  channel?: Channel | null;
   item_ids: string[];
 }
 

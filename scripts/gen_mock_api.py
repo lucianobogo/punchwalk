@@ -1320,6 +1320,8 @@ TRADES_2B: list[S.TradeContactIn] = [
         contact="Ana Kowalski",
         email=None,
         phone="(555) 010-2207",
+        slack_channel="#punch-glazing",  # its webhook refused the automatic send (item 2b_09's note)
+        slack_webhook="https://hooks.slack.example.com/services/T000/B000/demo-glazing",
     ),
     S.TradeContactIn(
         trade=Trade.plumbing,
@@ -2230,7 +2232,8 @@ class Gen:
                     checked_at + timedelta(seconds=40),
                     HistoryActor.system,
                     HistoryAction.noted,
-                    "Not sent automatically: no email or Slack on file for Clearview Glass.",
+                    "Not sent automatically: Slack didn't accept the message (no_service). Nothing was marked as "
+                    "sent; check the webhook in the trades directory or copy a link instead.",
                 )
 
         # ---- everything after, in time order: sends, the PM's edit, the re-walk check
@@ -2960,7 +2963,10 @@ class Gen:
             c = self.contact(project_id, t)
             eff = self.working_channels(project_id, t)[0]
             to_review = sum(1 for i in mine if i.status == ItemStatus.needs_review)
-            to_send = sum(1 for i in mine if i.status == ItemStatus.open)
+            ever_sent = {iid for d in sends if d.ok for iid in d.item_ids}
+            to_send = sum(1 for i in mine if i.status == ItemStatus.open and i.id not in ever_sent)
+            sent = sum(1 for i in mine if i.status == ItemStatus.dispatched
+                       or (i.status == ItemStatus.open and i.id in ever_sent))  # fmt: skip
             summaries.append(
                 S.TradeSummaryOut(
                     trade=t,
@@ -2968,7 +2974,7 @@ class Gen:
                     contact=self.contact_out(c),
                     to_review=to_review,
                     to_send=to_send,
-                    sent=sum(1 for i in mine if i.status == ItemStatus.dispatched),
+                    sent=sent,
                     caught_up=to_review == 0 and to_send == 0,
                     effective_channel=eff.channel,
                     effective_channel_label=eff.label,
@@ -3020,7 +3026,7 @@ class Gen:
                     S.DispatchSentItemOut(item_id=i.id, number=i.number, title=i.title,
                                           sent_at=latest[i.id].sent_at, channel=latest[i.id].channel)
                     for i in by_number
-                    if i.status == ItemStatus.dispatched and i.id in latest
+                    if i.status in (ItemStatus.open, ItemStatus.dispatched) and i.id in latest
                 ],  # fmt: skip
                 heading=heading,
                 lines=lines,
@@ -3365,6 +3371,9 @@ class Gen:
         )
         write_json(
             "requests/items.patch.edit.json", S.ItemPatch(trade=Trade.general, title="Loose towel bar")
+        )
+        write_json(  # no channel: the trade's effective channel
+            "requests/dispatch.post.effective.json", S.DispatchCreate(item_ids=["itm_2b_09"])
         )
         write_json(
             "requests/dispatch.post.json",

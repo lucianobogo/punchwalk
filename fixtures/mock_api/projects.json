@@ -65,8 +65,8 @@
           "contact": "Ana Kowalski",
           "email": null,
           "phone": "(555) 010-2207",
-          "slack_channel": null,
-          "has_slack_webhook": false
+          "slack_channel": "#punch-glazing",
+          "has_slack_webhook": true
         },
         {
           "trade": "plumbing",

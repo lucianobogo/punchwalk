@@ -961,12 +961,16 @@ def trade_list_out(session: Session, project: Project) -> S.TradeListOut:
     sends = session.exec(select(Dispatch).where(Dispatch.project_id == project.id)).all()
     directory = [c.trade for c in contacts(project)]
     trades = directory + [t for t in Trade if t not in directory and any(i.trade == t for i in items)]
+    ever_sent = {iid for d in sends if d.ok for iid in (d.item_ids or [])}
     out = []
     for t in trades:
         mine = [i for i in items if i.trade == t]
         c = contact_for(project, t)
         to_review = sum(1 for i in mine if i.status == ItemStatus.needs_review)
-        to_send = sum(1 for i in mine if i.status == ItemStatus.open)
+        # To send = open and never sent; an open item sent before (reopened) counts as Sent
+        to_send = sum(1 for i in mine if i.status == ItemStatus.open and i.id not in ever_sent)
+        sent = sum(1 for i in mine if i.status == ItemStatus.dispatched
+                   or (i.status == ItemStatus.open and i.id in ever_sent))  # fmt: skip
         eff = effective_for(project, t)
         out.append(
             S.TradeSummaryOut(
@@ -975,7 +979,7 @@ def trade_list_out(session: Session, project: Project) -> S.TradeListOut:
                 contact=trade_contact_out(c),
                 to_review=to_review,
                 to_send=to_send,
-                sent=sum(1 for i in mine if i.status == ItemStatus.dispatched),
+                sent=sent,
                 caught_up=to_review == 0 and to_send == 0,
                 effective_channel=eff.channel,
                 effective_channel_label=eff.label,
