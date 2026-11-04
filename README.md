@@ -114,7 +114,7 @@ and is never used for tuning.
 | Precision | ≥ 0.90 | **1.00** (12/12) | n/a | **1.00** (2/2) |
 | Right trade | ≥ 0.85 | **1.00** (12/12) | n/a | **1.00** (2/2) |
 | Right room | ≥ 0.90 | **1.00** (12/12) | n/a | **1.00** (2/2) |
-| Defect outlined (pointed items) | reported | 1.00 (11/11) | n/a | 0.50 (1/2) |
+| Defect outlined (pointed items) | reported | 0.91 (10/11) | n/a | 0.50 (1/2) |
 | Needs a look rate | reported | 0.25 (3/12) | n/a | 0.50 (1/2) |
 | Closure accuracy (signed off vs. really fixed) | ≥ 0.90 | n/a | **0.92** (11/12) | n/a |
 | False "fixed" claims caught | 100% | n/a | **100%** (2/2) | n/a |
@@ -131,6 +131,8 @@ these numbers with their limits in mind:
   are overexposed or blurry, so the verifier said "The frame doesn't show the defect described." and held
   them for a person instead of sending them. That's the check doing its job: all three items are correct, and
   all three were signed off on the re-walk.
+- **One pointed item has no outline on purpose.** #006 (cabinet knob) keeps only the "pointed here" dot
+  after the last grounding fix: no outline beats a wrong outline.
 - **The one closure miss is the safe kind.** #004 (light switch screw) really was fixed, but the re-walk
   photo didn't clearly show it, so it went to "Needs a look" instead of being signed off. Nothing was
   signed off that wasn't fixed.
@@ -164,7 +166,7 @@ Rules of thumb from those runs:
 Live latencies from the probe: Files 2.3 s, SAM video 7.0 s for 90 frames, SAM image 1.4–2.9 s, ASR 3.6 s
 for 5 s of audio, and Spark Open 4.2 s per call (`fixtures/probe/README.md`).
 
-The whole build cost **≈ $2.92** of live Meta and Baseten calls, including probes, prompt tuning and
+The whole build cost **≈ $3.06** of live Meta and Baseten calls, including probes, prompt tuning and
 fixture recording, against a $25 cap. Replaying a walk from the cache costs $0. That's why the seeded
 demo's "How this walk was processed" screen says "from recorded model answers (no new cost)".
 

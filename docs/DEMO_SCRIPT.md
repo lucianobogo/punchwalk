@@ -18,12 +18,12 @@ footage:
 | #003 | Stove top damaged at front left burner | Appliances | Kitchen | **Needs a look**: "Marked fixed on the re-walk, but the defect is still visible." | **Re-walk summary (headline moment)** |
 | #004 | Light switch cover missing screw | Electrical | Kitchen | Needs a look: "Marked fixed on the re-walk, but the photo doesn't clearly show it." | Punch list filter |
 | #005 | Toothpaste smudged on bathroom mirror | Cleaning | Bathroom | Signed off | |
-| #006 | Cabinet knob missing on right door | Carpentry & millwork | Bathroom | Signed off | Hook, walk detail (at 0:43) |
+| #006 | Cabinet knob missing on right door | Carpentry & millwork | Bathroom | Signed off | Walk detail (slides in at 0:43) |
 | #007 | Fire alarm missing on ceiling | Electrical | Living room | Signed off | Punch list filter |
 | #008 | Window screen not attached properly | Windows & glazing | Living room | Signed off | |
 | #009 | Wall pencil marks and screws above TV | Painting | Living room | Still open, sent again | Trades (Slack send) |
 | #010 | Small wall nick needing repaint, bedroom | Painting | Bedroom | Still open | Trades (Slack send) |
-| #011 | Outlet cover loose and crooked in hallway | Electrical | Hallway | Signed off | Item detail, Play this moment |
+| #011 | Outlet cover loose and crooked in hallway | Electrical | Hallway | Signed off | Hook, item detail, Play this moment |
 | #012 | Pencil marks on hallway wall | Painting | Hallway | **Needs a look**: the second false "fixed" claim | Re-walk summary |
 | #013 | Mold in washing machine detergent compartment | Cleaning | Laundry room | Needs a look: "The frame doesn't show the defect described." (walk3) | Needs-a-look example |
 | #014 | Spilled detergent on laundry machine front | Cleaning | Laundry room | Open (walk3) | |
@@ -64,7 +64,7 @@ What the screens show in the seeded state:
 
 ### 0:00–0:12 Hook
 
-- **Shoot:** 2 s of the inspector in Ray-Ban Metas pointing at the bathroom cabinet's missing knob (third person, our own footage). Then cut to the walk detail (`/walks/wlk_demo_walk1`), scrubbed to about 0:42 and playing: the hand is outlined in blue, tab 6 sits at the fingertip, and the "Cabinet knob missing on right door" card slides up with "New".
+- **Shoot:** 2 s of the inspector in Ray-Ban Metas pointing at the loose hallway outlet cover (third person, our own footage). Then cut to the walk detail (`/walks/wlk_demo_walk1`), scrubbed to about 1:26 and playing: the hand is outlined in blue, tab 11 sits at the fingertip, and the "Outlet cover loose and crooked in hallway" card slides up with "New".
 - **Must be visible:** the hand outline, the number tab at the fingertip, the new-item card.
 - **Say:** "The walk takes minutes. The write-up takes hours, and the final payment waits on it."
 
@@ -138,7 +138,7 @@ What the screens show in the seeded state:
 
 ## 30–45 s cut for X
 
-1. **0–5 s:** the glasses view pointing at the cabinet's missing knob: the hand outlined, tab 6 at the fingertip. Caption: "Point at it. Say it."
+1. **0–5 s:** the glasses view pointing at the loose hallway outlet cover: the hand outlined, tab 11 at the fingertip. Caption: "Point at it. Say it."
 2. **5–15 s:** the processing checklist naming Muse Voice Transcribe, SAM 3.1 and Muse Spark Open on Baseten → "N items ready".
 3. **15–25 s:** #011 item detail with the before/after photo, then Play this moment jumping to the second.
 4. **25–35 s:** "Send 2 items to Brightline Painting" → the Slack message lands.
