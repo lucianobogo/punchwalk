@@ -14,7 +14,7 @@ Re-walk closure numbers are measured on walk2, which was used for tuning (in-sam
 | walk1 | Precision | 1.00 (12/12) | >= 0.90 | pass |
 | walk1 | Trade accuracy | 1.00 (12/12) | >= 0.85 | pass |
 | walk1 | Room accuracy | 1.00 (12/12) | >= 0.90 | pass |
-| walk1 | Grounding rate (pointed) | 1.00 (11/11) | - | - |
+| walk1 | Grounding rate (pointed) | 0.91 (10/11) | - | - |
 | walk1 | Needs-review rate | 0.25 (3/12) | - | - |
 | walk2 | Closure accuracy | 0.92 (11/12) | >= 0.90 | pass |
 | walk2 | False-claim catch | 1.00 (2/2) | = 1.00 | pass |
@@ -43,7 +43,7 @@ Clip parts: a at 00:00.0, b at 00:35.6, c at 00:49.1, d at 01:19.1, e at 01:28.3
 | 3 | 00:20.0 | #003 | 00:19.4 | -0.6 | 0.188 | Kitchen / Kitchen (ok) | Appliances / Appliances (ok) | Stovetop damaged on the bottom-left | Stove top damaged at front left burner | sam_concept | open | - | match |
 | 4 | 00:30.0 | #004 | 00:28.9 | -1.1 | 0.364 | Kitchen / Kitchen (ok) | Electrical / Electrical (ok) | Light switch missing a screw | Light switch cover missing screw | sam_concept | open | - | match |
 | 5 | 00:38.6 | #005 | 00:35.8 | -2.8 | 0.5 | Bathroom / Bathroom (ok) | Cleaning / Cleaning (ok) | Toothpaste smudged on the mirror | Toothpaste smudged on bathroom mirror | sam_concept | needs_review | The frame doesn't show the defect described. | match |
-| 6 | 00:42.6 | #006 | 00:42.9 | +0.3 | 0.25 | Bathroom / Bathroom (ok) | Carpentry & millwork / Carpentry & millwork (ok) | Knob missing on cabinet | Cabinet knob missing on right door | sam_box | open | - | match |
+| 6 | 00:42.6 | #006 | 00:42.9 | +0.3 | 0.25 | Bathroom / Bathroom (ok) | Carpentry & millwork / Carpentry & millwork (ok) | Knob missing on cabinet | Cabinet knob missing on right door | pointed_only | open | - | match |
 | 7 | 00:52.1 | #007 | 00:49.3 | -2.8 | 0.3 | Living room / Living room (ok) | Electrical / Electrical (ok) | Fire alarm missing on roof | Fire alarm missing on ceiling | sam_concept | open | - | match |
 | 8 | 01:00.1 | #008 | 00:59.3 | -0.8 | 0.214 | Living room / Living room (ok) | Windows & glazing / Windows & glazing (ok) | Window screen not placed correctly | Window screen not attached properly | sam_box | needs_review | The frame doesn't show the defect described. | match |
 | 9 | 01:12.1 | #009 | 01:08.7 | -3.4 | 0.364 | Living room / Living room (ok) | Painting / Painting (ok) | Wall has pencil marks and screws in it | Wall pencil marks and screws above TV | sam_box | open | - | match |
@@ -77,18 +77,18 @@ Clip parts: a at 00:00.0, b at 00:27.8, c at 00:39.7, d at 01:00.5, e at 01:08.0
 | Label | t label | Item | t item | dt (s) | Jaccard | Room (label / item) | Trade (label / item) | Label description | Item title | Grounding | Status | Review reason | Result |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 13 | 00:03.0 | #013 | 00:00.5 | -2.5 | 0.3 | Laundry room / Laundry room (ok) | Cleaning / Cleaning (ok) | Mold in the detergent compartment | Mold in washing machine detergent compartment | pointed_only | needs_review | The frame doesn't show the defect described. | match |
-| 14 | 00:10.0 | #014 | 00:09.7 | -0.3 | 0.444 | Laundry room / Laundry room (ok) | Cleaning / Cleaning (ok) | Spilled detergent on laundry machine | Spilled detergent on laundry machine front | sam_concept | open | - | match |
+| 14 | 00:10.0 | #014 | 00:09.7 | -0.3 | 0.444 | Laundry room / Laundry room (ok) | Cleaning / Cleaning (ok) | Spilled detergent on laundry machine | Spilled detergent on laundry machine front | sam_box | open | - | match |
 
 ## Timing and cost
 
 | Walk | Pipeline time (this run) | Model calls | Cached | Failed | Fallback | Live cost (this run) | Est. live cost | Recorded latency |
 |---|---|---|---|---|---|---|---|---|
-| walk1 | 1 min 32 s | 55 | 55 | 0 | 0 | $0.0000 | $0.5201 | 0.0 s |
-| walk2 | 1 min 12 s | 43 | 43 | 0 | 0 | $0.0000 | $0.3801 | 0.0 s |
-| walk3 | 26.3 s | 10 | 10 | 0 | 0 | $0.0000 | $0.0842 | 0.0 s |
+| walk1 | 1 min 34 s | 54 | 54 | 0 | 0 | $0.0000 | $0.5168 | 0.0 s |
+| walk2 | 1 min 13 s | 43 | 43 | 0 | 0 | $0.0000 | $0.3914 | 0.0 s |
+| walk3 | 26.3 s | 11 | 11 | 0 | 0 | $0.0000 | $0.0861 | 0.0 s |
 
 Est. live cost prices SAM 3.1 frames/images and Muse Voice Transcribe seconds at list price; cached Muse Spark Open calls carry no token counts, so they are counted, not priced.
 
-- **walk1** stages: ingest 0.1 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 1 min 6 s, find_points 0.9 s, fuse 0.0 s, pick_evidence 11.6 s, write_items 0.7 s, ground_defects 12.6 s, verify 0.2 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x25, Muse Voice Transcribe x1, SAM 3.1 x24, meta-files x5.
-- **walk2** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 59.0 s, find_points 1.1 s, fuse 0.0 s, pick_evidence 0.0 s, resolve_closures 12.1 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x32, Muse Voice Transcribe x1, SAM 3.1 x5, meta-files x5.
-- **walk3** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 19.2 s, find_points 0.4 s, fuse 0.0 s, pick_evidence 2.7 s, write_items 0.1 s, ground_defects 3.7 s, verify 0.0 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x5, Muse Voice Transcribe x1, SAM 3.1 x3, meta-files x1.
+- **walk1** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 1 min 6 s, find_points 1.1 s, fuse 0.0 s, pick_evidence 12.9 s, write_items 0.7 s, ground_defects 12.6 s, verify 0.2 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x25, Muse Voice Transcribe x1, SAM 3.1 x23, meta-files x5.
+- **walk2** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 58.6 s, find_points 1.1 s, fuse 0.0 s, pick_evidence 0.0 s, resolve_closures 13.0 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x32, Muse Voice Transcribe x1, SAM 3.1 x5, meta-files x5.
+- **walk3** stages: ingest 0.2 s, transcribe 0.0 s, classify_turns 0.0 s, track_hands 19.1 s, find_points 0.4 s, fuse 0.0 s, pick_evidence 2.7 s, write_items 0.2 s, ground_defects 3.7 s, verify 0.0 s, persist 0.0 s. Calls: Muse Spark Open on Baseten x5, Muse Voice Transcribe x1, SAM 3.1 x4, meta-files x1.

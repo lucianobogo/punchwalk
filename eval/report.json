@@ -39,9 +39,9 @@
           "value": 1.0
         },
         "grounding": {
-          "num": 11,
+          "num": 10,
           "den": 11,
-          "value": 1.0
+          "value": 0.9091
         },
         "needs_review": {
           "num": 3,
@@ -155,7 +155,7 @@
       "walk": "walk1",
       "key": "grounding",
       "metric": "Grounding rate (pointed)",
-      "value": "1.00 (11/11)",
+      "value": "0.91 (10/11)",
       "target": "-",
       "result": "-",
       "holdout": false
@@ -244,7 +244,7 @@
   ],
   "app_summary": {
     "source": "eval/report.md",
-    "updated_at": "2026-11-04T01:08:43.074577Z",
+    "updated_at": "2026-11-04T01:31:46.676567Z",
     "metrics": [
       {
         "key": "defects_found",
