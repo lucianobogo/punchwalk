@@ -1,7 +1,7 @@
 # STATE
 
 Status: COMPLETE
-Updated: 2026-11-03 22:40 ET
+Updated: 2026-11-03 23:48 ET
 Current phase: COMPLETE — 51/51 PLAN boxes `[x]`, all verified; live demo at https://punchwalk.fly.dev with the seeded project (live smoke test PASS).
 Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9.4, 54 tags); nothing untagged.
 
@@ -23,7 +23,7 @@ Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9
 - FYI (your call): item #006's evidence frame (cabinet knob) shows the inspector's face in a mirror and a bag with a name on it. It's your own footage and the repo README doesn't use that frame any more, but it is in the live demo project. If you'd rather not show it, dismiss item #006 in the app after the import (More → Dismiss) or tell me to swap its evidence frame.
 - Keys are in `.env` (confirmed by name, 16:15 ET); both work (probe 9/9 ok).
 - **Optional check with the organizers:** the hackathon Baseten slug `meta-models/muse-spark-open-1026` returns 404 ("please check the model you provided"); the catalog slug `meta-models/muse-spark-open` answers. The client tries -1026 first and falls back automatically, logging which slug answered. If the organizers say -1026 should be live, nothing changes; if they say to use the catalog slug, set `SPARK_OPEN_MODEL=meta-models/muse-spark-open` in `.env`.
-- Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: human will decide later; dispatch uses the in-app outbox until `SLACK_WEBHOOK_URL` is set.
+- Human decisions on record: **no git pushes from this build** (human pushes manually; checkpoints are committed + tagged locally). **Slack webhook**: set in `.env` at 23:48 ET and confirmed working (a test dispatch of 2 painting items posted via the real webhook, HTTP 201). **For the live demo on Fly it must also be a Fly secret:** `grep -E '^SLACK_WEBHOOK_URL=.+' .env | fly secrets import -a punchwalk` (this restarts the app; do it before or together with the final `make deploy`). Note: the test marked #009/#010 "Sent again" in the local DB only; the Fly data is untouched.
 - Labels: DONE (18:42 ET) — walk1 (12 items), walk2 (re-walk statuses incl. two false claims) and walk3 (2 holdout items) are in `eval/labels/` and committed. Thank you.
 
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.

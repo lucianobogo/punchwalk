@@ -82,3 +82,4 @@ One line per event, newest at the bottom:
 2026-11-03 20:34 ET | 9.2 | builder (docs) | README numbers corrected (grounding 10/11, $3.06), demo hook → #011 | report | commit; tick 9.2; tags ckpt-9.2/9.3/9.4; only 9.1 [~] remains (human import)
 2026-11-03 22:23 ET | 9.1 import | human | demo snapshot imported on Fly: prj_demo, 14 items (7/3/4), re-walk summary 7/2/3 live | curl | live smoke test (iPhone profile) → 9.1 [x]
 2026-11-03 22:29 ET | 9.1 live smoke | verifier | PASS: every demo beat works read-only on https://punchwalk.fly.dev (iPhone 15 Pro profile; 0 console errors; 14 items; video 206; PDF 200; share page); stale processing copy until the human redeploys | .verify/live/*.png | 9.1 [x]; Status COMPLETE
+2026-11-03 23:48 ET | Slack test | orchestrator | SLACK_WEBHOOK_URL set in .env; test dispatch (painting, 2 items) → HTTP 201 ok=True via the real webhook on the local seeded API; local DB only | curl | human adds the secret on Fly
