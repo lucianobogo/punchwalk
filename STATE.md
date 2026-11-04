@@ -1,7 +1,7 @@
 # STATE
 
 Status: COMPLETE
-Updated: 2026-11-03 22:29 ET
+Updated: 2026-11-03 22:40 ET
 Current phase: COMPLETE — 51/51 PLAN boxes `[x]`, all verified; live demo at https://punchwalk.fly.dev with the seeded project (live smoke test PASS).
 Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9.4, 54 tags); nothing untagged.
 
@@ -13,8 +13,7 @@ Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
-| 3.4 + 7.5 + 7.x fixes verify (main tree, readonly; needs data/record media) | verifier | 19:40 | read-only | no pipeline edits while this runs |
+| none — build complete | | | | |
 
 ## Needs human
 - Demo data on Fly: DONE — live smoke test PASS (22:29 ET): every demo beat works on the iPhone profile, 0 console errors. The processing screen's cost line reads "about $0.00" until you redeploy (the fix is in the repo).
