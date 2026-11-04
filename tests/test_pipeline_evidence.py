@@ -67,13 +67,21 @@ def test_hand_edges_do_not_count_as_sharpness():
     assert c.frame == 2  # withdrawn wins over a frame whose only sharp content is the hand
 
 
-def test_all_frames_covered_falls_back_to_least_covered():
+def test_all_frames_covered_prefers_a_reliable_pointer_then_least_covered(monkeypatch):
+    from punchwalk.pipeline import evidence as ev_mod
+
     base = wall()
     frames, masks = {}, {}
     for f, x in enumerate((140, 145, 120)):
         frames[f], masks[f] = with_hand(base, x, int(TIP[1]) - 30)
+    # every pointer carried over reliably: the least-covered frame wins (x=145 leaves the most uncovered)
+    monkeypatch.setattr(ev_mod, "align_point", lambda src, dst, pt, *a: (pt, True))
     c = choose_pointed_frame(frames, masks, pointing_frame=0, fingertip=TIP, hold_last=2)
-    assert not c.hand_clear and c.frame == 1  # x=145 leaves the most of the square uncovered
+    assert not c.hand_clear and c.frame == 1 and c.aligned
+    # only the pointing frame's pointer is reliable: a dot in the right place beats a less-covered frame
+    monkeypatch.setattr(ev_mod, "align_point", lambda src, dst, pt, *a: (pt, False))
+    c = choose_pointed_frame(frames, masks, pointing_frame=0, fingertip=TIP, hold_last=2)
+    assert c.frame == 0 and c.aligned
 
 
 def test_pointer_follows_camera_motion():

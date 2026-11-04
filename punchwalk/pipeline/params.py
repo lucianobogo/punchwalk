@@ -33,11 +33,14 @@ TITLE_MAX_CHARS = 60
 
 # --------------------------------------------------------------------------- 1.6 evidence
 EVIDENCE_SEARCH_S = 1.5  # SPEC: look for the evidence frame within +/- this of the point
+EVIDENCE_AFTER_HOLD_S = 2.0  # 3.4: ...and up to this long after the hold ends (long holds hide the defect;
+# later frames mostly lose the pointer because the camera moves on)
 EVIDENCE_CLEAR_BOX_FRAC = 0.15  # SPEC: square around the fingertip, as a fraction of frame width
 EVIDENCE_MAX_HAND_COVER = 0.05  # SPEC: that square must hold < this fraction of hand-mask pixels
 EVIDENCE_AFTER_BONUS = 1.25  # prefer frames after the hold with no hand in view (score multiplier)
 EVIDENCE_MAX_CANDIDATES = 31  # SAM frames considered around a point (10 fps x 3 s + 1)
 CONTEXT_FRAME_OFFSET_S = 0.7  # SPEC: context frames at +/- this
+CONTEXT_END_MARGIN_S = 0.2  # ...but no later than this before the clip's end
 VOICE_ONLY_SAMPLES = 5  # SPEC
 # Camera-motion compensation of the fingertip: ORB on the region around the fingertip.
 ALIGN_REGION_FRAC = 0.35  # square side as a fraction of the frame's short side
@@ -61,6 +64,7 @@ CLASSIFY_MAX_TOKENS_CAP = 12000
 
 # --------------------------------------------------------------------------- 2.2 ground defects
 GROUND_RADIUS_FRAC = 0.25  # SPEC: defect instance within ~25% of the frame width of the fingertip
+GROUND_BOX_MAX_DIST_FRAC = 0.15  # 3.4: Spark Open's defect_box must come within this share of the width of the dot
 GROUND_BOX_EXPAND = 0.10  # SPEC: box prompt = Spark Open's defect_box grown 10%
 GROUND_MAX_AREA_FRAC = 0.35  # an "instance" bigger than this share of the frame is a wall, not a defect
 GROUND_SVG_EPSILON_PX = 1.5  # outline simplification (display px)
@@ -80,3 +84,4 @@ PIXEL_STILL_RATIO = 0.5  # re-walk contrast >= this share of the first walk's = 
 PIXEL_GONE_RATIO = 0.2  # <= this share = gone
 CLOSURE_ALIGN_MIN_NCC = 0.3  # a phase-correlation shift is kept only if the gradients then correlate this well
 # (a fixed defect removes some edges, so a correct shift on a plain wall can score only ~0.4)
+CLOSURE_SECOND_LOOK = True  # 7.x: an automatic sign-off needs two independent "fixed" answers (or pixels)

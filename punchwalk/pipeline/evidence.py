@@ -1,9 +1,10 @@
 """Stage `pick_evidence` (PLAN 1.6, pointing revision): the clearest photo of each defect.
 
-Pointed items: candidates are the SAM frames within +/- 1.5 s of the pointing event (same clip
-part only: no candidates across a camera cut). A candidate qualifies when the hand masks of
+Pointed items: candidates are the SAM frames from 1.5 s before the pointing event to 3 s after the
+hold ends (same clip part only: no candidates across a camera cut). A candidate qualifies when the hand masks of
 that frame cover < 5% of a square (15% of the frame width) around the fingertip, i.e. the hand
-is not in the way of the defect. Score = Laplacian variance of a context crop around the
+is not in the way of the defect. Frames whose pointer could be carried over reliably (see below)
+come first; a clear frame where it couldn't (the camera moved on) is the last resort. Score = Laplacian variance of a context crop around the
 fingertip (hand pixels excluded), x EVIDENCE_AFTER_BONUS for frames after the hold with no hand in view (withdrawn). When no frame qualifies,
 the least-covered sharpest frame is used and `hand_clear` is false in the stage output.
 
@@ -162,13 +163,21 @@ def choose_pointed_frame(
         withdrawn = f > hold_last and (mask is None or not mask.any())
         bonus = P.EVIDENCE_AFTER_BONUS if withdrawn else 1.0
         scored.append((sharp * bonus, cover, f, pt, aligned))
+    # Tiers: hand clear + pointer carried over reliably > pointer reliable but hand partly in the way >
+    # hand clear but the pointer could not be carried over (the camera moved on: the dot may be off).
     clear = [s for s in scored if s[1] < P.EVIDENCE_MAX_HAND_COVER]
-    if clear:
+    clear_aligned = [s for s in clear if s[4]]
+    aligned = [s for s in scored if s[4]]
+    if clear_aligned:
+        best = max(clear_aligned, key=lambda s: (s[0], -abs(s[2] - pointing_frame)))
+    elif aligned:
+        best = min(aligned, key=lambda s: (s[1], -s[0]))
+    elif clear:
         best = max(clear, key=lambda s: (s[0], -abs(s[2] - pointing_frame)))
     else:
         best = min(scored, key=lambda s: (s[1], -s[0]))
-    return Choice(frame=best[2], pointer=best[3], score=best[0], cover=best[1], hand_clear=bool(clear),
-                  aligned=best[4], candidates=len(scored))
+    return Choice(frame=best[2], pointer=best[3], score=best[0], cover=best[1], hand_clear=best[1] <
+                  P.EVIDENCE_MAX_HAND_COVER, aligned=best[4], candidates=len(scored))
 
 
 def choose_sharpest(frames: dict[int, np.ndarray]) -> Choice:
@@ -226,6 +235,16 @@ def _protected_rows(ctx: StageContext) -> dict[str, dict[str, Any]]:
     return rows
 
 
+def pointed_window(ctx: StageContext, ev: dict[str, Any], fps: float) -> list[int]:
+    """Candidate SAM frames for a pointing event: +/- EVIDENCE_SEARCH_S around it and on until
+    EVIDENCE_AFTER_HOLD_S after the hold ends (after a long hold the hand only leaves late), inside
+    the event's clip part."""
+    lo, hi = _part_range(ctx, ev["frame"])
+    radius = int(round(P.EVIDENCE_SEARCH_S * fps))
+    end = max(ev["frame"] + radius, ev["hold_frames"][1] + int(round(P.EVIDENCE_AFTER_HOLD_S * fps)))
+    return list(range(max(lo, ev["frame"] - radius), min(hi, end) + 1))
+
+
 def _part_range(ctx: StageContext, frame: int) -> tuple[int, int]:
     """[first, last] SAM frame of the clip part that holds `frame`."""
     for c in ctx.meta.clips:
@@ -243,14 +262,12 @@ def run(ctx: StageContext) -> StageOutcome:
     w, h, fps = track["sam"]["width"], track["sam"]["height"], float(track["sam"]["fps"])
     sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
     dw, dh = meta.display.width, meta.display.height
-    radius = int(round(P.EVIDENCE_SEARCH_S * fps))
 
     plans: dict[str, list[int]] = {}
     for d in drafts:
         ev = events.get(d["point_id"]) if d["point_id"] and not voice_only else None
         if ev:
-            lo, hi = _part_range(ctx, ev["frame"])
-            plans[d["item_id"]] = list(range(max(lo, ev["frame"] - radius), min(hi, ev["frame"] + radius) + 1))
+            plans[d["item_id"]] = pointed_window(ctx, ev, fps)
         else:  # the turn window (PLAN 1.6), never across a clip boundary
             lo, hi = _part_range(ctx, int(round(d["quote_start_s"] * fps)))
             plans[d["item_id"]] = sample_frames(d["quote_start_s"], d["quote_end_s"], fps, lo, hi,
@@ -305,11 +322,22 @@ def _write_item_files(
     t = round(choice.frame / fps, 3)
     clip = ctx.meta.clip_at(t)  # context frames stay inside this clip part (no camera cut)
     first_t = clip.offset_s
-    last_t = max(first_t, clip.offset_s + clip.duration_s - 1.0 / ctx.meta.display.fps)
+    end_t = clip.offset_s + clip.duration_s
+    last_t = max(first_t, end_t - 1.0 / ctx.meta.display.fps)
     q = P.EVIDENCE_JPEG_QUALITY
     raw = media.extract_frame(display, t, out / "raw.jpg", quality=q)
-    media.extract_frame(display, max(first_t, t - P.CONTEXT_FRAME_OFFSET_S), out / "context_a.jpg", quality=q)
-    media.extract_frame(display, min(last_t, t + P.CONTEXT_FRAME_OFFSET_S), out / "context_b.jpg", quality=q)
+    for name, ct in (("context_a.jpg", max(first_t, t - P.CONTEXT_FRAME_OFFSET_S)),
+                     ("context_b.jpg", min(last_t, t + P.CONTEXT_FRAME_OFFSET_S))):
+        # seeking to the very last frame time can find no frame: retry a little inside the clip, then
+        # fall back to the photo itself (context frames only support it)
+        for attempt in (ct, max(first_t, min(ct, end_t - P.CONTEXT_END_MARGIN_S))):
+            try:
+                media.extract_frame(display, attempt, out / name, quality=q)
+                break
+            except media.MediaError as err:
+                log.warning("pick_evidence: %s at %.2fs failed (%s)", name, attempt, str(err)[:120])
+        else:
+            (out / name).write_bytes(raw.read_bytes())
     pointing_rel = None
     if ev:
         pointing_rel = rel_to_data(media.extract_frame(display, ev["t"], out / "pointing_raw.jpg", quality=q))

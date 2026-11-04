@@ -289,6 +289,7 @@ def run(ctx: StageContext) -> StageOutcome:
         mid = hold.middle
         tx, ty, edge = hold_fingertip(hold, w, h, track["records"])
         x1, y1, x2, y2 = mid["box"]
+        tx, ty = min(max(tx, x1), x2), min(max(ty, y1), y2)  # the median over the hold stays on the hand box
         events.append({
             "id": stable_id("pnt", ctx.walk_id, m.key),
             "number": len(events) + 1,

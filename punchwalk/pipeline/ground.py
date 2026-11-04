@@ -5,8 +5,9 @@ Per item, in order, recording which worked in `Evidence.grounding`:
      nearest the fingertip, within GROUND_RADIUS_FRAC x frame width (no pointer: nearest the center of
      Spark Open's defect_box, else the only instance). Instances covering more than
      GROUND_MAX_AREA_FRAC of the frame (a whole wall) are ignored.
-  2. `sam_box`: SAM box prompt from Spark Open's defect_box grown 10%, if the box lies within that
-     radius of the fingertip (or there is no pointer).
+  2. `sam_box`: SAM box prompt from Spark Open's defect_box grown 10%, if the box comes within
+     GROUND_BOX_MAX_DIST_FRAC x width of the fingertip (or there is no pointer): a box far from where the
+     finger pointed is on the wrong object.
   3. `pointed_only` (a pointer, no outline) or `none` (voice-only, no outline, no dot).
 
 Items that are protected (sent, closed or edited by a person) keep their outline and renders.
@@ -101,7 +102,8 @@ def ground_one(raw, w: int, h: int, pointer: tuple[float, float] | None, concept
                 return Grounding.sam_concept, rec, notes
         except (ApiError, ValueError) as err:
             notes["concept_error"] = str(err)[:300]
-    if defect_box and (pointer is None or point_to_box(pointer[0], pointer[1], defect_box) <= radius):
+    box_radius = P.GROUND_BOX_MAX_DIST_FRAC * w
+    if defect_box and (pointer is None or point_to_box(pointer[0], pointer[1], defect_box) <= box_radius):
         box = expand_box(defect_box, P.GROUND_BOX_EXPAND, w, h)
         try:
             res = sam.boxes_on_image(raw, [box])

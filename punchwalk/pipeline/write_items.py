@@ -71,13 +71,16 @@ Rules:
 - location_detail: where in the room, in a few clean words (for example "upper cabinet left of the sink"),
   or null.
 - action: at most 80 characters, imperative, what the trade needs to do (for example "Install a matching knob").
-- trade: the one trade that fixes it, from the list given.
+- trade: the one trade that fixes it, from the list given. Marks, scuffs, nicks, holes or screws left in
+  walls and ceilings -> painting (touch-up); spills, stains and smudges on counters, mirrors, glass or
+  appliances -> cleaning; missing or loose fixtures -> the trade that installs them.
 - severity: "safety" if it could hurt someone (exposed wiring, trip hazard, broken glass), "functional" if
   something doesn't work as it should (door won't latch, bulb out, loose bar), else "cosmetic".
 - sam_concept: a short noun phrase naming the defective object or area as it looks in photo 1, for an
   image segmentation model (for example "cabinet door", "door strike plate", "wall scuff mark").
-- defect_box: [x1, y1, x2, y2] around the defect in photo 1's pixels, near the blue dot when there is one.
-  If photo 1 doesn't show the defect, set defect_box to null and lower confidence.
+- defect_box: [x1, y1, x2, y2] around the defect in photo 1's pixels. The blue dot is exactly where the
+  inspector's finger pointed: the defect is at or right next to the dot, so the box must contain or touch
+  it. If photo 1 doesn't show the defect there, set defect_box to null and lower confidence.
 - confidence: 0 to 1, how sure you are that the item matches both the words and the photo.
 - rationale: one short sentence, at most 200 characters."""
 

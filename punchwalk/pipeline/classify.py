@@ -57,9 +57,10 @@ For every turn (one transcribed utterance) return one label with the same idx:
   "status_update" if it reports on an earlier item ("kitchen knob, fixed", "scuffs still there");
   "other" for anything else (filler, comments, "okay", "next").
 - room: the room this turn names, using the project's room names when one fits; null if it names none.
-- continues_previous: true only when this turn finishes a defect description started in the previous turn
-  (for example "Upper cabinet left of the sink," then "knob missing."). Then put the defect on this turn too,
-  described in full.
+- continues_previous: true only when this turn finishes or adds detail to the defect described in the previous
+  turn (for example "Upper cabinet left of the sink," then "knob missing.", or "The stove top is damaged." then
+  "On the bottom left part."). Then put that one defect on this turn, described in full; it is the same defect,
+  not a new one.
 - defects: for kind "defect", one short punch-list description per distinct defect, in the order spoken
   (for example ["upper cabinet left of sink: knob missing"]). Use the inspector's facts only; never add
   quantities or causes. Empty list for other kinds.
@@ -96,6 +97,30 @@ def normalize_room(room: str | None, rooms: list[str]) -> str | None:
         if r.lower() in low or low in r.lower():
             return r
     return clean[:1].upper() + clean[1:]
+
+
+_FOLLOW_UP_RE = re.compile(
+    r"^(on|in|at|near|by|under|above|below|behind|next|left|right|top|bottom|the (left|right|top|bottom)|"
+    r"and|which|that|it's|its|so|also)\b", re.IGNORECASE)
+FOLLOW_UP_MAX_WORDS = 7
+FOLLOW_UP_MAX_GAP_MS = 2500
+
+
+def mark_follow_ups(turns: list[dict[str, Any]], labels: list[dict[str, Any]]) -> int:
+    """Rule on top of the model: a short defect turn right after a defect turn (<= 2.5 s gap,
+    <= 7 words) that starts with a location or connector word ("on the bottom left part") continues
+    the previous description. Returns how many turns it changed."""
+    changed = 0
+    for i in range(1, len(turns)):
+        lab, prev = labels[i], labels[i - 1]
+        if lab["kind"] != "defect" or prev["kind"] != "defect" or lab.get("continues_previous"):
+            continue
+        text = turns[i]["text"].strip()
+        gap = turns[i]["start_ms"] - turns[i - 1]["end_ms"]
+        if gap <= FOLLOW_UP_MAX_GAP_MS and len(text.split()) <= FOLLOW_UP_MAX_WORDS and _FOLLOW_UP_RE.match(text):
+            lab["continues_previous"] = True
+            changed += 1
+    return changed
 
 
 def carry_rooms(labels: list[dict[str, Any]]) -> None:
@@ -201,6 +226,7 @@ def run(ctx: StageContext) -> StageOutcome:
             lab["defects"], lab["continues_previous"] = [], False
         if lab["kind"] != "status_update":
             lab["status_target"], lab["claimed"] = None, None
+    info["follow_ups_by_rule"] = mark_follow_ups(turns, labels) if labels else 0
     carry_rooms(labels)
     merged = [{**t, **{k: v for k, v in lab.items() if k != "idx"}} for t, lab in zip(turns, labels, strict=True)]
     ctx.save_output(Stage.classify_turns, {"version": 1, "info": info, "turns": merged})

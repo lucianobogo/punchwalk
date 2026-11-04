@@ -2,7 +2,8 @@
 
 A *mention* is one defect the inspector called out. A defect turn may describe several defects
 (`defects[]`), and a description may continue over the next turn (`continues_previous`); such
-turns form one group sharing a time window. `status_update` turns (re-walk "kitchen knob, fixed")
+turns form one group sharing a time window, and a continuation's defect text replaces the group's
+last one (it re-states the same defect with more detail; it never adds a mention). `status_update` turns (re-walk "kitchen knob, fixed")
 become one mention each, kind `status_update`.
 
 Input rows are the `turns` of `stages/classify_turns.json`:
@@ -53,7 +54,9 @@ def _groups(turns: list[dict[str, Any]]) -> list[_Group]:
             if t.get("continues_previous") and prev is not None and prev.kind == "defect" \
                     and prev.turns[-1]["idx"] == t["idx"] - 1:
                 prev.turns.append(t)
-                prev.defects.extend(d for d in t.get("defects") or [] if d.strip())
+                more = [d for d in t.get("defects") or [] if d.strip()]
+                if more:  # the follow-up re-states the same defect more fully: it replaces the last one
+                    prev.defects = prev.defects[:-1] + more
                 continue
             groups.append(_Group("defect", [t], [d for d in t.get("defects") or [] if d.strip()]))
         elif kind == "status_update":

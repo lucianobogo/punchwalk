@@ -160,3 +160,23 @@ def test_mentions_group_continuations():
     assert m.turn_ids == ["trn_0", "trn_1"] and m.start_s == 1.0 and m.end_s == 3.5
     assert m.text == "upper cabinet left of sink: knob missing"
     assert m.quote == "Upper cabinet left of the sink, knob missing."
+
+
+def test_continuation_replaces_the_defect_instead_of_adding_one():
+    turns = [_turn(3, 19.4, 22.8, "the stove top is damaged", defects=["stove top: damaged"]),
+             _turn(4, 23.4, 26.5, "on the bottom left part", defects=["stove top bottom left: damaged"], cont=True)]
+    (m,) = build_mentions(turns)
+    assert m.text == "stove top bottom left: damaged" and m.turn_ids == ["trn_3", "trn_4"]
+    assert m.quote == "the stove top is damaged on the bottom left part"
+
+
+def test_follow_up_rule_marks_short_location_turns():
+    from punchwalk.pipeline.classify import mark_follow_ups
+
+    turns = [{"idx": 0, "start_ms": 19400, "end_ms": 22780, "text": "the stove top is damaged"},
+             {"idx": 1, "start_ms": 23420, "end_ms": 26460, "text": "on the bottom left part"},
+             {"idx": 2, "start_ms": 28940, "end_ms": 32620, "text": "this light switch is missing a screw."}]
+    labels = [{"kind": "defect", "continues_previous": False}, {"kind": "defect", "continues_previous": False},
+              {"kind": "defect", "continues_previous": False}]
+    assert mark_follow_ups(turns, labels) == 1
+    assert [x["continues_previous"] for x in labels] == [False, True, False]
