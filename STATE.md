@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 20:34 ET
+Updated: 2026-11-03 22:23 ET
 Current phase: DONE except 9.1 `[~]` — waiting for the human to load the demo snapshot on Fly (then a live iPhone-profile smoke test closes 9.1 → Status COMPLETE). 50/51 boxes `[x]`, 0 `[ ]`.
 Last checkpoint: ckpt-9.4. Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
@@ -17,14 +17,7 @@ Last checkpoint: ckpt-9.4. Untagged: 8.1 (verified on synth; tag after real walk
 | 3.4 + 7.5 + 7.x fixes verify (main tree, readonly; needs data/record media) | verifier | 19:40 | read-only | no pipeline edits while this runs |
 
 ## Needs human
-- **Load the demo data on Fly (blocked for me: "Remote Shell Writes").** **Snapshot FINAL (20:26 ET) — go ahead.** The seed snapshot is built: `demo/seed_snapshot.tar.gz` (61.8 MB, gitignored; real walk1/walk2/walk3, 14 items, built at $0 from the tuned pipeline). From the repo root:
-  ```
-  printf 'put demo/seed_snapshot.tar.gz /data/seed_snapshot.tar.gz\n' | fly ssh sftp shell -a punchwalk
-  fly ssh console -a punchwalk -C "chown punch:punch /data/seed_snapshot.tar.gz"
-  fly ssh console -a punchwalk -C "sh -c 'cd /app && setpriv --reuid=punch --regid=punch --init-groups /app/.venv/bin/python scripts/seed.py --import /data/seed_snapshot.tar.gz'"
-  curl -s https://punchwalk.fly.dev/api/projects      # should list "Unit 2B final punch"
-  ```
-  Then open https://punchwalk.fly.dev on your iPhone: the punch list should show 14 items; the re-walk summary "7 signed off. 2 still open. 3 need a look."
+- Demo data on Fly: DONE by the human (22:23 ET) — https://punchwalk.fly.dev/api/projects lists Unit 2B final punch, 14 items, re-walk summary 7/2/3. Live smoke test running.
 - **Redeploy once after the final pass** (`make deploy` from the repo root) so the live app has the last fixes (model labels, before/after on closures, overlay clamp, polish). The volume keeps the imported demo data across deploys. I'll say in STATE.md when the final pass is done.
 - License: DONE — MIT, copyright 2026 Luciano Bogomolni (LICENSE at the repo root; README's `<!-- LICENSE -->` placeholder gets filled in the final README pass).
 - **Slack on camera (optional):** the seeded Ace Electric webhook is an example-domain placeholder (never contacted). To make the Slack beat real, put your webhook in `.env` as SLACK_WEBHOOK_URL (global) or follow the pre-flight swap in docs/DEMO_SCRIPT.md.
