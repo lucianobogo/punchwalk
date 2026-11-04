@@ -274,6 +274,20 @@ def test_hevc_landscape_input(tmp_path):
     assert meta.clips[0].source.codec == "hevc"
 
 
+def _patch_mean(video: Path, x: int, y: int, *, hdr_signal: bool, t_s: float = 0.5, r: int = 4) -> list[float]:
+    """Mean RGB (0-255) of a (2r+1)² patch. hdr_signal: decode BT.2020 YUV to its HLG signal values with no
+    transfer conversion (what the tonemap gets as input)."""
+    conv = "scale=in_color_matrix=bt2020:in_range=tv:out_range=full," if hdr_signal else ""
+    n = 2 * r + 1
+    proc = subprocess.run(
+        [media.ffmpeg_bin(), "-hide_banner", "-loglevel", "error", "-ss", f"{t_s:.3f}", "-i", str(video),
+         "-frames:v", "1", "-vf", f"{conv}format=rgb48le,crop={n}:{n}:{x - r}:{y - r}", "-f", "rawvideo", "-"],
+        capture_output=True, check=True,
+    )  # fmt: skip
+    vals = [int.from_bytes(proc.stdout[i : i + 2], "little") for i in range(0, len(proc.stdout), 2)]
+    return [sum(vals[c::3]) / (len(vals) // 3) / 257 for c in range(3)]
+
+
 def test_hdr_input_is_tonemapped(tmp_path):
     clip = synth.make_clip(tmp_path / "walk.mp4", 1.5, hdr=True, rotate_meta=90, audio="tone")
     info = media.probe(clip)
@@ -285,10 +299,16 @@ def test_hdr_input_is_tonemapped(tmp_path):
     if media.hdr_methods_available()[0] == "none":
         assert not meta.hdr_tonemapped
         pytest.skip("this ffmpeg has no tonemap path; checked the fallback only")
-    assert meta.hdr_tonemapped and meta.hdr_method in ("swscale", "zscale")
-    if meta.hdr_method == "swscale":  # relative colorimetric: SDR-range colors come back as they were
-        wall = media.read_rgb_pixel(tmp_path / "out" / "display.mp4", 360, 40, t_s=0.5)
-        assert _close(wall, WALL_RGB, 15), wall
+    assert meta.hdr_tonemapped and meta.hdr_method in ("zscale", "lut3d")
+    # The wall's HLG signal, run through the reference tonemap, is what display.mp4 must show
+    # (tests/test_color.py covers real footage). The old swscale relative-colorimetric path passed a
+    # "colors come back" check here while washing real HLG footage out.
+    import numpy as np
+
+    signal = np.array(_patch_mean(clip, 360, 40, hdr_signal=True)) / 255
+    expected = media.hdr_to_sdr_rgb(signal, "hlg") * 255
+    got = np.array(_patch_mean(tmp_path / "out" / "display.mp4", 360, 40, hdr_signal=False))
+    assert np.abs(got - expected).max() <= 6, (got, expected)
 
 
 def test_hdr_without_tonemap_falls_back_with_warning(tmp_path):

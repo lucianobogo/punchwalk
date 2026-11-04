@@ -119,14 +119,128 @@ def scale_has_color_management() -> bool:
 
 
 def hdr_methods_available() -> list[str]:
-    """HDR→SDR methods this ffmpeg supports, best first. 'none' (plain matrix conversion) is always last."""
+    """HDR→SDR methods this ffmpeg supports, best first. 'none' (plain matrix conversion) is always last.
+
+    - "zscale": zimg linearize → BT.709 gamut → hable tonemap → BT.709 (the Docker image's ffmpeg 7.1).
+    - "lut3d": the same conversion baked into a 3D LUT (`hdr_lut_file`) for ffmpeg's built-in lut3d
+      filter; for builds without zscale (Homebrew ffmpeg 9). Matches zscale within ~2/255 on real
+      HLG footage.
+    - "swscale": newer swscale color management with perceptual intent (ffmpeg >= 8): a last resort,
+      ~10% brighter than the reference. Never relative colorimetric: that clips everything above
+      HLG/PQ reference white and washes the picture out.
+    """
     methods: list[str] = []
+    filters = ffmpeg_filters()
+    if {"zscale", "tonemap"} <= filters:
+        methods.append("zscale")
+    if "lut3d" in filters:
+        methods.append("lut3d")
     if scale_has_color_management():
         methods.append("swscale")
-    if {"zscale", "tonemap"} <= ffmpeg_filters():
-        methods.append("zscale")
     methods.append("none")
     return methods
+
+
+# --------------------------------------------------------------------------- HDR → SDR math
+#
+# One reference conversion for every path, measured against zscale (Docker) and Apple's AVFoundation
+# decode of the same Ray-Ban Meta HLG frames (DECISIONS.md, COLOR-FIX):
+#   decode (BT.2020 non-constant-luminance matrix, source range) → HDR RGB signal
+#   → display light: HLG inverse OETF + OOTF (gamma 1.2 per channel, 1000 nit peak) | PQ EOTF; 1.0 = 203 nits
+#     (BT.2408 HDR reference white, zscale npl=203)
+#   → BT.2020 → BT.709 primaries (linear) → hable on max(R,G,B), normalized at peak 10 (ffmpeg tonemap)
+#   → BT.1886 inverse EOTF (gamma 1/2.4, what zimg's "bt709" means for display light) → BT.709 limited.
+
+HDR_REFERENCE_WHITE_NITS = 203.0
+HDR_TONEMAP_PEAK = 10.0
+HLG_PEAK_NITS = 1000.0
+LUT_SIZE = 65
+LUT_VERSION = 2  # bump when the math below changes (LUT files are cached by content hash anyway)
+_HLG_A, _HLG_B, _HLG_C = 0.17883277, 0.28466892, 0.55991073
+_BT2020_TO_BT709 = (
+    (1.6604910021, -0.5876411388, -0.0728498633),
+    (-0.1245504745, 1.1328998971, -0.0083494226),
+    (-0.0181507634, -0.1005788980, 1.1187296614),
+)
+
+
+def hdr_kind(transfer: str | None, primaries: str | None) -> str | None:
+    """'hlg' | 'pq' | 'wcg' (BT.2020 primaries, SDR transfer) | None (plain SDR)."""
+    if transfer == "arib-std-b67":
+        return "hlg"
+    if transfer == "smpte2084":
+        return "pq"
+    if primaries in HDR_PRIMARIES:
+        return "wcg"
+    return None
+
+
+def _hable(x):
+    a, b, c, d, e, f = 0.15, 0.50, 0.10, 0.20, 0.02, 0.30
+    return (x * (x * a + b * c) + d * e) / (x * (x * a + b) + d * f) - e / f
+
+
+def hdr_to_sdr_rgb(rgb, kind: str, *, bt2020_primaries: bool = True):
+    """Reference HDR → SDR conversion of non-linear RGB signal values in [0, 1] (array [..., 3]).
+
+    Returns BT.709 / BT.1886 non-linear RGB in [0, 1]. `kind` is 'hlg', 'pq' or 'wcg' (`hdr_kind`).
+    """
+    import numpy as np
+
+    x = np.clip(np.asarray(rgb, dtype=np.float64), 0.0, 1.0)
+    if kind == "hlg":
+        scene = np.where(x <= 0.5, x * x / 3.0, (np.exp((x - _HLG_C) / _HLG_A) + _HLG_B) / 12.0)
+        # OOTF gamma 1.2 per channel, as zimg (zscale) applies it, so Mac and Docker outputs match; BT.2100's
+        # luminance-based OOTF is ~1-2 chroma levels less saturated and no closer to Apple's decode.
+        light = np.power(scene, 1.2) * (HLG_PEAK_NITS / HDR_REFERENCE_WHITE_NITS)
+    elif kind == "pq":
+        m1, m2 = 2610 / 16384, 2523 / 4096 * 128
+        c1, c2, c3 = 3424 / 4096, 2413 / 4096 * 32, 2392 / 4096 * 32
+        p = np.power(x, 1 / m2)
+        light = np.power(np.maximum(p - c1, 0.0) / (c2 - c3 * p), 1 / m1) * (10000.0 / HDR_REFERENCE_WHITE_NITS)
+    elif kind == "wcg":
+        light = np.power(x, 2.4)
+    else:
+        raise ValueError(f"unknown HDR kind {kind!r}; expected hlg, pq or wcg")
+    if bt2020_primaries:
+        light = np.maximum(light @ np.array(_BT2020_TO_BT709).T, 0.0)
+    if kind != "wcg":
+        sig = np.maximum(light.max(axis=-1), 1e-6)
+        light = light * (_hable(sig) / _hable(HDR_TONEMAP_PEAK) / sig)[..., None]
+    return np.power(np.clip(light, 0.0, 1.0), 1 / 2.4)
+
+
+def _safe_filter_path(path: Path) -> bool:
+    """True when `path` can go into an ffmpeg filter argument without escaping."""
+    return all(ch.isalnum() or ch in "/._-" for ch in str(path))
+
+
+def hdr_lut_file(kind: str, *, bt2020_primaries: bool = True, size: int = LUT_SIZE) -> Path:
+    """A .cube 3D LUT of `hdr_to_sdr_rgb` for ffmpeg's lut3d filter, written once to the temp dir."""
+    import hashlib
+    import tempfile
+
+    import numpy as np
+
+    tag = f"v{LUT_VERSION}-{kind}-{'2020' if bt2020_primaries else '709'}-{size}"
+    tag += f"-{HDR_REFERENCE_WHITE_NITS:g}-{HDR_TONEMAP_PEAK:g}-{HLG_PEAK_NITS:g}"
+    digest = hashlib.sha256(tag.encode()).hexdigest()[:12]
+    base = Path(os.environ.get("PUNCHWALK_LUT_DIR") or Path(tempfile.gettempdir()) / "punchwalk-luts")
+    path = base / f"hdr_to_sdr_{kind}_{digest}.cube"
+    if not _safe_filter_path(path):
+        raise MediaError(f"LUT path {path} has characters ffmpeg filters can't take; set PUNCHWALK_LUT_DIR")
+    if path.is_file() and path.stat().st_size > 0:
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    v = np.linspace(0.0, 1.0, size)
+    b, g, r = np.meshgrid(v, v, v, indexing="ij")  # .cube order: red changes fastest
+    out = hdr_to_sdr_rgb(np.stack([r, g, b], axis=-1).reshape(-1, 3), kind, bt2020_primaries=bt2020_primaries)
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    with open(tmp, "w") as fh:
+        fh.write(f"# punchwalk HDR->SDR {tag}\nLUT_3D_SIZE {size}\n")
+        np.savetxt(fh, out, fmt="%.6f")
+    os.replace(tmp, path)
+    return path
 
 
 # --------------------------------------------------------------------------- running commands

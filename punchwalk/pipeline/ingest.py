@@ -3,8 +3,8 @@
 Steps (PLAN 0.5):
   1. Normalize each clip: apply rotation (ffmpeg autorotates; portrait stays portrait), fit to the canvas
      (short side ≤ 1080, even dims, never letterboxed), constant frame rate capped at 30 fps (higher rates,
-     e.g. 120 fps glasses footage, are decimated by the fps filter), yuv420p, best-effort
-     HDR→SDR, an audio track (silent if the clip has none). Each clip is trimmed to a frame count that
+     e.g. 120 fps glasses footage, are decimated by the fps filter), yuv420p, HDR→SDR
+     (HLG/PQ tonemapped to BT.709, see `_hdr_chain`), an audio track (silent if the clip has none). Each clip is trimmed to a frame count that
      is a whole number of tenths of a second (a multiple of fps / gcd(fps, 10) frames), so part
      boundaries fall exactly on SAM frames at any frame rate.
   2. Mixed clips: if ANY clip is portrait the canvas is portrait, sized from the first portrait clip
@@ -46,7 +46,10 @@ from punchwalk.pipeline.media import ClipInfo, MediaError
 log = logging.getLogger(__name__)
 
 # Bump when output settings change, so existing outputs are rebuilt instead of skipped.
-INGEST_VERSION = 3  # 3: display.mp4 capped at 30 fps (glasses record 120 fps)
+# 3: display.mp4 capped at 30 fps (glasses record 120 fps)
+# 4: HDR→SDR tonemaps to BT.2408 reference white (zscale npl=203 / lut3d); the old swscale relative
+#    colorimetric path clipped everything above reference white and washed HLG footage out
+INGEST_VERSION = 4
 
 DISPLAY_MAX_SHORT_SIDE = 1080
 SAM_SHORT_SIDE = 720
@@ -59,6 +62,7 @@ SAM_MAX_FRAMES = 15000
 CANVAS_POLICY = "portrait_if_any_fit_pad"
 # Tag frames as BT.709 SDR; ffmpeg ≥ 7 takes color tags from the frames, not only the encoder flags.
 SDR_SETPARAMS = "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv"
+HDR_METHODS = ("zscale", "lut3d", "swscale", "none")  # media.hdr_methods_available() order
 ASPECT_TOLERANCE = 0.01  # aspect ratios this close count as equal: scale, don't pad
 
 DISPLAY_NAME = "display.mp4"
@@ -138,7 +142,7 @@ class IngestMeta(BaseModel):
     clips: list[ClipMeta]
     hdr_detected: bool
     hdr_tonemapped: bool  # True only when every HDR clip went through a real tonemap/transfer conversion
-    hdr_method: str | None  # "swscale" | "zscale" | "none" | None (no HDR clips)
+    hdr_method: str | None  # "zscale" | "lut3d" | "swscale" | "none" | None (no HDR clips)
     canvas_policy: str = CANVAS_POLICY
     warnings: list[str] = Field(default_factory=list)
     input_fingerprint: str
@@ -237,7 +241,7 @@ def ingest(
 ) -> IngestMeta:
     """Normalize + concatenate `clips` (in order) into `out_dir`. Idempotent unless `force`.
 
-    `hdr_method` forces an HDR→SDR method ("swscale" | "zscale" | "none"); by default the best one this
+    `hdr_method` forces an HDR→SDR method (see HDR_METHODS); by default the best one this
     ffmpeg supports is used, falling through to the next one if it fails.
     """
     clips = [Path(c) for c in clips]
@@ -366,7 +370,7 @@ def _run_ingest(clips: list[Path], out_dir: Path, fingerprint: str, hdr_method: 
     hdr_tonemapped = hdr_detected and bool(used_methods) and all(m != "none" for m in used_methods)
     if hdr_detected and not hdr_tonemapped:
         warnings.append(
-            "HDR input was converted without a tonemap (no usable swscale/zscale path); colors may look flat"
+            "HDR input was converted without a tonemap (no usable zscale/lut3d/swscale path); colors may look flat"
         )
 
     shutil.rmtree(work, ignore_errors=True)
@@ -403,8 +407,8 @@ def _hdr_methods(forced: str | None) -> list[str]:
     available = media.hdr_methods_available()
     if forced is None:
         return available
-    if forced not in ("swscale", "zscale", "none"):
-        raise IngestError(f"unknown hdr_method {forced!r}; use swscale, zscale or none")
+    if forced not in HDR_METHODS:
+        raise IngestError(f"unknown hdr_method {forced!r}; use one of {', '.join(HDR_METHODS)}")
     if forced not in available:
         raise IngestError(f"hdr_method {forced!r} is not supported by this ffmpeg (available: {available})")
     return [forced]
@@ -443,32 +447,55 @@ def _fit_to_canvas(info: ClipInfo, canvas_w: int, canvas_h: int) -> tuple[int, i
     return fit_w, fit_h, True
 
 
+def _hdr_chain(info: ClipInfo, method: str, fit_w: int, fit_h: int) -> list[str]:
+    """Resize + HDR→SDR (BT.709, limited range) for one HDR or wide-gamut clip.
+
+    All methods implement one reference conversion (`media.hdr_to_sdr_rgb`): HLG/PQ → display light with
+    BT.2408 reference white (203 nits) at 1.0 → BT.709 primaries → hable → BT.1886. Resizing comes first
+    (in the source's signal domain), so the float conversion runs at the output size.
+    """
+    kind = media.hdr_kind(info.color_transfer, info.color_primaries) or "wcg"
+    resize = f"scale={fit_w}:{fit_h}:flags=bicubic"
+    if method == "zscale":
+        if kind == "wcg":
+            body = ["zscale=t=linear", "format=gbrpf32le", "zscale=p=bt709"]
+        else:
+            body = [
+                f"zscale=t=linear:npl={media.HDR_REFERENCE_WHITE_NITS:g}",
+                "format=gbrpf32le",
+                "zscale=p=bt709",
+                f"tonemap=tonemap=hable:desat=0:peak={media.HDR_TONEMAP_PEAK:g}",
+            ]
+        return [resize, *body, "zscale=t=bt709:m=bt709:r=tv", "format=yuv420p"]
+    if method == "lut3d":
+        lut = media.hdr_lut_file(kind, bt2020_primaries=(info.color_primaries or "bt2020") == "bt2020")
+        matrix = "bt709" if info.color_space == "bt709" else "bt2020"
+        in_range = {"pc": "full", "tv": "limited"}.get(info.color_range or "", "auto")
+        return [
+            # decode to full-range RGB once (range handled here only), map, re-encode limited BT.709
+            f"{resize}:in_color_matrix={matrix}:in_range={in_range}:out_range=full",
+            "format=rgb48le",
+            f"lut3d=file={lut}:interp=tetrahedral",
+            "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=pc",
+            "scale=out_color_matrix=bt709:out_range=tv",
+            "format=yuv420p",  # convert here, with these settings, not in an auto-inserted scaler
+        ]
+    if method == "swscale":
+        return [
+            resize,
+            "scale=out_transfer=bt709:out_primaries=bt709:out_color_matrix=bt709:out_range=tv:intent=perceptual",
+        ]
+    return [f"{resize}:out_color_matrix=bt709:out_range=tv"]
+
+
 def _video_filter(
     info: ClipInfo, canvas_w: int, canvas_h: int, fps: int, method: str | None
 ) -> tuple[str, bool]:
     fit_w, fit_h, padded = _fit_to_canvas(info, canvas_w, canvas_h)
-    sdr_out = "out_color_matrix=bt709:out_range=tv"
-    chain: list[str] = []
-    if method == "swscale":
-        # newer swscale: color-managed transfer + gamut conversion (relative colorimetric):
-        # SDR-range midtones come out accurate, highlights above SDR white clip. Resize first so the
-        # (slow, float) color conversion runs at the output size.
-        chain += [
-            f"scale={fit_w}:{fit_h}:flags=bicubic",
-            f"scale=out_transfer=bt709:out_primaries=bt709:{sdr_out}",
-        ]
-    elif method == "zscale":
-        chain += [
-            "zscale=t=linear:npl=100",
-            "format=gbrpf32le",
-            "zscale=p=bt709",
-            "tonemap=tonemap=hable:desat=0",
-            "zscale=t=bt709:m=bt709:r=tv",
-            "format=yuv420p",
-            f"scale={fit_w}:{fit_h}:flags=bicubic",
-        ]
+    if method is None:  # SDR source: resize + matrix only, colors untouched
+        chain = [f"scale={fit_w}:{fit_h}:flags=bicubic:out_color_matrix=bt709:out_range=tv"]
     else:
-        chain.append(f"scale={fit_w}:{fit_h}:flags=bicubic:{sdr_out}")
+        chain = _hdr_chain(info, method, fit_w, fit_h)
     if padded:
         chain.append(f"pad={canvas_w}:{canvas_h}:(ow-iw)/2:(oh-ih)/2:color=black")
     chain += [
@@ -811,7 +838,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("clips", nargs="+", type=Path, help="clip files, in walk order")
     parser.add_argument("--out", required=True, type=Path, help="output directory")
     parser.add_argument("--force", action="store_true", help="re-encode even if outputs are up to date")
-    parser.add_argument("--hdr-method", choices=["swscale", "zscale", "none"], default=None)
+    parser.add_argument("--hdr-method", choices=list(HDR_METHODS), default=None)
     parser.add_argument("-q", "--quiet", action="store_true", help="only print the summary")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.WARNING if args.quiet else logging.INFO, format="%(message)s")
