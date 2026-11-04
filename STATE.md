@@ -1,7 +1,7 @@
 # STATE
 
-Status: COMPLETE
-Updated: 2026-11-03 23:48 ET
+Status: RUNNING (demo-critical fix in progress; was COMPLETE at 22:40 Tue)
+Updated: 2026-11-04 00:14 ET
 Current phase: COMPLETE — 51/51 PLAN boxes `[x]`, all verified; live demo at https://punchwalk.fly.dev with the seeded project (live smoke test PASS).
 Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9.4, 54 tags); nothing untagged.
 
@@ -13,7 +13,7 @@ Last checkpoint: ckpt-9.1 (final). Every subphase is tagged (ckpt-0.1 … ckpt-9
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
-| none — build complete | | | | |
+| COLOR-FIX: HLG/BT.2020 glasses footage comes out washed out in display.mp4/evidence; fix ingest tonemap + regenerate demo display assets only (no model calls, sam.mp4 untouched) | builder (fresh) | 00:14 | punchwalk/pipeline/ingest.py, media.py, punchwalk/render/**, scripts/rerender_display.py (new), tests, data/walks/wlk_demo_* (assets), demo/seed_snapshot.tar.gz | human reported at 00:10 Wed; freeze is 12:00 |
 
 ## Needs human
 - Demo data on Fly: DONE — live smoke test PASS (22:29 ET): every demo beat works on the iPhone profile, 0 console errors. The processing screen's cost line reads "about $0.00" until you redeploy (the fix is in the repo).
