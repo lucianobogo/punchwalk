@@ -46,11 +46,15 @@ describe('mock adapter (fixtures/mock_api)', () => {
   it('records a dispatch and marks the items sent', async () => {
     const { api } = diskMock();
     const preview = await api.dispatchPreview('prj_unit2b', 'electrical');
-    const out = await api.dispatch('prj_unit2b', 'electrical', { channel: 'slack', item_ids: preview.item_ids });
+    // Electrical has nothing new to send; send its already-sent items again.
+    const ids = preview.already_sent.map((a) => a.item_id);
+    expect(ids.length).toBeGreaterThan(0);
+    const out = await api.dispatch('prj_unit2b', 'electrical', { channel: 'slack', item_ids: ids });
     expect(out.company).toBe('Ace Electric');
+    expect(out.summary).toBe(`Posted ${ids.length} items to #punch-electrical`);
     const history = await api.dispatches('prj_unit2b', 'electrical');
     expect(history.dispatches[0].id).toBe(out.id);
-    const item = await api.item(preview.item_ids[0]);
+    const item = await api.item(ids[0]);
     expect(item.dispatch?.dispatch_id).toBe(out.id);
   });
 

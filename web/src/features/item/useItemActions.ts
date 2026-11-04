@@ -39,14 +39,15 @@ export function useItemActions(item: ItemOut | undefined, contact: TradeContactO
     const who = recipient(item, contact);
     try {
       // One call on the server for approve + send, so an item is never left approved but unsent.
-      if (approveFirst) await approve.mutateAsync({ itemId: item.id, channel: pickChannel(contact) });
-      else
-        await send.mutateAsync({
-          projectId: item.project_id,
-          trade: item.trade,
-          body: { channel: pickChannel(contact), item_ids: [item.id] },
-        });
-      toast.show(`Sent item ${item.number} to ${who}`);
+      // The confirmation says where it went, in the API's words ("Posted 1 item to Slack").
+      const out = approveFirst
+        ? await approve.mutateAsync({ itemId: item.id })
+        : await send.mutateAsync({
+            projectId: item.project_id,
+            trade: item.trade,
+            body: { channel: pickChannel(contact), item_ids: [item.id] },
+          });
+      toast.show(out.summary ? `${out.summary}.${approveFirst ? ` Item ${item.number} approved.` : ''}` : `Sent item ${item.number} to ${who}`);
     } catch (e) {
       toast.show(errorText(e), { tone: 'error' });
     }

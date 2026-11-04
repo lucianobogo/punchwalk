@@ -197,16 +197,29 @@ Then a checklist card fills in live. Each step has a status icon (check, progres
 
 Below the checklist, an "Items so far" strip of thumbnails with their tabs, and the line "You can leave this screen. Items appear on the punch list as they're written." When it finishes: "12 items ready" and an "Open punch list" button.
 
-### Trades, `06-send-to-trade.png`
+### Trades
 
-- **List:** each trade with its company name and open count.
+The render `06-send-to-trade.png` predates this section; where they differ, this section wins.
+
+- **One vocabulary per trade** (signed-off items aren't counted anywhere on these screens):
+  - **To review**: items that need a look before they can go out. Amber (Hold).
+  - **To send**: open items never sent to this trade. Blue (Tape tint chip, Tape ink text).
+  - **Sent**: open items already sent on any channel, including a copied link. Muted (Pencil).
+- **The effective channel** is the one a send will use, and the app names it everywhere (list row, the default in the picker, the button, history, the Approve-and-send confirmation): the trade's own channel if it's set up and working, else the team's Slack channel if the team webhook is set, else Copy link. Only working channels are offered; a channel that can't be used isn't shown, not even grayed out.
+- **List:**
+  - each row: the company (or the trade name and "No company yet"), the trade in plain words, chips "1 to review" (amber) and "2 to send" (blue), a muted "3 sent", and one line naming the channel: "Posts to #punch-electrical." / "Posts to your team's Slack channel." / "Emails maria.chen@example.com." / "Copy a link to share." (the API's `effective_channel_label`)
+  - no count badge: the chips are the counts
+  - trades with nothing to review or send go under an "All caught up" section header, below the rest
 - **Trade screen:**
-  - the company name, then "Electrical. 3 open items."
-  - a channel segmented control: Slack, Email, Copy link
-  - "Message to #channel", and the message preview exactly as it will be sent: a bold first line, then each item with its tape tab, title, one line of location plus action, and a "View item and video" link
-  - the primary button "Send 3 items to Ace Electric"
-  - sent history ("Nothing sent to Ace Electric yet.")
-- After sending, a toast: "Sent 3 items to Ace Electric".
+  - the company name, then the counts as a sentence: "1 to review, 2 to send, 3 sent." (or "All caught up.")
+  - if anything is to review: an amber row "1 item needs your review before it can go out" that opens the item (with more than one, it lists them, each opening its item)
+  - a channel segmented control only when more than one working channel exists; otherwise the channel line alone ("Posts to #punch-electrical.")
+  - the message preview exactly as it will be sent: a bold first line, then each To send item with its tape tab, title, one line of location plus action, and a "View item and video" link; each item checked by default
+  - "Already sent": the items already sent, each with when and where ("Sent Nov 3 at 7:41 PM, Slack"), unchecked; checking one sends it again
+  - the primary button names the outcome: "Post 2 items to Slack" / "Email 2 items to Brightline Painting" / "Copy a link for 2 items"
+  - history: what happened, with date and time ("Posted 2 items to #punch-electrical", "Emailed 2 items to Brightline Painting", "Copied a link for 3 items"; the API's `summary`); "Nothing sent to Ace Electric yet." when empty
+- After sending, a toast with the same sentence ("Posted 2 items to #punch-electrical").
+- **Approve and send** (item detail) confirms where it went with the same sentence.
 
 ### Re-walk summary, `07-rewalk-summary.png`
 
@@ -244,7 +257,8 @@ Below the checklist, an "Items so far" strip of thumbnails with their tabs, and 
 
 - **Statuses:** Open, Needs a look, Signed off. **Severities:** Cosmetic, Functional, Safety.
 - **Trades:** Electrical, Plumbing, Drywall, Painting, Carpentry & millwork, Doors & hardware, Flooring, Windows & glazing, HVAC, Appliances, Cleaning, General.
-- **Buttons say what happens:** "Play this moment", "Send 3 items to Ace Electric", "Upload walk", "Sign off", "Approve and send to Ace Electric".
+- **Buttons say what happens:** "Play this moment", "Post 2 items to Slack", "Email 2 items to Brightline Painting", "Copy a link for 2 items", "Upload walk", "Sign off", "Approve and send to Ace Electric".
+- **Sending:** To review, To send, Sent (see "Trades"). Channels are named by what they do: "Posts to #punch-electrical.", "Posts to your team's Slack channel.", "Emails maria.chen@example.com.", "Copy a link to share." Never "Outbox". History and toasts say what happened: "Posted 2 items to #punch-electrical", "Emailed 2 items to Brightline Painting", "Copied a link for 3 items".
 - **Errors say what happened and what to do, without apologizing.** For example: "This walk is longer than 10 minutes. Split it into parts and upload them together."
 - No meta strings joined with dots. Write sentences ("Electrical. 3 open items.") or separate elements.
 
@@ -283,7 +297,7 @@ Below the checklist, an "Items so far" strip of thumbnails with their tabs, and 
 5. Walks list (one processing, one ready)
 6. Walk detail mid-play while pointing (hand outline + number tab at the fingertip), with the new-item card over the video; and scrolled, with the mini-player
 7. Record: clips added; processing checklist mid-run; done
-8. Trades list; trade screen with message preview; sent toast
+8. Trades list (with an "All caught up" group); trade screen with items to review; trade screen with only items to send; the sent toast
 9. Re-walk summary
 10. How this walk was processed
 11. Landing page at 1440 × 900 (phone frame + QR) and at 393 × 852

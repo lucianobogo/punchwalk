@@ -247,31 +247,47 @@ export const SCREENS: Screen[] = [
     path: '/record?walk=wlk_3a_first&mock_progress=8',
   },
   // 8. Trades
-  { name: 'trades-list', checklist: '8. Trades list', path: '/trades' },
+  {
+    name: 'trades-list',
+    checklist: '8. Trades list, with an "All caught up" group',
+    path: '/trades',
+    setup: async (page) => {
+      await page.getByRole('heading', { name: 'All caught up' }).waitFor({ timeout: 3000 });
+    },
+  },
   {
     name: 'trade-preview',
-    checklist: '8. Trade screen with message preview',
+    checklist: '8. Trade screen: Ace Electric (Slack), nothing new to send, Already sent, channel picker',
     path: '/trades/electrical',
     render: '06-send-to-trade.png',
     setup: async (page) => {
-      await page.getByText(/^Message to /).waitFor({ timeout: 3000 });
+      await page.getByRole('heading', { name: 'Already sent' }).waitFor({ timeout: 3000 });
+    },
+  },
+  {
+    name: 'trade-to-review',
+    checklist: '8. Trade screen with an item to review (amber row opens it)',
+    path: '/trades/general',
+    setup: async (page) => {
+      await page.getByText(/needs your review before it can go out/).waitFor({ timeout: 3000 });
+    },
+  },
+  {
+    name: 'trade-to-send',
+    checklist: '8. Trade screen with only items to send (one working channel: Copy link, no picker)',
+    path: '/trades/windows_glazing',
+    setup: async (page) => {
+      await page.getByRole('button', { name: /^Copy a link for \d+ items?$/ }).waitFor({ timeout: 3000 });
     },
   },
   {
     name: 'trade-sent-toast',
-    checklist: '8. Sent toast',
+    checklist: '8. Sent toast ("Posted 1 item to #punch-electrical") and the history row',
     path: '/trades/electrical',
     setup: async (page) => {
-      await tapButton(page, /^Send \d+ items? to/);
-      await page.getByRole('status').filter({ hasText: /^Sent/ }).first().waitFor({ timeout: 3000 });
-    },
-  },
-  {
-    name: 'trade-outbox',
-    checklist: '8. Trade with no channel: goes to the Outbox, ready to share',
-    path: '/trades/windows_glazing',
-    setup: async (page) => {
-      await page.getByText(/goes to the Outbox/).waitFor({ timeout: 3000 });
+      await page.getByRole('checkbox', { name: /^Send item \d+ again$/ }).first().check();
+      await tapButton(page, /^Post \d+ items? to Slack$/);
+      await page.getByRole('status').filter({ hasText: /^Posted \d+ items? to / }).first().waitFor({ timeout: 3000 });
     },
   },
   // 9. Re-walk summary

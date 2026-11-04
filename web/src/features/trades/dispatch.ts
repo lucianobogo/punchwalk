@@ -1,72 +1,81 @@
-// Sending a trade its list: which channels it can use and why, what the button says, and the request.
+// Sending a trade its list (DESIGN.md "Trades"): one vocabulary (To review, To send, Sent), the effective
+// channel named by what it does, and buttons and history that say what happens or happened.
 // The message itself is rendered by the API (DispatchPreviewOut); the UI shows it exactly as sent.
 import {
   CHANNEL_LABEL,
   TRADE_LABEL,
   type Channel,
+  type DispatchChannelOut,
   type DispatchCreate,
   type DispatchOut,
   type DispatchPreviewOut,
   type Trade,
+  type TradeContactOut,
 } from '../../api/types';
 import { plural } from '../../lib/labels';
 
-/** The request: channel and item ids are both required, in the preview's order. */
-export function buildDispatch(channel: Channel, preview: Pick<DispatchPreviewOut, 'item_ids'>, excluded: Set<string> = new Set()): DispatchCreate {
-  return { channel, item_ids: preview.item_ids.filter((id) => !excluded.has(id)) };
+/** The request: channel and item ids are both required. To-send items first (preview order), then re-sends. */
+export function buildDispatch(channel: Channel, toSend: string[], excluded: Set<string>, resend: Set<string>): DispatchCreate {
+  return { channel, item_ids: [...toSend.filter((id) => !excluded.has(id)), ...[...resend].filter((id) => !toSend.includes(id))] };
 }
 
-export interface ChannelOption {
-  value: Channel;
-  label: string;
-  disabled: boolean;
-  /** Why it can't be used ("No email on file for Clearview Glass."). */
-  reason: string | null;
-  destination: string | null;
+/** "1 to review, 2 to send, 3 sent." or "All caught up." (zeros left out; sentences, not dot-joined meta). */
+export function countsSentence(c: { to_review: number; to_send: number; sent: number }): string {
+  const parts = [c.to_review && `${c.to_review} to review`, c.to_send && `${c.to_send} to send`, c.sent && `${c.sent} sent`].filter(Boolean);
+  if (!c.to_review && !c.to_send) return c.sent ? `All caught up. ${c.sent} sent.` : 'All caught up.';
+  return `${parts.join(', ')}.`;
 }
 
-const ORDER: Channel[] = ['slack', 'email', 'outbox'];
-
-export function channelOptions(preview: Pick<DispatchPreviewOut, 'channels'>): ChannelOption[] {
-  return ORDER.map((c) => {
-    const ch = preview.channels.find((x) => x.channel === c);
-    return {
-      value: c,
-      label: CHANNEL_LABEL[c],
-      disabled: !ch?.available,
-      reason: ch?.reason ?? null,
-      destination: ch?.destination ?? null,
-    };
-  });
+/** Where a channel goes, as the API words it ("Posts to #punch-electrical."); a fallback if it didn't. */
+export function channelLine(ch: Pick<DispatchChannelOut, 'channel' | 'destination'> & { label?: string | null }): string {
+  if (ch.label) return ch.label;
+  if (ch.channel === 'slack') return ch.destination ? `Posts to ${ch.destination}.` : 'Posts to your team’s Slack channel.';
+  if (ch.channel === 'email') return ch.destination ? `Emails ${ch.destination}.` : 'Emails the trade.';
+  return 'Copy a link to share.';
 }
 
-/** "Message to #punch-electrical" / "Email to maria.chen@example.com" / "Message to copy and share". */
-export function destinationLine(channel: Channel, destination: string | null): string {
-  if (channel === 'slack') return `Message to ${destination ?? 'Slack'}`;
-  if (channel === 'email') return `Email to ${destination ?? 'the trade'}`;
-  return 'Message to copy and share';
+/** Which channel a send uses, per DESIGN.md: the trade's own if set up, else the team's Slack, else Copy link. */
+export function effectiveChannelFor(contact: TradeContactOut | null | undefined, teamSlack = false): { channel: Channel; label: string } {
+  if (contact?.has_slack_webhook) return { channel: 'slack', label: channelLine({ channel: 'slack', destination: contact.slack_channel }) };
+  if (contact?.email) return { channel: 'email', label: channelLine({ channel: 'email', destination: contact.email }) };
+  if (teamSlack) return { channel: 'slack', label: 'Posts to your team’s Slack channel.' };
+  return { channel: 'outbox', label: channelLine({ channel: 'outbox', destination: null }) };
 }
 
-/** The sentence under the channel picker: the API's reason for the default, else where it goes. */
-export function channelNote(preview: Pick<DispatchPreviewOut, 'channel' | 'channel_reason'>, chosen: ChannelOption): string | null {
-  if (chosen.value === preview.channel && preview.channel_reason) return preview.channel_reason;
-  if (chosen.value === 'outbox') return 'It’s saved in the Outbox, and the message is copied so you can paste it anywhere.';
-  if (chosen.destination) return `Goes to ${chosen.destination}.`;
-  return null;
+/** The picker: working channels only, the effective one first. Shown only when there's a choice. */
+export function channelChoices(preview: Pick<DispatchPreviewOut, 'channels' | 'effective_channel'>): { value: Channel; label: string; line: string }[] {
+  const working = preview.channels.filter((c) => c.available !== false);
+  working.sort((a, b) => Number(b.channel === preview.effective_channel) - Number(a.channel === preview.effective_channel));
+  return working.map((c) => ({ value: c.channel, label: CHANNEL_LABEL[c.channel], line: channelLine(c) }));
 }
 
-/** Button words: "Send 3 items to Ace Electric", or for the Outbox "Copy 1 item for Clearview Glass". */
+/** The button names the outcome: "Post 2 items to Slack" / "Email 2 items to Brightline Painting" / "Copy a link for 2 items". */
 export function sendButtonLabel(channel: Channel, count: number, company: string): string {
-  return channel === 'outbox' ? `Copy ${plural(count, 'item')} for ${company}` : `Send ${plural(count, 'item')} to ${company}`;
+  const n = plural(count, 'item');
+  if (channel === 'slack') return `Post ${n} to Slack`;
+  if (channel === 'email') return `Email ${n} to ${company}`;
+  return `Copy a link for ${n}`;
 }
 
-/** Toast words: "Sent 3 items to Ace Electric in Slack". */
-export function sentToast(d: Pick<DispatchOut, 'channel' | 'item_ids' | 'company' | 'trade'>, copied = false): string {
-  const who = d.company ?? TRADE_LABEL[d.trade];
+/** What happened ("Posted 2 items to Slack"): the API's summary, or the same words built here. */
+export function sentSummary(
+  d: Pick<DispatchOut, 'channel' | 'item_ids' | 'company' | 'trade'> & { summary?: string | null; destination?: string | null },
+): string {
+  if (d.summary) return d.summary;
   const n = plural(d.item_ids.length, 'item');
-  if (d.channel === 'slack') return `Sent ${n} to ${who} in Slack`;
-  if (d.channel === 'email') return `Sent ${n} to ${who} by email`;
-  return copied ? `Copied ${n} for ${who}. It’s in the Outbox too.` : `Saved ${n} for ${who} in the Outbox`;
+  if (d.channel === 'slack') return `Posted ${n} to ${d.destination?.startsWith('#') ? d.destination : 'Slack'}`;
+  if (d.channel === 'email') return `Emailed ${n} to ${d.company ?? TRADE_LABEL[d.trade]}`;
+  return `Copied a link for ${n}`;
+}
+
+/** "Sent Nov 3 at 7:41 PM, Slack" for an item in "Already sent". */
+export function sentWhere(channel: Channel, when: string): string {
+  return `Sent ${when}, ${CHANNEL_LABEL[channel]}`;
+}
+
+/** The amber row: "1 item needs your review before it can go out". */
+export function reviewLine(n: number): string {
+  return `${plural(n, 'item')} ${n === 1 ? 'needs' : 'need'} your review before ${n === 1 ? 'it' : 'they'} can go out`;
 }
 
 /**
@@ -80,7 +89,7 @@ export function headingFor(heading: string, count: number, trade: Trade, total: 
   return `${m[1]}: ${count} ${m[2] || TRADE_LABEL[trade].toLowerCase()} ${count === 1 ? 'item' : 'items'}`;
 }
 
-/** The text of a sent message, for the Outbox's copy button. */
+/** The text of a sent message, for the history's copy button. */
 export function dispatchText(d: Pick<DispatchOut, 'payload'>): string | null {
   const p = d.payload as Record<string, unknown>;
   for (const k of ['text', 'message_text', 'body']) if (typeof p[k] === 'string') return p[k] as string;

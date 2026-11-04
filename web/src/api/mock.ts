@@ -20,7 +20,10 @@
 import { ApiError, OFFLINE_MESSAGE, type Api } from './api';
 import { applyFilters, countItems } from './filters';
 import {
+  CHANNEL_LABEL,
   TRADE_LABEL,
+  type Channel,
+  type TradeContactOut,
   type DispatchListOut,
   type DispatchOut,
   type DispatchPreviewOut,
@@ -47,6 +50,28 @@ import {
 } from './types';
 
 export const MOCK_BASE = '/mock-api/';
+
+/** "Posts to #punch-electrical." / "Emails maria.chen@example.com." / "Copy a link to share." */
+function channelLabelLine(channel: Channel, destination: string | null): string {
+  if (channel === 'slack') return destination ? `Posts to ${destination}.` : 'Posts to your team’s Slack channel.';
+  if (channel === 'email') return destination ? `Emails ${destination}.` : 'Emails the trade.';
+  return 'Copy a link to share.';
+}
+
+/** The effective channel when the fixtures don't carry it: the trade's own channel, else Copy link. */
+function effective(contact: TradeContactOut | null): { effective_channel: Channel; effective_channel_label: string } {
+  if (contact?.has_slack_webhook) return { effective_channel: 'slack', effective_channel_label: channelLabelLine('slack', contact.slack_channel) };
+  if (contact?.email) return { effective_channel: 'email', effective_channel_label: channelLabelLine('email', contact.email) };
+  return { effective_channel: 'outbox', effective_channel_label: channelLabelLine('outbox', null) };
+}
+
+/** What happened, in the API's words: "Posted 2 items to Slack" / "Emailed 2 items to X" / "Copied a link for 3 items". */
+function summaryFor(channel: Channel, n: number, company: string, destination: string | null): string {
+  const items = `${n} ${n === 1 ? 'item' : 'items'}`;
+  if (channel === 'slack') return `Posted ${items} to ${destination?.startsWith('#') ? destination : 'Slack'}`;
+  if (channel === 'email') return `Emailed ${items} to ${company}`;
+  return `Copied a link for ${items}`;
+}
 
 /** Returns the raw text of a fixture file (path relative to fixtures/mock_api/). */
 export type MockLoader = (file: string) => Promise<string>;
@@ -301,6 +326,13 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
           t.open_count = mine.filter((i) => i.status === 'open' || i.status === 'dispatched').length;
           t.needs_review_count = mine.filter((i) => i.status === 'needs_review').length;
           t.signed_off_count = mine.filter((i) => i.status === 'closed').length;
+          // DESIGN.md "Trades": To review / To send / Sent, recounted from the (patched) items.
+          t.to_review = t.needs_review_count;
+          t.to_send = mine.filter((i) => i.status === 'open').length;
+          t.sent = mine.filter((i) => i.status === 'dispatched').length;
+          t.caught_up = t.to_review === 0 && t.to_send === 0;
+          t.company = t.company ?? t.contact?.company ?? null;
+          if (!t.effective_channel || !t.effective_channel_label) Object.assign(t, effective(t.contact));
           const latest = sent.get(`${id}/${t.trade}`)?.[0];
           if (latest) t.last_sent_at = latest.sent_at;
         }
@@ -311,12 +343,22 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
       answer(async () => {
         const p = await load<DispatchPreviewOut>(`projects/${id}/trades/${trade}/preview.json`);
         const items = await projectItems(id);
-        const sendable = new Set(
-          items.filter((i) => i.trade === trade && (i.status === 'open' || i.status === 'dispatched')).map((i) => i.id),
-        );
+        const mine = items.filter((i) => i.trade === trade);
+        const toSend = new Set(mine.filter((i) => i.status === 'open').map((i) => i.id));
         const before = p.lines.length;
-        p.lines = p.lines.filter((l) => sendable.has(l.item_id));
-        p.item_ids = p.item_ids.filter((x) => sendable.has(x));
+        p.lines = p.lines.filter((l) => toSend.has(l.item_id));
+        p.item_ids = p.item_ids.filter((x) => toSend.has(x));
+        p.to_review = mine
+          .filter((i) => i.status === 'needs_review')
+          .map((i) => ({ item_id: i.id, number: i.number, title: i.title }));
+        p.already_sent = mine
+          .filter((i) => i.status === 'dispatched' && i.dispatch)
+          .map((i) => ({ item_id: i.id, number: i.number, title: i.title, sent_at: i.dispatch!.sent_at, channel: i.dispatch!.channel }));
+        if (!p.effective_channel || !p.effective_channel_label) Object.assign(p, effective(p.contact));
+        p.channels = p.channels
+          .filter((c) => c.available)
+          .map((c) => ({ ...c, label: c.label ?? channelLabelLine(c.channel, c.destination) }))
+          .sort((a, b) => Number(b.channel === p.effective_channel) - Number(a.channel === p.effective_channel));
         if (p.lines.length !== before) {
           const project = await load<ProjectOut>(`projects/${id}.json`);
           const n = p.lines.length;
@@ -351,6 +393,8 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
           ok: true,
           error: null,
           payload: { text: body.channel === 'slack' ? preview.slack_text : preview.message_text },
+          channel_label: CHANNEL_LABEL[body.channel],
+          summary: '',
         };
         const key = `${id}/${trade}`;
         const out: DispatchOut = {
@@ -359,6 +403,8 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
           channel: body.channel,
           item_ids: body.item_ids,
           sent_at: nowIso(),
+          channel_label: CHANNEL_LABEL[body.channel],
+          summary: summaryFor(body.channel, body.item_ids.length, company ?? TRADE_LABEL[trade], base.destination),
         };
         sent.set(key, [out, ...(sent.get(key) ?? [])]);
         for (const itemId of body.item_ids) {
@@ -376,7 +422,7 @@ export function createMockApi(loader: MockLoader = fetchLoader, initial: Partial
             },
             history: [
               ...item.history,
-              historyEntry({ action: 'dispatched', note: `Sent to ${out.company ?? TRADE_LABEL[trade]}.` }),
+              historyEntry({ action: 'dispatched', note: `${out.summary}.` }),
             ],
           });
         }
