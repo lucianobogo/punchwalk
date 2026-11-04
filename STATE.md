@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 19:11 ET
+Updated: 2026-11-03 19:40 ET
 Current phase: 3.4 tuning (A) → 7.5 eval → 8.1 real seed + Fly import → 8.3 screenshot audit on real data → 9.2/9.3 final → 9.4 final pass. Everything else is done. Far ahead of the PLAN clock (Phase 8 target was Wed 10:30 AM).
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
@@ -14,7 +14,7 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | Task | Agent | Started (ET) | Paths | Notes |
 |---|---|---|---|---|
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
-| Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
+| 3.4 + 7.5 + 7.x fixes verify (main tree, readonly; needs data/record media) | verifier | 19:40 | read-only | no pipeline edits while this runs |
 
 ## Needs human
 - Deploy: DONE by the human (18:55 ET) — https://punchwalk.fly.dev is live (healthz ok, demo_mode true, PWA served, /mock-api 404). Remaining on the live app: the demo data. After Track A's 3.4 tuning, the orchestrator builds the seed snapshot on this Mac (`scripts/seed.py --reset --export demo/seed_snapshot.tar.gz`); then it must reach Fly — the orchestrator will try `fly ssh sftp` / `fly ssh console` itself; if the permission classifier blocks that, the exact commands appear here (they're also in docs/DEPLOY.md → "Seed").
@@ -28,10 +28,10 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unattended.
 
 ## Health
-- make test: 427 passed + 1 skipped (Pango) Python, 100 web (Track A report 18:45)
-- make eval (19:05, pre-tuning): walk1 recall 1.00 (12/12), precision 1.00, trade 1.00, room 1.00, grounding 11/11, needs-review 3/12 (overexposed/blurry photos); walk2 closure 0.50 (6/12) FAIL, false-claim catch 1.00 (2/2); walk3 pending one classify call
+- make test: 441 passed + 1 skipped (Pango) Python, 101 web (Track A report 19:40; earlier 18:45)
+- make eval (Track A final, 3.4): walk1 recall 1.00, precision 1.00, trade 1.00, room 1.00, grounding 11/11, needs-review 3/12; walk2 closure 0.92 (11/12) PASS, false-claim catch 1.00 (2/2) PASS; holdout walk3 recall/precision/trade/room 1.00 (2/2). ALL PLAN 3.4 TARGETS MET (verification pending)
 - make screenshots: 35/35 strict (verified at 8.4); 8.3 audit pending on real-walk data
-- Live API spend: $1.99 of $25 at 19:02 (3.4 tuning runs in progress)
+- Live API spend: $2.92 of $25 at 19:40 (tuning done)
 - Deploy: LIVE at https://punchwalk.fly.dev (human ran the runbook 18:55 ET); demo project not seeded yet (snapshot after 3.4)
 - Live URL: https://punchwalk.fly.dev
 

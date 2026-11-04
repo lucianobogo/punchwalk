@@ -22,3 +22,4 @@ Ideas and cut items. Nothing here gets built before every PLAN.md box is done.
 - Safari/WebKit plain Tab skips links unless "Press Tab to highlight each item" is on (platform behavior); Option-Tab works.
 - API: StageState.message carries raw exception text on failure (UI filters it); Track A to map it to plain words (queued).
 - UI low: on a phone /landing shows the demo banner even on an empty server (isDemoSession true); only show it when a project is loaded. Optional: a minimal service worker so a hard reload while offline shows the app shell.
+- Walks processed before the overlay fingertip clamp keep an unclamped cached overlay.json until re-run (seed re-runs walks, so the demo data is fine).
