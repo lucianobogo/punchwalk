@@ -97,7 +97,11 @@ V2_MIN_INSIDE_FRAC = 0.6  # reject masks with less than this share of their pixe
 V2_MIN_SOLIDITY = 0.5  # ...or less solid than this (area / convex hull: a C-shaped arc around an object)
 V2_MIN_BBOX_FILL = 0.2  # ...or filling less than this share of their own bbox
 V2_MAX_HAND_OVERLAP = 0.15  # reject masks with more than this share on the tracked hand (track_hands, free)
-V2_HAND_NEAR_FINGER_PX = 30  # hand this close to the fingertip -> no fingertip prompts (they'd segment the finger)  # ...or filling less than this share of their own bbox
+V2_HAND_NEAR_FINGER_PX = 30  # hand this close to the fingertip -> no fingertip prompts (they'd segment the finger)
+# Blank surface: a mask whose inside is flat (gray std below this) and no darker/lighter than the ring around it
+# is plain wall, not a defect (10.4 review: v1's #009/#010 blobs had std 0.6/0.8; correct outlines >= 4.0)
+V2_BLANK_MAX_STD = 2.0
+V2_BLANK_MAX_CONTRAST = 5.0
 # (10.3 dev run: good masks were >= 0.92 inside / 0.86 solid / 0.52 fill; the #011 arc 0.41 / 0.34 / 0.27)
 V2_W_IOU = 0.40  # score weights (renormalised over the terms that apply: no fingertip -> no finger term)
 V2_W_INSIDE = 0.15

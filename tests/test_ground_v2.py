@@ -150,7 +150,9 @@ def test_locate_box_scaled_back_and_concept_cleaned(monkeypatch, tmp_path):
 
 def _item(tmp_path, pointer=(450.0, 450.0)) -> ItemInput:
     raw = tmp_path / "raw.jpg"
-    cv2.imwrite(str(raw), np.full((H, W, 3), 150, np.uint8))
+    img = np.full((H, W, 3), 150, np.uint8)
+    cv2.circle(img, (450, 450), 45, (60, 80, 110), -1)  # the stain the candidates sit on
+    cv2.imwrite(str(raw), img)
     return ItemInput("itm_t", raw, W, H, "Wall stain", "A brown stain", "there's a stain here", pointer, 7)
 
 
@@ -401,3 +403,20 @@ def test_hand_at_the_fingertip_drops_finger_prompts_and_rejects_hand_masks(monke
     notes: dict = {}
     ground_v2.segment(item, Located(True, (500.0, 800.0, 900.0, 1100.0), "region", None, "r"), notes)
     assert "dropped" in notes["finger_prompts"] and all(not p for p in sent["sources"])
+
+
+def test_a_mask_on_plain_wall_is_rejected_but_a_faint_stain_is_not():
+    gray = np.full((H, W), 140, np.uint8)
+    gray = (gray + np.random.default_rng(0).normal(0, 0.4, gray.shape)).clip(0, 255).astype(np.uint8)
+    cv2.circle(gray, (700, 700), 30, 128, -1)  # a faint stain, 12 levels darker
+    wall = _cand((300, 300, 360, 360), disc=True, cid=1)
+    stain = _cand((670, 670, 730, 730), disc=True, cid=2)
+    assert ground_v2.blank_surface(gray, wall.mask)[0]
+    assert not ground_v2.blank_surface(gray, stain.mask)[0]
+    ground_v2.score_candidates([wall], (295.0, 295.0, 365.0, 365.0), "region", None, W, H, gray)
+    ground_v2.score_candidates([stain], (665.0, 665.0, 735.0, 735.0), "region", None, W, H, gray)
+    assert wall.rejected and "plain surface" in wall.rejected
+    assert stain.rejected is None or "plain" not in stain.rejected
+    m = np.zeros((50, 50), np.uint8)
+    m[10:40, 10:40] = 1
+    assert ground_v2.mask_solidity(m) <= 1.0

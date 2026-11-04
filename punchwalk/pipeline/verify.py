@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from punchwalk.clients import llm
 from punchwalk.clients.base import ApiError
+from punchwalk.clients.cost import CostCapReached
 from punchwalk.core.enums import (
     REVIEW_NOT_IN_FRAME,
     TRADE_LABEL,
@@ -127,20 +128,23 @@ def apply_check(row, check: ItemCheck | None, provider: str | None, *, protected
         add_history(row, HistoryActor.system, HistoryAction.flagged, note=REVIEW_CHECK_FAILED)
         return "failed"
     prov = Provider(provider)
+    was = (row.verification or {}).get("consistent")  # a re-check with the same verdict adds no history
     if check.consistent and check.frame_shows_defect:
         if not protected and ItemStatus(row.status) == ItemStatus.needs_review:  # flagged by an earlier check
             row.status, row.review_reason = ItemStatus.open, None
         row.verification = Verification(consistent=True, note=None, issues=[], provider=prov,
                                         checked_at=utcnow()).model_dump(mode="json")
-        if not protected:
+        if not protected and was is not True:
             add_history(row, HistoryActor.model, HistoryAction.verified, note="Matches the photo and what was said")
         return "matched"
     note = review_note(check)
     row.verification = Verification(consistent=False, note=note, issues=check.issues[:5],
                                     provider=prov, checked_at=utcnow()).model_dump(mode="json")
     if not protected:
+        same = was is False and row.review_reason == note
         row.status, row.review_reason = ItemStatus.needs_review, note
-        add_history(row, HistoryActor.model, HistoryAction.flagged, note=note)
+        if not same:
+            add_history(row, HistoryActor.model, HistoryAction.flagged, note=note)
     return "flagged"
 
 
@@ -212,10 +216,11 @@ def run(ctx: StageContext) -> StageOutcome:
 
 
 def _not_in_frame(item, row: dict[str, Any] | None) -> bool:
-    if row is not None:
-        return bool(row.get("ok")) and row.get("frame_shows_defect") is False
-    note = (item.verification or {}).get("note")
-    return note == REVIEW_NOT_IN_FRAME
+    """This run's check says the frame doesn't show the defect, or the item came into the run with that note
+    (`item` is as loaded before this run's checks)."""
+    if row is not None and row.get("ok") and row.get("frame_shows_defect") is False:
+        return True
+    return (item.verification or {}).get("note") == REVIEW_NOT_IN_FRAME
 
 
 def frame_pass(ctx: StageContext, items, rows: dict[str, Any], tally: dict[str, int], reground_all: bool) -> None:
@@ -245,8 +250,12 @@ def frame_pass(ctx: StageContext, items, rows: dict[str, Any], tally: dict[str, 
         ev = Evidence.model_validate(item.evidence)
         event = events.get(item.point_id) if item.point_id else None
         extra = extras.get(item.id, {})
-        new_ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, frame_pick.REASON_NOT_IN_FRAME,
-                                           pick_rows)
+        try:
+            new_ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker,
+                                               frame_pick.REASON_NOT_IN_FRAME, pick_rows)
+        except CostCapReached as err:  # the cost cap stops the pass; every item keeps what it has
+            log.warning("verify: frame pass stopped: %s", err)
+            break
         if new_ev.t == ev.t:
             continue  # nothing picked (or the current frame is best): status and photo stay
         new_ev, _, _ = ground.reground_one(ctx, item, new_ev)
@@ -275,8 +284,10 @@ def frame_pass(ctx: StageContext, items, rows: dict[str, Any], tally: dict[str, 
                 outcome, recheck, _ = _check_and_apply(ctx, fresh, protected=False)
                 out["recheck"] = recheck
         prev = rows.get(item.id)
-        if prev and prev.get("ok"):  # replace the first check's tally with the final one
-            tally["flagged" if not (prev.get("consistent") and prev.get("frame_shows_defect")) else "matched"] -= 1
-        tally[outcome] += 1
+        if prev is not None:  # counted in this run's checks: replace that tally with the final one
+            first = ("failed" if not prev.get("ok") else
+                     "matched" if prev.get("consistent") and prev.get("frame_shows_defect") else "flagged")
+            tally[first] -= 1
+            tally[outcome] += 1
         rows[item.id] = {**out, "first_check": prev}
     frame_pick.save_log(ctx.walk_dir, pick_rows, merge=True)

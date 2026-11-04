@@ -315,13 +315,41 @@ def test_items_already_tried_by_the_ground_stage_are_skipped(walk_ctx, monkeypat
     assert not rewrites
 
 
-def test_closures_use_the_pinned_photo():
-    import inspect
-
+def test_closures_look_at_the_pinned_photo_and_outline(tmp_path, monkeypatch):
+    """resolve_closures' look inputs come from the pinned evidence (crop, image, outline), not the new one."""
     from punchwalk.pipeline import closures
 
-    src = inspect.getsource(closures)
-    assert "frame_pick.pinned_before(" in src and "Evidence.model_validate(pinned)" in src
+    root = tmp_path
+    idir = root / "walks" / "w1" / "items" / "itm"
+    idir.mkdir(parents=True)
+    rng = np.random.default_rng(3)
+    for name in ("raw.jpg", "evidence.jpg", "crop.jpg"):
+        Image.fromarray((rng.random((60, 80, 3)) * 255).astype(np.uint8)).save(idir / name)
+    old = Evidence(t=1.0, image="walks/w1/items/itm/evidence.jpg", raw="walks/w1/items/itm/raw.jpg",
+                   crop="walks/w1/items/itm/crop.jpg", width=80, height=60, defect_svg="M10 10 L30 10 L30 30 Z",
+                   defect_box={"x1": 10, "y1": 10, "x2": 30, "y2": 30}, grounding="sam_box")
+    fp.pin_before(idir, old.model_dump(mode="json"), root)
+    new = old.model_copy(update={"t": 2.0, "defect_svg": "M50 40 L70 40 L70 55 Z",
+                                 "defect_box": {"x1": 50, "y1": 40, "x2": 70, "y2": 55}})
+    item = Item(id="itm", project_id="p", number=1, origin_walk_id="w1", title="t",
+                evidence=new.model_dump(mode="json"))
+    before, shown = closures.closure_before(root, item)
+    assert before.t == 1.0 and before.defect_svg == old.defect_svg and before.crop.endswith("pinned/crop.jpg")
+    assert shown.t == 2.0 and shown.defect_svg == new.defect_svg
+    monkeypatch.setattr(closures, "data_dir", lambda: root)
+    monkeypatch.setattr(closures, "align_frames", lambda a, b: None)  # frames that don't line up -> "compare"
+    out = tmp_path / "rw"
+    out.mkdir()
+    after = out / "after.jpg"
+    Image.new("RGB", (80, 60)).save(after)
+    images, mode, _ = closures._look_inputs(before, after, after, after, {"width": 80, "height": 60}, out)
+    assert mode == "compare" and images[0] == root / before.crop and images[2] == root / before.image
+    assert "pinned" in str(images[0])
+    # an item that was never re-grounded looks at its own evidence
+    plain = Item(id="other", project_id="p", number=2, origin_walk_id="w1", title="t",
+                 evidence=new.model_dump(mode="json"))
+    b2, s2 = closures.closure_before(root, plain)
+    assert b2.t == 2.0 and s2.t == 2.0
 
 
 def test_switches_default_off():

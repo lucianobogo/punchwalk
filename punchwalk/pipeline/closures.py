@@ -193,6 +193,15 @@ def _dt(value: Any) -> datetime | None:
     return d if d.tzinfo else d.replace(tzinfo=UTC)
 
 
+def closure_before(root: Path, item) -> tuple[Evidence | None, Evidence | None]:
+    """(evidence the look compares against, evidence on show). PLAN 10.4/10.5: once a re-ground pinned the
+    photo + outline a closure decided on (items/<id>/pinned_before.json), the look keeps using that; the
+    current evidence is only shown (before_after.jpg)."""
+    shown = Evidence.model_validate(item.evidence) if item.evidence else None
+    pinned = frame_pick.pinned_before(root / "walks" / item.origin_walk_id / "items" / item.id)
+    return (Evidence.model_validate(pinned) if pinned else shown), shown
+
+
 def after_crop_box(frame: dict[str, Any], before: Evidence | None) -> tuple[int, int, int, int]:
     """The re-walk crop: the same size as the first walk's card crop (so before/after share a scale),
     centered on where the finger pointed (else the frame center), kept inside the frame."""
@@ -611,11 +620,7 @@ def run(ctx: StageContext) -> StageOutcome:
         if item_id in locked or not actionable(item):
             continue
         frame = frames.get(m.key)
-        shown = Evidence.model_validate(item.evidence) if item.evidence else None
-        # PLAN 10.4: if the frame picker replaced this item's photo, the look uses the photo it was pinned to
-        # (what the closure decided on); before_after.jpg shows the current photo
-        pinned = frame_pick.pinned_before(root / "walks" / item.origin_walk_id / "items" / item.id)
-        before = Evidence.model_validate(pinned) if pinned else shown
+        before, shown = closure_before(root, item)
         vision, note_v, after_rel, after_frame_rel, ba_rel, after_t = VisionStatus.not_checked, None, None, None, None, None
         look_mode = None
         if frame is not None:

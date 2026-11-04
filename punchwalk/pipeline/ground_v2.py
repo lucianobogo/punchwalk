@@ -228,11 +228,29 @@ def mask_inside(mask: np.ndarray, box: Sequence[float]) -> float:
 
 
 def mask_solidity(mask: np.ndarray) -> float:
+    """Outer-contour area / convex-hull area, in 0..1 (both measured on the same polygons)."""
     found, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not found:
         return 0.0
-    hull = cv2.convexHull(np.vstack(found))
-    return float(mask.sum()) / max(1.0, float(cv2.contourArea(hull)))
+    area = sum(float(cv2.contourArea(c)) for c in found)
+    hull = float(cv2.contourArea(cv2.convexHull(np.vstack(found))))
+    return min(1.0, area / hull) if hull > 0 else 0.0
+
+
+def blank_surface(gray: np.ndarray | None, mask: np.ndarray) -> tuple[bool, float, float]:
+    """(is plain surface, interior gray std, contrast with the ring around it). A defect differs from its
+    surroundings in tone or texture; a mask on bare wall is flat and the same tone as the wall around it."""
+    if gray is None or not mask.any():
+        return False, 0.0, 0.0
+    k = max(9, int(round(math.sqrt(float(mask.sum())) * 0.35)))
+    m = mask.astype(np.uint8)
+    ring = cv2.dilate(m, np.ones((k, k), np.uint8)) - cv2.dilate(m, np.ones((3, 3), np.uint8))
+    inside = gray[m > 0].astype(np.float32)
+    around = gray[ring > 0].astype(np.float32)
+    if not len(around):
+        return False, float(inside.std()), 0.0
+    std, contrast = float(inside.std()), float(abs(np.median(inside) - np.median(around)))
+    return std < P.V2_BLANK_MAX_STD and contrast < P.V2_BLANK_MAX_CONTRAST, std, contrast
 
 
 def clamp_box(box: Sequence[float], w: int, h: int) -> BoxF | None:
@@ -588,7 +606,7 @@ def segment(item: ItemInput, loc: Located, notes: dict[str, Any], save_dir: Path
 
 
 def score_candidates(cands: list[Candidate], spark_box: BoxF, extent: Extent, pointer: Point | None,
-                     w: int, h: int) -> list[Candidate]:
+                     w: int, h: int, gray: np.ndarray | None = None) -> list[Candidate]:
     """Fill in each candidate's measures, score and rejection reason; return them best first
     (accepted ones before rejected ones)."""
     barea = max(1.0, box_area(spark_box))
@@ -622,6 +640,8 @@ def score_candidates(cands: list[Candidate], spark_box: BoxF, extent: Extent, po
             c.rejected = f"wrong shape (solidity {c.solidity:.2f})"
         elif c.fill < P.V2_MIN_BBOX_FILL:
             c.rejected = f"wrong shape (fills {c.fill:.0%} of its box)"
+        elif blank_surface(gray, m)[0]:
+            c.rejected = "plain surface (flat, same tone as around it)"
         terms = [(P.V2_W_IOU, c.iou), (P.V2_W_INSIDE, c.inside),
                  (P.V2_W_CONF, float(c.confidence if c.confidence is not None else 0.5))]
         r = c.area_ratio / expected
@@ -824,7 +844,8 @@ def _ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
 
     notes: dict[str, Any] = {}
     cands = segment(item, loc, notes, save_dir)
-    scored = score_candidates(cands, loc.box, loc.extent, item.pointer, item.width, item.height)
+    gray = np.asarray(load_frame(item).convert("L"))
+    scored = score_candidates(cands, loc.box, loc.extent, item.pointer, item.width, item.height, gray)
     row["segment"] = notes
     accepted = [c for c in scored if c.rejected is None]
     offered: list[Candidate] = []
@@ -834,7 +855,12 @@ def _ground_item(item: ItemInput, save_dir: Path | None = None) -> V2Result:
         _smooth(c, item, loc.box)
         if c.svg:
             offered.append(c)
-    if spark_box_ok(loc.box, loc.extent, item.width, item.height):
+    box_mask = np.zeros(gray.shape, np.uint8)
+    bx1, by1, bx2, by2 = (int(round(v)) for v in loc.box)
+    box_mask[by1:by2, bx1:bx2] = 1
+    box_blank = blank_surface(gray, box_mask)
+    row["spark_box_blank"] = {"blank": box_blank[0], "std": round(box_blank[1], 2), "contrast": round(box_blank[2], 2)}
+    if spark_box_ok(loc.box, loc.extent, item.width, item.height) and not box_blank[0]:
         offered.append(Candidate(id=0, source="spark_box", grounding=Grounding.spark_box, confidence=None,
                                  bbox=loc.box, iou=1.0, area_ratio=1.0))
     row["candidates"] = [c.as_row() for c in scored]

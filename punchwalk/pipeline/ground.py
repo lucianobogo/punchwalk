@@ -17,6 +17,8 @@ With GROUNDING_V2=1 (PLAN 10.3) steps 1-3 are replaced by punchwalk/pipeline/gro
 defect itself, SAM box/point prompts, score, Spark Open check, smoothing); its per-item log goes to
 stages/ground_v2.json. Unpointed items first go through the evidence frame picker (PLAN 10.4,
 frame_pick.py), and so do items whose locate answered visible: false; picks go to stages/frame_pick.json.
+With GROUNDING_MODE=voice_only the v2 path ignores pointing altogether (PLAN 10.5's talking-only run): the
+pointer is cleared, so the picker runs for every item and no fingertip prompt or dot is used.
 With REGROUND_ALL=1 protected items are re-grounded too: evidence fields and renders only (text, status,
 history and closure decisions untouched); a closed item's before_after.jpg is redrawn from its new crop.
 
@@ -38,7 +40,7 @@ import numpy as np
 from punchwalk.clients import sam
 from punchwalk.clients.base import ApiError
 from punchwalk.config import get_settings
-from punchwalk.core.enums import Grounding, Stage
+from punchwalk.core.enums import REVIEW_NOT_IN_FRAME, Grounding, Stage
 from punchwalk.core.models import Box, Evidence
 from punchwalk.pipeline import frame_pick, ground_v2
 from punchwalk.pipeline import params as P
@@ -295,6 +297,7 @@ def run(ctx: StageContext) -> StageOutcome:
     settings = get_settings()
     v2 = settings.GROUNDING_V2
     reground_all = v2 and settings.REGROUND_ALL
+    talking_only = settings.GROUNDING_MODE == "voice_only"
     v2_rows: dict[str, Any] = {}
     pick_rows: dict[str, Any] = {}
     picker: frame_pick.Picker | None = None
@@ -307,13 +310,19 @@ def run(ctx: StageContext) -> StageOutcome:
             rows[item.id] = {"grounding": ev.grounding.value, "kept": True}
             continue
         before = (ev.t, ev.defect_svg)
+        if v2 and talking_only and ev.pointer is not None:  # PLAN 10.5 evaluation: every item as unpointed
+            ev = ev.model_copy(update={"pointer": None})
         wrow = written.get(item.id) or {}
         extra = extras.get(item.id, {})
         event = events.get(item.point_id) if item.point_id else None
-        if v2 and ev.pointer is None:  # unpointed: the frame picker is the normal path (PLAN 10.4)
+        if v2 and item.closure:  # resolve_closures keeps deciding on the photo + outline it decided on
+            frame_pick.pin_before(ctx.item_dir(item.id), Evidence.model_validate(item.evidence).model_dump(mode="json"),
+                                  root)
+        came_not_in_frame = (item.verification or {}).get("note") == REVIEW_NOT_IN_FRAME
+        if v2 and (ev.pointer is None or came_not_in_frame):  # PLAN 10.4: the picker first
             picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
-            ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, frame_pick.REASON_UNPOINTED,
-                                           pick_rows)
+            reason = frame_pick.REASON_UNPOINTED if ev.pointer is None else frame_pick.REASON_NOT_IN_FRAME
+            ev = frame_pick.pick_and_adopt(ctx, root, item, ev, extra, event, picker, reason, pick_rows)
         new_ev, grounding, notes = ground_and_render(ctx, root, item, ev, wrow, extra, event, v2, v2_rows)
         if v2 and _not_visible(v2_rows.get(item.id)) and item.id not in pick_rows:
             picker = picker or frame_pick.Picker.for_walk(ctx.walk_dir)
