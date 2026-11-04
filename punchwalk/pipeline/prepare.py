@@ -4,15 +4,18 @@ Reads the uploaded clips from `DATA_DIR/walks/<walk_id>/clips/<order:02d>_<name>
 and writes the ingest outputs next to them. When there are no clips but a complete `meta.json`
 is already there (a walk loaded from recorded media, e.g. `make seed` or the integration test),
 those outputs are used as they are. Updates Walk.media / clips / duration_s / fps / size /
-orientation.
+orientation, and Walk.device from the first uploaded clip's container tags (PLAN 10.9; `device_from_tags`:
+Ray-Ban Meta -> glasses, iPhone / iPad -> phone, else unknown). Prepared media keeps the walk's device.
 """
 
 from __future__ import annotations
 
+import logging
 import re
+from collections.abc import Mapping
 from pathlib import Path
 
-from punchwalk.core.enums import Orientation
+from punchwalk.core.enums import Device, Orientation
 from punchwalk.core.models import ClipInfo, Walk, WalkMediaPaths
 from punchwalk.pipeline import media
 from punchwalk.pipeline import params as P
@@ -21,6 +24,9 @@ from punchwalk.pipeline.frames import laplacian_variance, read_frames
 from punchwalk.pipeline.ingest import META_NAME, VIDEO_EXTENSIONS, IngestError, IngestMeta, ingest
 
 _ORDER_PREFIX = re.compile(r"^\d{2,3}_")
+log = logging.getLogger(__name__)
+# Container tags that name the recording device (QuickTime / MP4 metadata; the Meta AI app writes both).
+DEVICE_TAGS = ("com.apple.quicktime.model", "com.apple.quicktime.comment", "comment", "model")
 
 
 def uploaded_clips(wdir: Path) -> list[Path]:
@@ -34,6 +40,29 @@ def uploaded_clips(wdir: Path) -> list[Path]:
 def original_name(path_or_name: str) -> str:
     """'00_walk1_a.mp4' -> 'walk1_a.mp4'."""
     return _ORDER_PREFIX.sub("", Path(path_or_name).name)
+
+
+def device_from_tags(tags: Mapping[str, object] | None) -> Device:
+    """The capture device from a clip's format tags: "Ray-Ban Meta" -> glasses, "iPhone" / "iPad" -> phone,
+    anything else -> unknown. Tag names are matched without regard to case."""
+    lower = {str(k).lower(): str(v) for k, v in (tags or {}).items()}
+    text = " ".join(lower.get(k, "") for k in DEVICE_TAGS).lower()
+    if "ray-ban meta" in text:
+        return Device.glasses
+    if "iphone" in text or "ipad" in text:
+        return Device.phone
+    return Device.unknown
+
+
+def clip_device(path: Path) -> Device:
+    """Device of one clip, from ffprobe's format tags (the same streams + format probe ingest runs).
+    Unreadable tags -> unknown; never fails the walk."""
+    try:
+        tags = (media.ffprobe_json(Path(path)).get("format") or {}).get("tags") or {}
+    except media.MediaError as err:
+        log.warning("ingest: no device tags for %s: %s", Path(path).name, err)
+        return Device.unknown
+    return device_from_tags(tags)
 
 
 def write_poster(wdir: Path, meta: IngestMeta) -> Path:
@@ -85,6 +114,8 @@ def run(ctx: StageContext) -> StageOutcome:
         walk.fps = float(meta.display.fps)
         walk.width, walk.height = meta.display.width, meta.display.height
         walk.orientation = Orientation(meta.orientation)
+        if clips:  # a multi-clip walk takes the first clip's device
+            walk.device = clip_device(clips[0])
         s.add(walk)
         s.commit()
     msg = f"{len(meta.clips)} clip(s), {meta.duration_s:.0f} s, {meta.display.width}x{meta.display.height}"

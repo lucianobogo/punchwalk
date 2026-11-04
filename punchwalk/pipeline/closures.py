@@ -74,7 +74,7 @@ from punchwalk.pipeline import evidence as ev_mod
 from punchwalk.pipeline import frame_pick, ground, media, verify, write_items
 from punchwalk.pipeline import params as P
 from punchwalk.pipeline.context import StageContext, StageOutcome, data_dir, rel_to_data
-from punchwalk.pipeline.frames import rasterize_svg, read_frames, svg_polygons
+from punchwalk.pipeline.frames import rasterize_svg, svg_polygons
 from punchwalk.pipeline.items import add_history, is_protected
 from punchwalk.pipeline.mentions import Mention, mention_from_dict
 from punchwalk.render.before_after import render_before_after
@@ -289,21 +289,30 @@ def after_frames(ctx: StageContext, mentions: list[Mention], events: dict[str, d
     w, h, fps = track["sam"]["width"], track["sam"]["height"], float(track["sam"]["fps"])
     sx, sy = meta.scale.sam_to_display_x, meta.scale.sam_to_display_y
     plans = plan_frames(ctx, mentions, events, fps)
-    needed = {f for fs in plans.values() for f in fs}
-    frames = read_frames(ctx.walk_dir / meta.sam.path, needed)
-    masks = ev_mod._hand_masks(track["records"], needed, w, h)
-    display = ctx.walk_dir / meta.display.path
-    out: dict[str, dict[str, Any]] = {}
-    for m in mentions:
-        got = {f: frames[f] for f in plans[m.key] if f in frames}
+    svgs = ev_mod.hand_svgs_by_frame(track["records"], {f for fs in plans.values() for f in fs})
+    # PLAN 10.9: one sequential decode; each mention is decided as soon as its frames are in, then its frames
+    # are let go (memory holds overlapping windows only, not every candidate frame of the re-walk).
+    choices: dict[str, ev_mod.Choice] = {}
+    for key, got in ev_mod.stream_item_frames(ctx.walk_dir / meta.sam.path, plans):
         if not got:
             continue
-        ev = events.get(m.key)
+        ev = events.get(key)
         if ev and ev["frame"] in got:
-            choice = ev_mod.choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
-                                                 fingertip=tuple(ev["fingertip"]), hold_last=ev["hold_frames"][1])
+            masks = ev_mod.hand_masks_for(svgs, got, w, h)
+            choices[key] = ev_mod.choose_pointed_frame(got, masks, pointing_frame=ev["frame"],
+                                                       fingertip=tuple(ev["fingertip"]),
+                                                       hold_last=ev["hold_frames"][1])
+            del masks
         else:
-            choice = ev_mod.choose_sharpest(got)
+            choices[key] = ev_mod.choose_sharpest(got)
+        del got
+    display = ctx.walk_dir / meta.display.path
+    out: dict[str, dict[str, Any]] = {}
+    for m in mentions:  # files and results in mention order, as before
+        choice = choices.get(m.key)
+        if choice is None:
+            continue
+        ev = events.get(m.key)
         t = round(choice.frame / fps, 3)
         d = ctx.walk_dir / "closures" / m.key
         raw = media.extract_frame(display, t, d / "after_raw.jpg", quality=P.EVIDENCE_JPEG_QUALITY)
