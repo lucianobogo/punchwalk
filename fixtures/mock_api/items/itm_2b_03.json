@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+      "note": "Posted 3 items to #punch-electrical automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-04T13:21:05.600000Z",

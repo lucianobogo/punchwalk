@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+      "note": "Posted 3 items to #punch-electrical automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-04T13:21:14.100000Z",
@@ -127,12 +127,12 @@
     },
     {
       "at": "2026-11-04T13:25:00Z",
-      "actor": "system",
+      "actor": "human",
       "action": "dispatched",
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent again to Ace Electric on Slack (#punch-electrical)."
+      "note": "Posted 1 item to #punch-electrical"
     }
   ],
   "dispatch": {

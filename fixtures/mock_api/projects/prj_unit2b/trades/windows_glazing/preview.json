@@ -11,27 +11,20 @@
     "has_slack_webhook": false
   },
   "channel": "outbox",
-  "channel_reason": "No Slack channel or email set up for Clearview Glass, so this goes to the Outbox, ready to share.",
+  "channel_reason": "Copy a link to share.",
+  "effective_channel": "outbox",
+  "effective_channel_label": "Copy a link to share.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Clearview Glass."
-    },
-    {
-      "channel": "email",
-      "available": false,
-      "destination": null,
-      "reason": "No email on file for Clearview Glass."
-    },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [],
+  "already_sent": [],
   "heading": "Unit 2B final punch: 1 windows & glazing item",
   "lines": [
     {

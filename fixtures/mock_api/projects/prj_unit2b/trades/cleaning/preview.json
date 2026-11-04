@@ -11,27 +11,33 @@
     "has_slack_webhook": false
   },
   "channel": "email",
-  "channel_reason": "Spotless Final Clean gets email at rosa.alvarez@example.com.",
+  "channel_reason": "Emails rosa.alvarez@example.com.",
+  "effective_channel": "email",
+  "effective_channel_label": "Emails rosa.alvarez@example.com.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Spotless Final Clean."
-    },
     {
       "channel": "email",
       "available": true,
       "destination": "rosa.alvarez@example.com",
-      "reason": null
+      "reason": null,
+      "label": "Emails rosa.alvarez@example.com."
     },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [
+    {
+      "item_id": "itm_2b_02",
+      "number": 2,
+      "title": "Coffee drips on counter"
+    }
+  ],
+  "already_sent": [],
   "heading": "Unit 2B final punch: 0 cleaning items",
   "lines": [],
   "subject": "Unit 2B final punch: 0 cleaning items",

@@ -8,6 +8,8 @@
       "trade": "carpentry_millwork",
       "company": "Oakline Millwork",
       "channel": "email",
+      "channel_label": "Email",
+      "summary": "Emailed 2 items to Oakline Millwork",
       "destination": "dev.patel@example.com",
       "item_ids": [
         "itm_2b_01",

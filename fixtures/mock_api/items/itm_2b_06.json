@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Keystone Door & Hardware by email (lena.brooks@example.com)."
+      "note": "Emailed 1 item to Keystone Door & Hardware automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-04T13:21:10.700000Z",

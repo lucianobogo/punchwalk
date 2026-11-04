@@ -4,6 +4,8 @@
   "trade": "painting",
   "company": "Brightline Painting",
   "channel": "email",
+  "channel_label": "Email",
+  "summary": "Emailed 1 item to Brightline Painting",
   "destination": "tom.reyes@example.com",
   "item_ids": [
     "itm_2b_07"

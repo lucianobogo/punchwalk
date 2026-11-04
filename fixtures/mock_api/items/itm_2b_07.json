@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Brightline Painting by email (tom.reyes@example.com)."
+      "note": "Emailed 1 item to Brightline Painting automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-04T13:21:12.400000Z",
@@ -127,12 +127,12 @@
     },
     {
       "at": "2026-11-04T13:25:30Z",
-      "actor": "system",
+      "actor": "human",
       "action": "dispatched",
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent again to Brightline Painting by email (tom.reyes@example.com)."
+      "note": "Emailed 1 item to Brightline Painting"
     }
   ],
   "dispatch": {

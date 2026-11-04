@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Oakline Millwork by email (dev.patel@example.com)."
+      "note": "Emailed 2 items to Oakline Millwork automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-03T16:05:00Z",
@@ -118,12 +118,12 @@
     },
     {
       "at": "2026-11-03T16:06:00Z",
-      "actor": "system",
+      "actor": "human",
       "action": "dispatched",
       "field": "status",
       "from": "dispatched",
       "to": "dispatched",
-      "note": "Sent again to Northfield Builders from the outbox."
+      "note": "Copied a link for 1 item"
     },
     {
       "at": "2026-11-04T13:21:07.300000Z",

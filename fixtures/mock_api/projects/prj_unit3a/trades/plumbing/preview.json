@@ -11,27 +11,27 @@
     "has_slack_webhook": false
   },
   "channel": "email",
-  "channel_reason": "Riverside Plumbing gets email at joe.lindqvist@example.com.",
+  "channel_reason": "Emails joe.lindqvist@example.com.",
+  "effective_channel": "email",
+  "effective_channel_label": "Emails joe.lindqvist@example.com.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Riverside Plumbing."
-    },
     {
       "channel": "email",
       "available": true,
       "destination": "joe.lindqvist@example.com",
-      "reason": null
+      "reason": null,
+      "label": "Emails joe.lindqvist@example.com."
     },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [],
+  "already_sent": [],
   "heading": "Unit 3A turnover: 0 plumbing items",
   "lines": [],
   "subject": "Unit 3A turnover: 0 plumbing items",

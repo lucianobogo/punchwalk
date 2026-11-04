@@ -105,7 +105,7 @@
       "field": "status",
       "from": "open",
       "to": "dispatched",
-      "note": "Sent to Oakline Millwork by email (dev.patel@example.com)."
+      "note": "Emailed 2 items to Oakline Millwork automatically: checked against the photo and the quote."
     },
     {
       "at": "2026-11-04T13:21:02.200000Z",

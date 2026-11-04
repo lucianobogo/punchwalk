@@ -4,6 +4,8 @@
   "trade": "carpentry_millwork",
   "company": "Oakline Millwork",
   "channel": "email",
+  "channel_label": "Email",
+  "summary": "Emailed 1 item to Oakline Millwork",
   "destination": "dev.patel@example.com",
   "item_ids": [
     "itm_3a_02"

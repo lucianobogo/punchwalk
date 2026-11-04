@@ -11,27 +11,20 @@
     "has_slack_webhook": false
   },
   "channel": "outbox",
-  "channel_reason": "No Slack channel or email set up for Northfield Builders, so this goes to the Outbox, ready to share.",
+  "channel_reason": "Copy a link to share.",
+  "effective_channel": "outbox",
+  "effective_channel_label": "Copy a link to share.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Northfield Builders."
-    },
-    {
-      "channel": "email",
-      "available": false,
-      "destination": null,
-      "reason": "No email on file for Northfield Builders."
-    },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [],
+  "already_sent": [],
   "heading": "Unit 3A turnover: 1 general item",
   "lines": [
     {

@@ -40,6 +40,7 @@ sys.path.insert(0, str(ROOT))
 
 from punchwalk.api import schemas as S  # noqa: E402
 from punchwalk.core.enums import (  # noqa: E402
+    CHANNEL_LABEL,
     MODEL_ASR,
     MODEL_SAM,
     MODEL_SPARK_HOSTED,
@@ -76,6 +77,7 @@ from punchwalk.core.enums import (  # noqa: E402
     WalkStatus,
     model_label,
 )
+from punchwalk.dispatch.service import channel_label, send_summary  # noqa: E402
 
 OUT = ROOT / "fixtures" / "mock_api"
 MEDIA = OUT / "media"
@@ -1403,6 +1405,8 @@ DISPATCHES_2B = [
     ("dsp_2b_08", "2026-11-04T13:25:30Z", Trade.painting, Channel.email, ["2b_07"]),
 ]
 TRADE_EDIT_2B_04 = ("2026-11-03T16:05:00Z", Trade.carpentry_millwork, Trade.general)
+# Sent by the auto-send policy right after the first walk was processed (the rest by the PM)
+AUTO_DISPATCHES_2B = {"dsp_2b_01", "dsp_2b_02", "dsp_2b_03", "dsp_2b_04", "dsp_2b_05"}
 
 # Pricing assumptions used only for mock cost estimates.
 PRICE_SAM_FRAME = 0.20 / 1000
@@ -2260,19 +2264,14 @@ class Gen:
         for at, kind, payload in sorted(events, key=lambda e: e[0]):
             if kind == "send":
                 d: S.DispatchOut = payload
-                how = {
-                    Channel.slack: f"on Slack ({d.destination})",
-                    Channel.email: f"by email ({d.destination})",
-                    Channel.outbox: "from the outbox",
-                }[d.channel]
-                verb = "Sent again" if times_sent else "Sent"
+                auto = d.id in AUTO_DISPATCHES_2B
                 times_sent += 1
                 prev, status = status, ItemStatus.dispatched
                 log(
                     at,
-                    HistoryActor.system,
+                    HistoryActor.system if auto else HistoryActor.human,
                     HistoryAction.dispatched,
-                    f"{verb} to {d.company} {how}.",
+                    d.summary + (" automatically: checked against the photo and the quote." if auto else ""),
                     "status",
                     prev.value,
                     status.value,
@@ -2423,7 +2422,7 @@ class Gen:
         for did, at, trade, channel, keys in DISPATCHES_2B:
             c = self.contact(PRJ_2B, trade)
             assert c is not None
-            dest = {Channel.slack: c.slack_channel, Channel.email: c.email, Channel.outbox: "Outbox"}[channel]
+            dest = {Channel.slack: c.slack_channel, Channel.email: c.email, Channel.outbox: "Copy link"}[channel]
             lines = [self.dispatch_line(rows[k]) for k in keys]
             heading = self.heading(PRJ_2B, trade, len(keys))
             text = self.message_text(heading, lines)
@@ -2440,6 +2439,8 @@ class Gen:
                 trade=trade,
                 company=c.company,
                 channel=channel,
+                channel_label=CHANNEL_LABEL[channel],
+                summary=send_summary(channel, len(keys), dest, c.company),
                 destination=dest,
                 item_ids=[item_id(k) for k in keys],
                 sent_at=dt(at),
@@ -2925,6 +2926,28 @@ class Gen:
 
     # ---------------------------------------------------------------- trades
 
+    def working_channels(self, project_id: str, trade: Trade) -> list[S.DispatchChannelOut]:
+        """The mock server's working channels, effective first (punchwalk/dispatch/service.py's rule).
+
+        The mock server has Resend configured and no team Slack webhook: a trade's own webhook, else its
+        email, else Copy link.
+        """
+        c = self.contact(project_id, trade)
+        company = c.company if c else TRADE_LABEL[trade]
+        out: list[S.DispatchChannelOut] = []
+
+        def add(channel: Channel, destination: str | None, own: bool) -> None:
+            label = channel_label(channel, destination, own=own, company=company)
+            out.append(S.DispatchChannelOut(channel=channel, available=True, destination=destination, reason=None,
+                                            label=label))  # fmt: skip
+
+        if c and c.slack_webhook:
+            add(Channel.slack, c.slack_channel or "Slack", True)
+        if c and c.email:
+            add(Channel.email, c.email, True)
+        add(Channel.outbox, "Copy link", False)
+        return out
+
     def trade_outputs(self, project_id: str) -> None:
         items = self.project_items(project_id)
         p = self.projects[project_id]
@@ -2934,10 +2957,21 @@ class Gen:
         for t in trades:
             mine = [i for i in items if i.trade == t]
             sends = [d for d in self.dispatches.values() if d.project_id == project_id and d.trade == t]
+            c = self.contact(project_id, t)
+            eff = self.working_channels(project_id, t)[0]
+            to_review = sum(1 for i in mine if i.status == ItemStatus.needs_review)
+            to_send = sum(1 for i in mine if i.status == ItemStatus.open)
             summaries.append(
                 S.TradeSummaryOut(
                     trade=t,
-                    contact=self.contact_out(self.contact(project_id, t)),
+                    company=c.company if c else None,
+                    contact=self.contact_out(c),
+                    to_review=to_review,
+                    to_send=to_send,
+                    sent=sum(1 for i in mine if i.status == ItemStatus.dispatched),
+                    caught_up=to_review == 0 and to_send == 0,
+                    effective_channel=eff.channel,
+                    effective_channel_label=eff.label,
                     open_count=sum(1 for i in mine if i.status in (ItemStatus.open, ItemStatus.dispatched)),
                     needs_review_count=sum(1 for i in mine if i.status == ItemStatus.needs_review),
                     signed_off_count=sum(1 for i in mine if i.status == ItemStatus.closed),
@@ -2958,35 +2992,13 @@ class Gen:
         lines = [self.dispatch_line(rows[i.id]) for i in sendable]
         heading = self.heading(project_id, trade, len(lines))
         company = c.company if c else TRADE_LABEL[trade]
-        channels = [
-            S.DispatchChannelOut(
-                channel=Channel.slack,
-                available=bool(c and c.slack_webhook),
-                destination=c.slack_channel if c and c.slack_webhook else None,
-                reason=None if c and c.slack_webhook else f"No Slack channel set up for {company}.",
-            ),
-            S.DispatchChannelOut(
-                channel=Channel.email,
-                available=bool(c and c.email),
-                destination=c.email if c else None,
-                reason=None if c and c.email else f"No email on file for {company}.",
-            ),
-            S.DispatchChannelOut(channel=Channel.outbox, available=True, destination="Outbox", reason=None),
-        ]
-        default = next(ch.channel for ch in channels if ch.available)
-        # Same sentences as punchwalk/dispatch/service.py::why()
-        if default == Channel.slack:
-            channel_reason = f"{company} has a Slack channel ({c.slack_channel})." if c and c.slack_channel else (
-                f"{company} gets the team's Slack channel."
-            )
-        elif default == Channel.email:
-            channel_reason = f"{company} gets email at {c.email}." if c else None
-        elif channels[1].destination:  # an address on file, but email isn't available
-            channel_reason = (
-                f"Email isn't set up on this server yet, so this goes to the Outbox for {company}, ready to share."
-            )
-        else:
-            channel_reason = f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
+        channels = self.working_channels(project_id, trade)
+        default = channels[0].channel
+        latest: dict[str, S.DispatchOut] = {}
+        for d in sorted(sends, key=lambda d: (d.sent_at, d.id)):
+            for iid in d.item_ids:
+                latest[iid] = d
+        by_number = sorted(mine, key=lambda i: i.number)
         base = f"projects/{project_id}/trades/{trade.value}"
         write_json(
             f"{base}/preview.json",
@@ -2995,8 +3007,21 @@ class Gen:
                 trade=trade,
                 contact=self.contact_out(c),
                 channel=default,
-                channel_reason=channel_reason,
+                channel_reason=channels[0].label,
+                effective_channel=default,
+                effective_channel_label=channels[0].label,
                 channels=channels,
+                to_review=[
+                    S.DispatchItemRefOut(item_id=i.id, number=i.number, title=i.title)
+                    for i in by_number
+                    if i.status == ItemStatus.needs_review
+                ],
+                already_sent=[
+                    S.DispatchSentItemOut(item_id=i.id, number=i.number, title=i.title,
+                                          sent_at=latest[i.id].sent_at, channel=latest[i.id].channel)
+                    for i in by_number
+                    if i.status == ItemStatus.dispatched and i.id in latest
+                ],  # fmt: skip
                 heading=heading,
                 lines=lines,
                 subject=heading,
@@ -3030,6 +3055,8 @@ class Gen:
                     trade=trade,
                     company=company,
                     channel=default,
+                    channel_label=CHANNEL_LABEL[default],
+                    summary=send_summary(default, len(lines), dest, company),
                     destination=dest,
                     item_ids=[ln.item_id for ln in lines],
                     sent_at=dt("2026-11-04T15:00:00Z"),

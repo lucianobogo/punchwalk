@@ -11,27 +11,27 @@
     "has_slack_webhook": false
   },
   "channel": "email",
-  "channel_reason": "Keystone Door & Hardware gets email at lena.brooks@example.com.",
+  "channel_reason": "Emails lena.brooks@example.com.",
+  "effective_channel": "email",
+  "effective_channel_label": "Emails lena.brooks@example.com.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Keystone Door & Hardware."
-    },
     {
       "channel": "email",
       "available": true,
       "destination": "lena.brooks@example.com",
-      "reason": null
+      "reason": null,
+      "label": "Emails lena.brooks@example.com."
     },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [],
+  "already_sent": [],
   "heading": "Unit 2B final punch: 0 doors & hardware items",
   "lines": [],
   "subject": "Unit 2B final punch: 0 doors & hardware items",

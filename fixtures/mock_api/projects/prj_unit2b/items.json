@@ -108,7 +108,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Oakline Millwork by email (dev.patel@example.com)."
+          "note": "Emailed 2 items to Oakline Millwork automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:02.200000Z",
@@ -247,7 +247,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
+          "note": "Emailed 3 items to Spotless Final Clean automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:03.900000Z",
@@ -386,7 +386,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+          "note": "Posted 3 items to #punch-electrical automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:05.600000Z",
@@ -525,7 +525,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Oakline Millwork by email (dev.patel@example.com)."
+          "note": "Emailed 2 items to Oakline Millwork automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-03T16:05:00Z",
@@ -538,12 +538,12 @@
         },
         {
           "at": "2026-11-03T16:06:00Z",
-          "actor": "system",
+          "actor": "human",
           "action": "dispatched",
           "field": "status",
           "from": "dispatched",
           "to": "dispatched",
-          "note": "Sent again to Northfield Builders from the outbox."
+          "note": "Copied a link for 1 item"
         },
         {
           "at": "2026-11-04T13:21:07.300000Z",
@@ -682,7 +682,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
+          "note": "Emailed 3 items to Spotless Final Clean automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:09Z",
@@ -821,7 +821,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Keystone Door & Hardware by email (lena.brooks@example.com)."
+          "note": "Emailed 1 item to Keystone Door & Hardware automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:10.700000Z",
@@ -960,7 +960,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Brightline Painting by email (tom.reyes@example.com)."
+          "note": "Emailed 1 item to Brightline Painting automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:12.400000Z",
@@ -982,12 +982,12 @@
         },
         {
           "at": "2026-11-04T13:25:30Z",
-          "actor": "system",
+          "actor": "human",
           "action": "dispatched",
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent again to Brightline Painting by email (tom.reyes@example.com)."
+          "note": "Emailed 1 item to Brightline Painting"
         }
       ],
       "dispatch": {
@@ -1095,7 +1095,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+          "note": "Posted 3 items to #punch-electrical automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:15.300000Z",
@@ -1313,7 +1313,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Ace Electric on Slack (#punch-electrical)."
+          "note": "Posted 3 items to #punch-electrical automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:14.100000Z",
@@ -1335,12 +1335,12 @@
         },
         {
           "at": "2026-11-04T13:25:00Z",
-          "actor": "system",
+          "actor": "human",
           "action": "dispatched",
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent again to Ace Electric on Slack (#punch-electrical)."
+          "note": "Posted 1 item to #punch-electrical"
         }
       ],
       "dispatch": {
@@ -1579,7 +1579,7 @@
           "field": "status",
           "from": "open",
           "to": "dispatched",
-          "note": "Sent to Spotless Final Clean by email (rosa.alvarez@example.com)."
+          "note": "Emailed 3 items to Spotless Final Clean automatically: checked against the photo and the quote."
         },
         {
           "at": "2026-11-04T13:21:17.500000Z",

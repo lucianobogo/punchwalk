@@ -637,9 +637,24 @@ export interface OverlayOut {
 
 // =========================================================================== trades & dispatch
 
+/** One row of the Trades list. Signed-off items aren't in to_review / to_send / sent. */
 export interface TradeSummaryOut {
   trade: Trade;
+  /** null -> show the trade name + "No company yet" */
+  company: string | null;
   contact: TradeContactOut | null;
+  /** needs a look (status needs_review) */
+  to_review: number;
+  /** open, never sent (status open) */
+  to_send: number;
+  /** sent on any channel (a copied link included), not signed off (status dispatched) */
+  sent: number;
+  /** to_review == 0 && to_send == 0 -> "All caught up" */
+  caught_up: boolean;
+  /** where a send goes now; `outbox` is shown as "Copy link" (never "Outbox") */
+  effective_channel: Channel;
+  /** "Posts to #punch-electrical." / "Posts to your team's Slack channel." / "Emails maria.chen@example.com." / "Copy a link to share." */
+  effective_channel_label: string;
   open_count: number;
   needs_review_count: number;
   signed_off_count: number;
@@ -652,11 +667,30 @@ export interface TradeListOut {
   trades: TradeSummaryOut[];
 }
 
+/** A working channel for this trade (the preview lists only working ones). */
 export interface DispatchChannelOut {
   channel: Channel;
   available: boolean;
   destination: string | null;
   reason: string | null;
+  /** "Posts to #punch-electrical." / "Emails maria.chen@example.com." / "Copy a link to share." */
+  label: string;
+}
+
+/** A needs-a-look item in the trade detail (opens the item; not sendable until approved). */
+export interface DispatchItemRefOut {
+  item_id: string;
+  number: number;
+  title: string;
+}
+
+/** An item already sent and not signed off ("Already sent", unchecked by default). */
+export interface DispatchSentItemOut {
+  item_id: string;
+  number: number;
+  title: string;
+  sent_at: string;
+  channel: Channel;
 }
 
 export interface DispatchLineOut {
@@ -674,7 +708,12 @@ export interface DispatchPreviewOut {
   contact: TradeContactOut | null;
   channel: Channel;
   channel_reason: string | null;
+  effective_channel: Channel;
+  effective_channel_label: string;
+  /** working channels only, effective_channel first */
   channels: DispatchChannelOut[];
+  to_review: DispatchItemRefOut[];
+  already_sent: DispatchSentItemOut[];
   heading: string;
   lines: DispatchLineOut[];
   subject: string;
@@ -696,6 +735,10 @@ export interface DispatchOut {
   trade: Trade;
   company: string | null;
   channel: Channel;
+  /** CHANNEL_LABEL: "Slack" / "Email" / "Copy link" */
+  channel_label: string;
+  /** "Posted 2 items to #punch-electrical" / "Emailed 2 items to Brightline Painting" / "Copied a link for 3 items" */
+  summary: string;
   destination: string | null;
   item_ids: string[];
   sent_at: string;

@@ -8,7 +8,9 @@
       "trade": "general",
       "company": "Northfield Builders",
       "channel": "outbox",
-      "destination": "Outbox",
+      "channel_label": "Copy link",
+      "summary": "Copied a link for 1 item",
+      "destination": "Copy link",
       "item_ids": [
         "itm_2b_04"
       ],

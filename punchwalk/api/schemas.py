@@ -524,10 +524,20 @@ class OverlayOut(Schema):
 
 
 class TradeSummaryOut(Schema):
+    """One row of the Trades list. Signed-off items aren't in to_review / to_send / sent."""
+
     trade: Trade
+    company: str | None  # the directory's company; null -> the UI shows the trade name + "No company yet"
     contact: TradeContactOut | None  # null when the trade isn't in the directory
-    open_count: int  # open + dispatched
-    needs_review_count: int
+    to_review: int  # needs a look (status needs_review)
+    to_send: int  # open, never sent (status open)
+    sent: int  # sent on any channel, a copied link included, and not signed off (status dispatched)
+    caught_up: bool  # to_review == 0 and to_send == 0 -> listed under "All caught up"
+    effective_channel: Channel  # where a send goes now; `outbox` is shown as "Copy link"
+    effective_channel_label: str  # "Posts to #punch-electrical." / "Posts to your team's Slack channel." /
+    #   "Emails maria.chen@example.com." / "Copy a link to share."
+    open_count: int  # open + dispatched (older field; to_send + sent)
+    needs_review_count: int  # older field; = to_review
     signed_off_count: int
     last_sent_at: datetime | None
 
@@ -539,10 +549,31 @@ class TradeListOut(Schema):
 
 
 class DispatchChannelOut(Schema):
+    """A working channel for this trade (the preview lists only working ones)."""
+
     channel: Channel
-    available: bool
-    destination: str | None  # "#punch-electrical", "maria.chen@example.com", "Outbox"
-    reason: str | None  # why it's unavailable, e.g. "No email on file for Clearview Glass."
+    available: bool  # always true in the preview (unavailable channels aren't listed)
+    destination: str | None  # "#punch-electrical", "Slack", "maria.chen@example.com", "Copy link"
+    reason: str | None  # null for working channels
+    label: str  # "Posts to #punch-electrical." / "Emails maria.chen@example.com." / "Copy a link to share."
+
+
+class DispatchItemRefOut(Schema):
+    """An item named in the trade detail: a needs-a-look row that blocks sending."""
+
+    item_id: str
+    number: int
+    title: str
+
+
+class DispatchSentItemOut(Schema):
+    """An item already sent and not signed off ("Already sent", unchecked by default)."""
+
+    item_id: str
+    number: int
+    title: str
+    sent_at: datetime  # the latest successful send of this item
+    channel: Channel  # where that send went (`outbox` = a copied link)
 
 
 class DispatchLineOut(Schema):
@@ -554,14 +585,19 @@ class DispatchLineOut(Schema):
 
 
 # GET /api/projects/{project_id}/trades/{trade}/preview
-#   The items that would be sent now: open + dispatched items of this trade (needs_review waits).
+#   The items that could be sent now: open + dispatched items of this trade (needs_review waits, listed
+#   in `to_review`; the dispatched ones are also in `already_sent`).
 class DispatchPreviewOut(Schema):
     project_id: str
     trade: Trade
     contact: TradeContactOut | None
-    channel: Channel  # suggested channel
-    channel_reason: str | None  # why `channel`: "Ace Electric has a Slack channel (#punch-electrical)."
-    channels: list[DispatchChannelOut]
+    channel: Channel  # the channel this preview is for: ?channel= if it works, else effective_channel
+    channel_reason: str | None  # the label of `channel`: "Posts to your team's Slack channel."
+    effective_channel: Channel  # the trade's default (same rule as TradeSummaryOut)
+    effective_channel_label: str
+    channels: list[DispatchChannelOut]  # working channels only, effective_channel first
+    to_review: list[DispatchItemRefOut]  # needs-a-look items, number order; not sendable until approved
+    already_sent: list[DispatchSentItemOut]  # sent and not signed off, number order
     heading: str  # bold first line: "Unit 2B final punch: 2 electrical items"
     lines: list[DispatchLineOut]
     subject: str  # email subject
@@ -585,6 +621,9 @@ class DispatchOut(Schema):
     trade: Trade
     company: str | None
     channel: Channel
+    channel_label: str  # CHANNEL_LABEL: "Slack" / "Email" / "Copy link"
+    summary: str  # "Posted 2 items to #punch-electrical" / "Emailed 2 items to Brightline Painting" /
+    #   "Copied a link for 3 items" (failed sends: "Couldn't post 2 items to Slack"); the UI adds date/time
     destination: str | None
     item_ids: list[str]
     sent_at: datetime

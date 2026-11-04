@@ -4,7 +4,9 @@
   "trade": "windows_glazing",
   "company": "Clearview Glass",
   "channel": "outbox",
-  "destination": "Outbox",
+  "channel_label": "Copy link",
+  "summary": "Copied a link for 1 item",
+  "destination": "Copy link",
   "item_ids": [
     "itm_2b_09"
   ],

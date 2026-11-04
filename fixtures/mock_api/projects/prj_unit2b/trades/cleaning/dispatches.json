@@ -8,6 +8,8 @@
       "trade": "cleaning",
       "company": "Spotless Final Clean",
       "channel": "email",
+      "channel_label": "Email",
+      "summary": "Emailed 3 items to Spotless Final Clean",
       "destination": "rosa.alvarez@example.com",
       "item_ids": [
         "itm_2b_02",

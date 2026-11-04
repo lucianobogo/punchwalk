@@ -11,27 +11,27 @@
     "has_slack_webhook": false
   },
   "channel": "email",
-  "channel_reason": "Brightline Painting gets email at tom.reyes@example.com.",
+  "channel_reason": "Emails tom.reyes@example.com.",
+  "effective_channel": "email",
+  "effective_channel_label": "Emails tom.reyes@example.com.",
   "channels": [
-    {
-      "channel": "slack",
-      "available": false,
-      "destination": null,
-      "reason": "No Slack channel set up for Brightline Painting."
-    },
     {
       "channel": "email",
       "available": true,
       "destination": "tom.reyes@example.com",
-      "reason": null
+      "reason": null,
+      "label": "Emails tom.reyes@example.com."
     },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
     }
   ],
+  "to_review": [],
+  "already_sent": [],
   "heading": "Unit 3A turnover: 0 painting items",
   "lines": [],
   "subject": "Unit 3A turnover: 0 painting items",

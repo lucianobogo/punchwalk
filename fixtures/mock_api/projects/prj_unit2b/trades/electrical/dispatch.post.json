@@ -4,6 +4,8 @@
   "trade": "electrical",
   "company": "Ace Electric",
   "channel": "slack",
+  "channel_label": "Slack",
+  "summary": "Posted 2 items to #punch-electrical",
   "destination": "#punch-electrical",
   "item_ids": [
     "itm_2b_11",

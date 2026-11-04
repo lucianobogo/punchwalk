@@ -11,25 +11,47 @@
     "has_slack_webhook": true
   },
   "channel": "slack",
-  "channel_reason": "Ace Electric has a Slack channel (#punch-electrical).",
+  "channel_reason": "Posts to #punch-electrical.",
+  "effective_channel": "slack",
+  "effective_channel_label": "Posts to #punch-electrical.",
   "channels": [
     {
       "channel": "slack",
       "available": true,
       "destination": "#punch-electrical",
-      "reason": null
+      "reason": null,
+      "label": "Posts to #punch-electrical."
     },
     {
       "channel": "email",
       "available": true,
       "destination": "maria.chen@example.com",
-      "reason": null
+      "reason": null,
+      "label": "Emails maria.chen@example.com."
     },
     {
       "channel": "outbox",
       "available": true,
-      "destination": "Outbox",
-      "reason": null
+      "destination": "Copy link",
+      "reason": null,
+      "label": "Copy a link to share."
+    }
+  ],
+  "to_review": [],
+  "already_sent": [
+    {
+      "item_id": "itm_2b_08",
+      "number": 8,
+      "title": "Switch plate crooked",
+      "sent_at": "2026-11-04T13:25:00Z",
+      "channel": "slack"
+    },
+    {
+      "item_id": "itm_2b_11",
+      "number": 11,
+      "title": "Outlet cover cracked",
+      "sent_at": "2026-11-03T15:42:03Z",
+      "channel": "slack"
     }
   ],
   "heading": "Unit 2B final punch: 2 electrical items",
