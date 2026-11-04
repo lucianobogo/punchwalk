@@ -22,6 +22,9 @@ kill_timeout = "30s"  # jobs interrupted by a restart are re-queued and resume o
   AUTO_SEND = "true"
   PUNCHWALK_WORKER = "1"
   REASONING_PROVIDER = "baseten"  # Muse Spark Open on Baseten; Muse Spark 1.3 only as the logged fallback
+  # Defect outlines v2 (PLAN 10.3-10.5): locate the defect itself, SAM 3.1 box/point prompts, scored and checked,
+  # evidence-frame picker for unpointed items. REGROUND_ALL stays unset: it only matters for an explicit re-ground.
+  GROUNDING_V2 = "1"
   # Spend: a daily cap (America/New_York day) that a judge's upload only hits on a very busy day, and a
   # total cap the demo can't reach. Budget left: /app/scripts/budget.py
   COST_DAILY_CAP_USD = "10"
