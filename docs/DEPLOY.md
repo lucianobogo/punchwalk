@@ -8,7 +8,7 @@ the repo root. Nothing here prints a secret.
 - **Stage `web`** (node 22 + pnpm 9.15): `VITE_DATA=live pnpm -C web build` writes the PWA to
   `punchwalk/static/`. The build fails if a live build would ship `static/mock-api/`.
 - **Stage `base`** (python 3.11 on Debian 13 "trixie"):
-  - ffmpeg 7.1 (with zscale, for HDR)
+  - ffmpeg 7.1 with zscale: HLG/PQ uploads are tonemapped by `zscale` + `tonemap=hable` (ingest `hdr_method=zscale`); a Mac without zscale uses the same curve baked into a `lut3d` LUT (`tests/test_color.py` checks both)
   - Pango, HarfBuzz and Cairo, plus DejaVu fonts for WeasyPrint
   - `uv sync --frozen --no-dev` into `/app/.venv`
   - the code, the static build, `scripts/`, `fixtures/cache`, `fixtures/pipeline`, `eval/`, and `demo/` (if it exists), so `scripts/seed.py` (the seed step) can run inside the container
@@ -103,7 +103,7 @@ snapshot on Fly. The import writes rows and media only, and makes no model calls
 
 ```bash
 # On the recording machine (cache hits here):
-uv run python scripts/seed.py --reset --export demo/seed_snapshot.tar.gz          # real walks
+uv run python scripts/seed.py --reset --no-sends --export demo/seed_snapshot.tar.gz --video-crf 28   # real walks; no sends, so every trade starts To send
 #   or, before they exist:  uv run python scripts/seed.py --walks synth_walk --reset --export demo/seed_snapshot.tar.gz
 
 # Put it on the volume (or bake it: demo/ is copied into the image; rebuild + deploy):

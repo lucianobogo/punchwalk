@@ -37,14 +37,14 @@ def send(message: Message, *, webhook_url: str, destination: str) -> SendResult:
             res = client.post(webhook_url, json=body)
     except httpx.HTTPError as exc:
         raise ChannelError(
-            "Slack couldn't be reached. Nothing was marked as sent; try again or send it from the Outbox.",
+            "Slack couldn't be reached. Nothing was marked as sent; try again or copy a link instead.",
             payload=body,
         ) from exc
     if res.status_code != 200:
         reason = (res.text or "").strip()[:80] or f"HTTP {res.status_code}"
         raise ChannelError(
             f"Slack didn't accept the message ({reason}). Nothing was marked as sent; "
-            "check the webhook in the trades directory or send it from the Outbox.",
+            "check the webhook in the trades directory or copy a link instead.",
             payload=body,
             status=res.status_code,
         )

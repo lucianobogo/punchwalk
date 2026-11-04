@@ -46,7 +46,7 @@ def test_verified_items_go_out_and_needs_a_look_items_wait(api: TestClient) -> N
     walk_id, ids = seed_walk(pid)
     report = run_policy(walk_id)
 
-    # electrical #2 #3 -> Slack; carpentry #1 and glazing #5 -> Outbox (no Slack, no Resend)
+    # electrical #2 #3 -> Slack; carpentry #1 and glazing #5 -> Copy link (no Slack, no Resend)
     assert sorted(report.sent_items) == sorted([ids[0], ids[1], ids[2], ids[4]])
     assert report.held == [ids[3]] and report.failed == {}
     assert route.call_count == 1
@@ -58,10 +58,10 @@ def test_verified_items_go_out_and_needs_a_look_items_wait(api: TestClient) -> N
         assert last["actor"] == "system" and last["action"] == "dispatched"
         assert last["note"].endswith(": checked against the photo and the quote.")
     assert item_row(ids[1]).history[-1]["note"] == (
-        "Sent automatically to Ace Electric in Slack (#punch-electrical): checked against the photo and the quote."
+        "Posted 2 items to #punch-electrical automatically: checked against the photo and the quote."
     )
     assert item_row(ids[0]).history[-1]["note"] == (
-        "Put in the Outbox for Oakline Millwork automatically: checked against the photo and the quote."
+        "Copied a link for 1 item automatically: checked against the photo and the quote."
     )
     held = item_row(ids[3])
     assert held.status == ItemStatus.needs_review
@@ -138,7 +138,7 @@ def test_job_worker_auto_sends_after_a_first_walk(api: TestClient, clip_path: Pa
     items = api.get(f"/api/projects/{pid}/items").json()["items"]
     (item,) = items
     assert item["status"] == "dispatched"  # the fake runner's item passed its self-check
-    assert item["history"][-1]["note"].startswith("Put in the Outbox for Oakline Millwork automatically")
+    assert item["history"][-1]["note"].startswith("Copied a link for 1 item automatically")
     assert item["dispatch"]["channel"] == "outbox"
     assert api.get(f"/api/walks/{up['walk_id']}/progress").json()["status"] == "done"
 
@@ -158,7 +158,7 @@ def test_resend_open_items_after_a_rewalk(api: TestClient) -> None:
         s.commit()
         report = resend_open_items(s, pid, rewalk_id)
     assert report.sent_items == [ids[1]]
-    assert notes(ids[1])[-1] == "Sent again to Ace Electric after the re-walk: still open."
+    assert notes(ids[1])[-1] == "Copied a link for 1 item again after the re-walk: still open."
 
 
 def test_resend_after_a_rewalk_sends_once_per_closure(api: TestClient) -> None:
@@ -190,8 +190,24 @@ def test_resend_after_a_rewalk_sends_once_per_closure(api: TestClient) -> None:
     assert resend() == [ids[1]]
     sent = dispatch_count()
     assert resend() == [] and dispatch_count() == sent  # a second call sends nothing
-    assert sum(n.startswith("Sent again to") for n in notes(ids[1])) == 1
+    assert sum(n.endswith("again after the re-walk: still open.") for n in notes(ids[1])) == 1
     # the re-walk processed again writes a new closure: that one is re-sent (once)
     close_still_open(utcnow())
     assert resend() == [ids[1]] and resend() == []
+
+
+def test_auto_send_off_also_skips_the_rewalk_resend(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    pid = make_project(api, webhook=None)["id"]
+    walk_id, ids = seed_walk(pid)
+    run_policy(walk_id)
+    rewalk_id, _ = seed_walk_rewalk(pid)
+    with session_factory() as s:
+        item = s.get(Item, ids[1])
+        item.closure = Closure(rewalk_id=rewalk_id, decision=ClosureDecision.still_open).model_dump(mode="json")
+        s.add(item)
+        s.commit()
+    monkeypatch.setenv("AUTO_SEND", "false")
+    reset_settings()
+    with session_factory() as s:
+        assert resend_open_items(s, pid, rewalk_id).sent_items == []
 

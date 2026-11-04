@@ -35,11 +35,17 @@ include JPEG frames that ffmpeg extracts at run time, so a cache recorded on a M
 Linux image. Seed where the recording was made, then ship the result instead of re-running it:
   uv run python scripts/seed.py --export demo/seed_snapshot.tar.gz       # after a successful seed
   python scripts/seed.py --import demo/seed_snapshot.tar.gz              # in the container: no pipeline
+`--export-only` packs the demo project as it is (no seeding, no row writes), e.g. after re-rendering its media.
 Add `--video-crf 28` to the export to re-encode each display.mp4 in the snapshot (same size and fps,
 so the overlay's display-pixel coordinates still line up; DATA_DIR/walks is left as it is).
 A snapshot holds the demo project's rows (project, walks, turns, points, items, dispatches, model
 calls, jobs) and each walk's public media plus stages/ (display.mp4, poster.jpg, meta.json,
 stages/*.json, items/**). It leaves out audio.wav and sam*.mp4, which only the pipeline needs.
+
+`--no-sends` seeds with AUTO_SEND off (no automatic send after the first walk, no re-send after the
+re-walk), so the project has no Dispatch rows and no "sent" history: every trade starts with its
+items To send. Use it with --reset for the exported demo:
+  uv run python scripts/seed.py --reset --no-sends --export demo/seed_snapshot.tar.gz --video-crf 28
 
 Idempotent: walk ids are `wlk_demo_<walk>` and the project id is `prj_demo`. A walk that's already
 ready is left alone unless --force. A real Slack webhook (SLACK_WEBHOOK_URL) is ignored while seeding.
@@ -326,6 +332,16 @@ def _failure(walk_id: str, source: Source, rooms: list[str]) -> str:
     return f"{source.walk} ({walk_id}) failed at stage {stage}: {error}\n{hint}"
 
 
+def dispatch_count() -> int:
+    from sqlmodel import select
+
+    from punchwalk.core.models import Dispatch
+    from punchwalk.db import session_factory
+
+    with session_factory() as s:
+        return len(s.exec(select(Dispatch.id).where(Dispatch.project_id == PROJECT_ID)).all())
+
+
 # --------------------------------------------------------------------------- summary
 
 
@@ -359,6 +375,7 @@ def summary(walk_ids: list[str]) -> dict[str, Any]:
                 "live_cost_usd": round(live, 4),
             })
     out["live_cost_usd"] = round(out["live_cost_usd"], 4)
+    out["dispatches"] = dispatch_count()
     return out
 
 
@@ -370,6 +387,7 @@ def print_summary(info: dict[str, Any]) -> None:
         for line in w["items"]:
             print(f"    {line}")
     print(f"Live API cost: ${info['live_cost_usd']:.4f} ({info['cached_calls']} calls answered from the cache)")
+    print(f"Sends: {info.get('dispatches', 0)}")
 
 
 # --------------------------------------------------------------------------- snapshots
@@ -536,6 +554,8 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     ap.add_argument("--reset", action="store_true", help="drop the demo project (rows + walk media) first")
     ap.add_argument("--force", action="store_true", help="re-run walks that are already ready")
     ap.add_argument("--json", action="store_true", help="print the summary as JSON")
+    ap.add_argument("--no-sends", action="store_true",
+                    help="seed with AUTO_SEND off: no automatic sends or re-walk re-sends, so no Dispatch rows")
     snap = ap.add_mutually_exclusive_group()
     snap.add_argument("--export", type=Path, metavar="TAR_GZ", help="after seeding, write a snapshot of the demo project")
     snap.add_argument("--import", dest="import_", type=Path, metavar="TAR_GZ",
@@ -543,7 +563,12 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     ap.add_argument("--video-crf", type=int, default=None, metavar="N",
                     help="with --export: re-encode each display.mp4 in the snapshot with libx264 at CRF N "
                          "(same size and fps; e.g. 28). Default: copy the videos as they are")
+    ap.add_argument("--export-only", action="store_true",
+                    help="with --export: pack the demo project as it is now, without seeding or writing any row "
+                         "(e.g. after scripts/rerender_display.py)")
     args = ap.parse_args(argv)
+    if args.export_only and not args.export:
+        ap.error("--export-only needs --export")
     if args.video_crf is not None and not args.export:
         ap.error("--video-crf only applies to --export")
     if args.video_crf is not None and not 0 <= args.video_crf <= 51:
@@ -551,11 +576,13 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     return args
 
 
-def _offline_settings() -> None:
-    """Replay only, and never post the demo to a real Slack channel."""
+def _offline_settings(*, no_sends: bool = False) -> None:
+    """Replay only, and never post the demo to a real Slack channel. `no_sends`: AUTO_SEND off."""
     os.environ["PUNCHWALK_CACHE"] = "readonly"
     os.environ["SLACK_WEBHOOK_URL"] = ""
     os.environ["RESEND_API_KEY"] = ""
+    if no_sends:
+        os.environ["AUTO_SEND"] = "false"
     from punchwalk.config import reset_settings
 
     reset_settings()
@@ -563,7 +590,7 @@ def _offline_settings() -> None:
 
 def run(argv: list[str] | None = None) -> dict[str, Any]:
     args = parse_args(argv)
-    _offline_settings()
+    _offline_settings(no_sends=args.no_sends)
     from punchwalk.db import init_db
 
     init_db()
@@ -572,6 +599,10 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
         info = summary(walk_ids)
         print(json.dumps(info, indent=1)) if args.json else print_summary(info)
         return info
+    if args.export_only:
+        counts = export_snapshot(args.export, video_crf=args.video_crf)
+        print(f"Snapshot written to {args.export}: {counts}", file=sys.stderr)
+        return counts
     names = args.walks or DEFAULT_WALKS
     sources: list[Source] = []
     for name in names:
@@ -595,6 +626,8 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
 
     if args.reset:
         reset_project()
+    if args.no_sends and dispatch_count() and not args.reset:
+        raise SeedError("The demo project already has sends; run with --reset --no-sends to start it without any.")
     upsert_project(rooms, keywords)
     walk_ids: list[str] = []
     first_initial: str | None = None
@@ -610,6 +643,8 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
         print(json.dumps(info, indent=1))
     else:
         print_summary(info)
+    if args.no_sends and dispatch_count():
+        raise SeedError("--no-sends, but the demo project has Dispatch rows; nothing was exported.")
     if args.export:
         counts = export_snapshot(args.export, video_crf=args.video_crf)
         print(f"Snapshot written to {args.export}: {counts}", file=sys.stderr)

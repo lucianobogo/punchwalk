@@ -1,11 +1,11 @@
-"""In-app Outbox: always available. The send is the stored Dispatch row; the PM copies the link or text."""
+"""Copy link (`Channel.outbox`): always available. The send is the stored Dispatch row; the PM copies the link or text."""
 
 from __future__ import annotations
 
 from punchwalk.dispatch.channels import SendResult
 from punchwalk.dispatch.message import Message
 
-DESTINATION = "Outbox"
+DESTINATION = "Copy link"
 
 
 def send(message: Message) -> SendResult:

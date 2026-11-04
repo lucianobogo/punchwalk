@@ -1,4 +1,4 @@
-"""Dispatch (PLAN 6.1): message copy, channel policy, preview, sending over Slack / email / Outbox."""
+"""Dispatch: message copy, the effective channel, preview, sending over Slack / email / Copy link."""
 
 from __future__ import annotations
 
@@ -51,13 +51,15 @@ def test_preview_lists_open_items_safety_first_and_suggests_slack(api: TestClien
     # open #2 and #3 (needs-a-look #4 waits, signed-off #6 is done); safety first
     assert [ln.number for ln in p.lines] == [3, 2]
     assert p.channel == "slack" and p.heading == "Unit 2B final punch: 2 electrical items" == p.subject
-    assert p.channel_reason == "Ace Electric has a Slack channel (#punch-electrical)."
-    assert [(c.channel, c.available, c.destination) for c in p.channels] == [
-        ("slack", True, "#punch-electrical"),
-        ("email", False, "maria.chen@example.com"),
-        ("outbox", True, "Outbox"),
+    assert p.channel_reason == "Posts to #punch-electrical." == p.effective_channel_label
+    assert p.effective_channel == "slack"
+    # only working channels (email isn't set up on this server), the effective one first
+    assert [(c.channel, c.available, c.destination, c.label) for c in p.channels] == [
+        ("slack", True, "#punch-electrical", "Posts to #punch-electrical."),
+        ("outbox", True, "Copy link", "Copy a link to share."),
     ]
-    assert p.channels[1].reason == "Email sending isn't set up on this server yet."
+    assert [(r.number, r.title) for r in p.to_review] == [(4, "Bulb out above the sink")]
+    assert p.already_sent == []
     assert p.lines[0].line == "Bedroom, left of the bed. Replace the cover."
     assert p.lines[1].line == "Hallway, by the hall closet. Straighten and tighten the plate."
     assert p.lines[0].url.startswith("/share/item/shr_") and p.contact and p.contact.has_slack_webhook
@@ -77,35 +79,32 @@ def test_preview_lists_open_items_safety_first_and_suggests_slack(api: TestClien
 def test_channel_policy(api: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     pid = make_project(api, webhook=None)["id"]
     seed_walk(pid)
+    # nothing set up (no webhook, email not configured on this server): Copy link, the only working channel
     p = preview(api, pid, "electrical")
-    assert p.channel == "outbox" and p.channels[0].reason == "No Slack channel set up for Ace Electric."
-    # Ace Electric has an email address, but this server can't send email yet: say that, not "no email"
-    assert p.channels[1].destination == "maria.chen@example.com" and not p.channels[1].available
-    assert p.channel_reason == (
-        "Email isn't set up on this server yet, so this goes to the Outbox for Ace Electric, ready to share."
-    )
+    assert p.channel == p.effective_channel == "outbox" and p.channel_reason == "Copy a link to share."
+    assert [c.channel for c in p.channels] == ["outbox"]
     glass = preview(api, pid, "windows_glazing")
-    assert glass.channels[1].reason == "No email on file for Clearview Glass." and glass.channel == "outbox"
-    assert glass.channel_reason == (
-        "No Slack channel or email set up for Clearview Glass, so this goes to the Outbox, ready to share."
-    )
-    # the server-wide webhook is the fallback for every trade
+    assert glass.channel == "outbox" and glass.effective_channel_label == "Copy a link to share."
+    # the team's webhook: every trade without its own channel posts to it
     monkeypatch.setenv("SLACK_WEBHOOK_URL", WEBHOOK)
     reset_settings()
     glass = preview(api, pid, "windows_glazing")
     assert glass.channel == "slack" and glass.channels[0].destination == "Slack"
-    assert glass.channel_reason == "Clearview Glass gets the team's Slack channel."
-    # email becomes the pick when Resend is configured and Slack isn't
-    monkeypatch.setenv("SLACK_WEBHOOK_URL", "")
+    assert glass.channel_reason == "Posts to your team's Slack channel."
+    assert [c.channel for c in glass.channels] == ["slack", "outbox"]
+    # the trade's own email beats the team's Slack once Resend is configured
     monkeypatch.setenv("RESEND_API_KEY", "re_test")
     monkeypatch.setenv("EMAIL_FROM", "Punchwalk <punch@example.com>")
     reset_settings()
     carp = preview(api, pid, "carpentry_millwork")
-    assert carp.channel == "email" and carp.channels[1].available
-    # ?channel= picks another available channel, and ignores an unavailable one
+    assert carp.channel == "email" and carp.channel_reason == "Emails dev.patel@example.com."
+    assert [c.channel for c in carp.channels] == ["email", "slack", "outbox"]
+    # ?channel= picks another working channel, and ignores one that doesn't work
     picked = preview(api, pid, "carpentry_millwork", "?channel=outbox")
-    assert picked.channel == "outbox"
-    assert picked.channel_reason == "This goes to the Outbox for Oakline Millwork, ready to share."
+    assert picked.channel == "outbox" and picked.effective_channel == "email"
+    assert picked.channel_reason == "Copy a link to share."
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "")
+    reset_settings()
     assert preview(api, pid, "carpentry_millwork", "?channel=slack").channel == "email"
     # a trade with nothing open has an empty preview
     empty = preview(api, pid, "plumbing")
@@ -137,17 +136,24 @@ def test_send_over_slack_marks_items_and_logs_history(api: TestClient, public_ba
         assert got.status == "dispatched"
         last = got.history[-1]
         assert (last.actor, last.action, last.from_, last.to) == ("human", "dispatched", "open", "dispatched")
-        assert last.note == "Sent to Ace Electric in Slack (#punch-electrical)."
+        assert last.note == "Posted 2 items to #punch-electrical"
         assert got.dispatch and got.dispatch.dispatch_id == out.id and got.dispatch.times_sent == 1
 
     # dispatched-but-open items are still offered, and a second send says "again"
     again = api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "outbox", "item_ids": [ids[1]]})
     assert again.status_code == 201
     got = check(S.ItemOut, api.get(f"/api/items/{ids[1]}").json())
-    assert got.history[-1].note == "Put in the Outbox again for Ace Electric, ready to share."
+    assert got.history[-1].note == "Copied a link for 1 item"
     assert got.dispatch and got.dispatch.times_sent == 2
     hist = check(S.DispatchListOut, api.get(f"/api/projects/{pid}/trades/electrical/dispatches").json())
-    assert [d.channel for d in hist.dispatches] == ["outbox", "slack"]
+    assert [(d.channel, d.channel_label, d.summary) for d in hist.dispatches] == [
+        ("outbox", "Copy link", "Copied a link for 1 item"),
+        ("slack", "Slack", "Posted 2 items to #punch-electrical"),
+    ]
+    # the sent items move to "Already sent", with when and where (the latest send)
+    p2 = preview(api, pid, "electrical")
+    assert [(a.number, a.channel) for a in p2.already_sent] == [(2, "outbox"), (3, "slack")]
+    assert p2.already_sent[1].sent_at == out.sent_at
     trades = check(S.TradeListOut, api.get(f"/api/projects/{pid}/trades").json())
     assert next(t for t in trades.trades if t.trade == "electrical").last_sent_at is not None
 
@@ -193,9 +199,9 @@ def test_outbox_send_and_refusals(api: TestClient) -> None:
     _, ids = seed_walk(pid)
     url = f"/api/projects/{pid}/trades/electrical/dispatch"
     out = check(S.DispatchOut, api.post(url, json={"channel": "outbox", "item_ids": [ids[2]]}).json())
-    assert out.channel == "outbox" and out.destination == "Outbox"
+    assert out.channel == "outbox" and out.destination == "Copy link" and out.summary == "Copied a link for 1 item"
     assert set(out.payload) == {"subject", "text", "links"} and out.payload["links"][0].startswith("http://localhost")
-    assert item_row(ids[2]).history[-1]["note"] == "Put in the Outbox for Ace Electric, ready to share."
+    assert item_row(ids[2]).history[-1]["note"] == "Copied a link for 1 item"
 
     def refused(body: dict, status: int, phrase: str) -> None:
         res = api.post(url, json=body)
@@ -233,7 +239,7 @@ def test_email_through_resend(api: TestClient, monkeypatch: pytest.MonkeyPatch) 
     body = json.loads(req.content)
     assert body["to"] == ["dev.patel@example.com"] and body["subject"] == "Unit 2B final punch: 1 carpentry & millwork item"
     assert "View item and video" in body["html"] and body["text"] == out.payload["text"]
-    assert item_row(ids[0]).history[-1]["note"] == "Sent to Oakline Millwork by email (dev.patel@example.com)."
+    assert item_row(ids[0]).history[-1]["note"] == "Emailed 1 item to Oakline Millwork" == out.summary
 
     monkeypatch.setattr(
         channels, "transport",
@@ -267,6 +273,7 @@ def test_approve_and_send(api: TestClient) -> None:
     assert res.status_code == 201, res.text
     out = check(S.DispatchOut, res.json())
     assert out.item_ids == [ids[3]] and out.channel == "outbox"
+    assert (out.summary, out.channel_label) == ("Copied a link for 1 item", "Copy link")  # says where it went
     item = check(S.ItemOut, api.get(f"/api/items/{ids[3]}").json())
     assert item.status == "dispatched" and item.review_reason is None
     assert [(h.action, h.from_, h.to) for h in item.history[-2:]] == [
@@ -286,7 +293,7 @@ def test_global_webhook_history_has_no_empty_channel_name(api: TestClient, monke
     _, ids = seed_walk(pid)
     res = api.post(f"/api/projects/{pid}/trades/windows_glazing/dispatch", json={"channel": "slack", "item_ids": [ids[4]]})
     assert res.status_code == 201, res.text
-    assert item_row(ids[4]).history[-1]["note"] == "Sent to Clearview Glass in Slack."
+    assert item_row(ids[4]).history[-1]["note"] == "Posted 1 item to Slack"
 
 
 @respx.mock
@@ -310,3 +317,61 @@ def test_example_domain_webhooks_are_never_contacted(api: TestClient) -> None:
         assert not mock.calls
     assert res.status_code == 201 and res.json()["destination"] == "#punch-electrical"
     assert item_row(ids[1]).status == "dispatched"
+
+
+@pytest.mark.parametrize(
+    ("own_hook", "team_hook", "resend", "expected", "label"),
+    [
+        (True, True, True, "slack", "Posts to #punch-electrical."),  # 1. the trade's own Slack
+        (False, True, True, "email", "Emails maria.chen@example.com."),  # 2. its own email (Resend on) beats the team
+        (False, True, False, "slack", "Posts to your team's Slack channel."),  # 3. the team's Slack
+        (False, False, False, "outbox", "Copy a link to share."),  # 4. nothing else works: Copy link
+    ],
+)
+def test_effective_channel_rule(api: TestClient, monkeypatch: pytest.MonkeyPatch, own_hook: bool, team_hook: bool,
+                                resend: bool, expected: str, label: str) -> None:  # fmt: skip
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", WEBHOOK if team_hook else "")
+    if resend:
+        monkeypatch.setenv("RESEND_API_KEY", "re_test")
+        monkeypatch.setenv("EMAIL_FROM", "Punchwalk <punch@example.com>")
+    reset_settings()
+    pid = make_project(api, webhook=WEBHOOK if own_hook else None)["id"]
+    seed_walk(pid)
+    row = next(t for t in api.get(f"/api/projects/{pid}/trades").json()["trades"] if t["trade"] == "electrical")
+    assert (row["effective_channel"], row["effective_channel_label"]) == (expected, label)
+    p = preview(api, pid, "electrical")
+    assert (p.channel, p.effective_channel, p.effective_channel_label, p.channel_reason) == (
+        expected, expected, label, label)  # fmt: skip
+    assert p.channels[0].channel == expected and all(c.available and c.reason is None for c in p.channels)
+
+
+def test_trade_list_counts(api: TestClient) -> None:
+    pid = make_project(api, webhook=None)["id"]
+    _, ids = seed_walk(pid)
+    api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "outbox", "item_ids": [ids[2]]})
+    out = check(S.TradeListOut, api.get(f"/api/projects/{pid}/trades").json())
+    rows = {t.trade: t for t in out.trades}
+    elec = rows["electrical"]  # #2 open, #3 sent (copied link), #4 needs a look, #6 signed off (not counted)
+    assert (elec.company, elec.to_review, elec.to_send, elec.sent, elec.caught_up) == ("Ace Electric", 1, 1, 1, False)
+    assert (elec.effective_channel, elec.effective_channel_label) == ("outbox", "Copy a link to share.")
+    carp = rows["carpentry_millwork"]
+    assert (carp.to_review, carp.to_send, carp.sent, carp.caught_up) == (0, 1, 0, False)
+    api.post(f"/api/projects/{pid}/trades/carpentry_millwork/dispatch", json={"channel": "outbox", "item_ids": [ids[0]]})
+    carp = next(t for t in check(S.TradeListOut, api.get(f"/api/projects/{pid}/trades").json()).trades
+                if t.trade == "carpentry_millwork")  # fmt: skip
+    assert (carp.to_send, carp.sent, carp.caught_up) == (0, 1, True)  # sent items don't keep a trade busy
+
+
+def test_no_string_says_outbox(api: TestClient) -> None:
+    pid = make_project(api, webhook=None)["id"]
+    _, ids = seed_walk(pid)
+    api.post(f"/api/projects/{pid}/trades/electrical/dispatch", json={"channel": "outbox", "item_ids": [ids[1]]})
+    bodies = [
+        api.get(f"/api/projects/{pid}/trades").text,
+        api.get(f"/api/projects/{pid}/trades/electrical/preview").text,
+        api.get(f"/api/projects/{pid}/trades/electrical/dispatches").text,
+        api.get(f"/api/items/{ids[1]}").text,
+    ]
+    for body in bodies:
+        assert "Outbox" not in body and "outbox " not in body.lower().replace('"outbox"', ""), body[:300]
+

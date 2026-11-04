@@ -2,16 +2,18 @@
 
 `auto_dispatch_after_processing(session, walk_id)` runs after a first walk is processed (the job
 worker calls it; the pipeline's persist stage may call it too, which is safe: it's idempotent):
-- open items whose self-check passed (`verification.consistent`) are grouped by trade and sent
-  through the channel policy, with the history note "Sent automatically ...: checked against the
-  photo and the quote.";
+- open items whose self-check passed (`verification.consistent`) are grouped by trade and sent over
+  the trade's effective channel, with the history note "Posted 2 items to Slack automatically: checked
+  against the photo and the quote." (or "Emailed ... to <company> automatically: ...", "Copied a link
+  for ... automatically: ...");
 - needs-a-look items, and open items that were never checked, are held, with one history note each
   ("Held for a look: <reason>");
 - items already sent (dispatched), signed off or dismissed are left alone, and a held item is never
   noted twice.
 A channel failure never breaks the walk: the item stays open with a note saying it wasn't sent.
 
-Turned off with `AUTO_SEND=false` (Settings; default on).
+Turned off with `AUTO_SEND=false` (Settings; default on), which also turns off the re-send of
+still-open items after a re-walk (`resend_open_items`): both are automatic sends.
 """
 
 from __future__ import annotations
@@ -26,7 +28,6 @@ from sqlmodel import Session, col, select
 
 from punchwalk.config import get_settings
 from punchwalk.core.enums import (
-    Channel,
     ClosureDecision,
     HistoryAction,
     HistoryActor,
@@ -103,16 +104,12 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
     session.commit()
 
     for trade, group in by_trade.items():
-        option = service.suggested(service.channel_options(project, trade))
-        company = service.company_for(project, trade)
-        if option.channel == Channel.outbox:
-            note = f"Put in the Outbox for {company} automatically: {AUTO_NOTE}"
-        else:
-            note = f"Sent automatically to {company} {service.via(option)}: {AUTO_NOTE}"
+        option = service.effective_for(project, trade)
         try:
             dispatch = service.send_items(
-                session, project, trade, [i.id for i in group], option.channel, actor=HistoryActor.system, note=note
-            )
+                session, project, trade, [i.id for i in group], option.channel, actor=HistoryActor.system,
+                note_suffix=f" automatically: {AUTO_NOTE}",
+            )  # fmt: skip
         except (service.DispatchFailed, service.DispatchRefused) as exc:
             log.warning("auto-send for %s/%s failed: %s", walk_id, trade, exc)
             report.failed[trade.value] = str(exc)
@@ -126,8 +123,7 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
     return report
 
 
-RESEND_NOTE_PREFIX = "Sent again to "
-RESEND_NOTE_SUFFIX = " after the re-walk: still open."
+RESEND_NOTE_SUFFIX = " again after the re-walk: still open."  # "Posted 2 items to Slack again after ..."
 
 
 def _as_utc(value: Any) -> datetime | None:
@@ -152,7 +148,7 @@ def _resent_for_closure(item: Item, closure: dict[str, Any]) -> bool:
         if not isinstance(event, dict) or event.get("action") != HistoryAction.dispatched.value:
             continue
         note = event.get("note") or ""
-        if not (note.startswith(RESEND_NOTE_PREFIX) and note.endswith(RESEND_NOTE_SUFFIX)):
+        if not note.endswith(RESEND_NOTE_SUFFIX):
             continue
         at = _as_utc(event.get("at"))
         if decided is None or (at is not None and at >= decided):
@@ -169,7 +165,7 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
     """
     report = AutoSendReport()
     project = session.get(Project, project_id)
-    if project is None:
+    if project is None or not auto_send_enabled():
         return report
     items = session.exec(select(Item).where(Item.project_id == project_id, col(Item.dismissed_at).is_(None))).all()
     by_trade: dict[Trade, list[Item]] = defaultdict(list)
@@ -183,7 +179,6 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
         ):
             by_trade[item.trade].append(item)
     for trade, group in by_trade.items():
-        company = service.company_for(project, trade)
         try:
             dispatch = service.send_items(
                 session,
@@ -192,7 +187,7 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
                 [i.id for i in group],
                 None,
                 actor=HistoryActor.system,
-                note=f"{RESEND_NOTE_PREFIX}{company}{RESEND_NOTE_SUFFIX}",
+                note_suffix=RESEND_NOTE_SUFFIX,
             )
         except (service.DispatchFailed, service.DispatchRefused) as exc:
             report.failed[trade.value] = str(exc)

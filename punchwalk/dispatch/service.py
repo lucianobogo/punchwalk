@@ -1,8 +1,10 @@
 """Channel choice, the preview, and sending a trade its items.
 
-Channel policy (per trade): Slack when a webhook exists (the trade's own from the trades directory,
-else the server-wide SLACK_WEBHOOK_URL); else email when Resend is configured and the contact has an
-address; else the in-app Outbox, which is always available.
+Effective channel (per trade; one rule for the Trades list, the preview default, sends, approve-and-send
+and the history): the trade's own channel when it's set up and working (its Slack webhook, else its
+contact email when Resend is configured), else Slack when the team webhook SLACK_WEBHOOK_URL is set,
+else Copy link (`Channel.outbox`: the send is recorded in the app and the PM copies the link). Only
+working channels are offered. The UI never says "Outbox"; nor does any sentence here.
 
 A send (`send_items`):
 1. checks every item belongs to the project and trade and is open (or already sent and still open);
@@ -33,6 +35,7 @@ from punchwalk.core.enums import (
     format_item_number,
 )
 from punchwalk.core.models import Dispatch, HistoryEvent, Item, Project, TradeContact, utcnow
+from punchwalk.db import as_utc
 from punchwalk.dispatch import mail, outbox, slack
 from punchwalk.dispatch.channels import ChannelError, SendResult
 from punchwalk.dispatch.message import Message, build_message
@@ -82,25 +85,53 @@ class ChannelOption:
     channel: Channel
     available: bool
     destination: str | None
-    reason: str | None
+    reason: str | None  # why it isn't available (used in refusals; never listed in the preview)
     webhook: str | None = None  # never leaves the server
+    own: bool = False  # the trade's own channel (its webhook / its email), not the team's Slack
+    label: str = ""  # "Posts to #punch-electrical." (see channel_label)
 
     def out(self) -> S.DispatchChannelOut:
         return S.DispatchChannelOut(
-            channel=self.channel, available=self.available, destination=self.destination, reason=self.reason
+            channel=self.channel,
+            available=self.available,
+            destination=self.destination,
+            reason=self.reason,
+            label=self.label,
         )
 
 
+def channel_label(channel: Channel, destination: str | None, *, own: bool, company: str) -> str:
+    """The sentence naming where a send goes: "Posts to #punch-electrical." / "Emails x@example.com." ..."""
+    if channel == Channel.slack:
+        if own and destination and destination.startswith("#"):
+            return f"Posts to {destination}."
+        if own:
+            return f"Posts to {company}'s Slack channel."
+        return "Posts to your team's Slack channel."
+    if channel == Channel.email:
+        return f"Emails {destination}."
+    return "Copy a link to share."
+
+
 def channel_options(project: Project, trade: Trade) -> list[ChannelOption]:
+    """Every channel (slack, email, outbox) with whether it works for this trade; see `effective`."""
     c = contact_for(project, trade)
     company = c.company if c else TRADE_LABEL[trade]
-    webhook = (c.slack_webhook if c else None) or get_settings().SLACK_WEBHOOK_URL.get_secret_value() or None
+    own_hook = (c.slack_webhook if c else None) or None
+    team_hook = get_settings().SLACK_WEBHOOK_URL.get_secret_value() or None
+    webhook = own_hook or team_hook
+    slack_dest = None
+    if own_hook:
+        slack_dest = (c.slack_channel if c else None) or SLACK_DEFAULT_DESTINATION
+    elif team_hook:
+        slack_dest = SLACK_DEFAULT_DESTINATION
     slack_opt = ChannelOption(
         Channel.slack,
         available=bool(webhook),
-        destination=((c.slack_channel if c else None) or SLACK_DEFAULT_DESTINATION) if webhook else None,
+        destination=slack_dest,
         reason=None if webhook else f"No Slack channel set up for {company}.",
         webhook=webhook,
+        own=bool(own_hook),
     )
     email = c.email if c else None
     if not email:
@@ -108,33 +139,60 @@ def channel_options(project: Project, trade: Trade) -> list[ChannelOption]:
     elif not mail.configured():
         email_opt = ChannelOption(Channel.email, False, email, "Email sending isn't set up on this server yet.")
     else:
-        email_opt = ChannelOption(Channel.email, True, email, None)
+        email_opt = ChannelOption(Channel.email, True, email, None, own=True)
     outbox_opt = ChannelOption(Channel.outbox, True, outbox.DESTINATION, None)
-    return [slack_opt, email_opt, outbox_opt]
+    options = [slack_opt, email_opt, outbox_opt]
+    for o in options:
+        o.label = channel_label(o.channel, o.destination, own=o.own, company=company)
+    return options
 
 
-def suggested(options: Sequence[ChannelOption]) -> ChannelOption:
-    return next(o for o in options if o.available)  # the outbox is always available
+def effective(options: Sequence[ChannelOption]) -> ChannelOption:
+    """The trade's own working channel (Slack webhook, else email), else the team's Slack, else Copy link."""
+    by = {o.channel: o for o in options}
+    slack_opt, email_opt = by[Channel.slack], by[Channel.email]
+    if slack_opt.available and slack_opt.own:
+        return slack_opt
+    if email_opt.available:
+        return email_opt
+    if slack_opt.available:
+        return slack_opt
+    return by[Channel.outbox]  # always available
 
 
-def why(option: ChannelOption, company: str, options: Sequence[ChannelOption] = ()) -> str:
-    """One plain sentence on the chosen channel (DispatchPreviewOut.channel_reason).
+suggested = effective  # older name
 
-    `options` (all of the trade's channels) explains an Outbox pick: an email address on file that
-    can't be used yet is named as the reason, not reported as missing.
-    """
-    if option.channel == Channel.slack:
-        if option.destination and option.destination != SLACK_DEFAULT_DESTINATION:
-            return f"{company} has a Slack channel ({option.destination})."
-        return f"{company} gets the team's Slack channel."
-    if option.channel == Channel.email:
-        return f"{company} gets email at {option.destination}."
-    others = [o for o in options if o.channel != Channel.outbox]
-    if any(o.available for o in others):  # the Outbox was picked on purpose (?channel=outbox)
-        return f"This goes to the Outbox for {company}, ready to share."
-    if any(o.channel == Channel.email and o.destination for o in others):
-        return f"Email isn't set up on this server yet, so this goes to the Outbox for {company}, ready to share."
-    return f"No Slack channel or email set up for {company}, so this goes to the Outbox, ready to share."
+
+def working(options: Sequence[ChannelOption]) -> list[ChannelOption]:
+    """Only the channels that work, the effective one first, then slack / email / copy link."""
+    first = effective(options)
+    return [first, *(o for o in options if o.available and o is not first)]
+
+
+def effective_for(project: Project, trade: Trade) -> ChannelOption:
+    return effective(channel_options(project, trade))
+
+
+def why(option: ChannelOption, company: str = "", options: Sequence[ChannelOption] = ()) -> str:
+    """DispatchPreviewOut.channel_reason: the chosen channel's label."""
+    return option.label or channel_label(option.channel, option.destination, own=option.own, company=company)
+
+
+def _items(n: int) -> str:
+    return f"{n} item" if n == 1 else f"{n} items"
+
+
+def send_summary(channel: Channel, n: int, destination: str | None, company: str, *, ok: bool = True) -> str:
+    """The history sentence for a send (no date: the UI shows `at`), e.g. "Posted 2 items to Slack"."""
+    if channel == Channel.slack:
+        where = destination if destination and destination.startswith("#") else "Slack"
+        verb = "Posted" if ok else "Couldn't post"
+        return f"{verb} {_items(n)} to {where}"
+    if channel == Channel.email:
+        verb = "Emailed" if ok else "Couldn't email"
+        return f"{verb} {_items(n)} to {company}"
+    verb = "Copied a link" if ok else "Couldn't copy a link"
+    return f"{verb} for {_items(n)}"
 
 
 # --------------------------------------------------------------------------- items
@@ -176,19 +234,47 @@ def message_for(session: Session, project: Project, trade: Trade, items: Sequenc
 # --------------------------------------------------------------------------- preview
 
 
+def last_sends(session: Session, project_id: str) -> dict[str, Dispatch]:
+    """item id -> its latest successful Dispatch in this project."""
+    out: dict[str, Dispatch] = {}
+    rows = session.exec(
+        select(Dispatch).where(Dispatch.project_id == project_id, Dispatch.ok == True)  # noqa: E712
+    ).all()
+    for d in sorted(rows, key=lambda d: (d.sent_at, d.id)):
+        for item_id in d.item_ids or []:
+            out[item_id] = d
+    return out
+
+
 def preview(session: Session, project: Project, trade: Trade, channel: Channel | None = None) -> S.DispatchPreviewOut:
     from punchwalk.api.views import trade_contact_out
 
     options = channel_options(project, trade)
-    chosen = next((o for o in options if o.channel == channel and o.available), None) or suggested(options)
+    eff = effective(options)
+    chosen = next((o for o in options if o.channel == channel and o.available), None) or eff
+    mine = sorted(live_trade_items(session, project.id, trade), key=lambda i: i.number)
+    sent_by = last_sends(session, project.id)
+    already_sent = [
+        S.DispatchSentItemOut(item_id=i.id, number=i.number, title=i.title, sent_at=as_utc(sent_by[i.id].sent_at),
+                              channel=sent_by[i.id].channel)
+        for i in mine if i.status == ItemStatus.dispatched and i.id in sent_by
+    ]  # fmt: skip
     msg = message_for(session, project, trade, sendable_items(session, project.id, trade))
     return S.DispatchPreviewOut(
         project_id=project.id,
         trade=trade,
         contact=trade_contact_out(contact_for(project, trade)),
         channel=chosen.channel,
-        channel_reason=why(chosen, company_for(project, trade), options),
-        channels=[o.out() for o in options],
+        channel_reason=why(chosen),
+        effective_channel=eff.channel,
+        effective_channel_label=eff.label,
+        channels=[o.out() for o in working(options)],
+        to_review=[
+            S.DispatchItemRefOut(item_id=i.id, number=i.number, title=i.title)
+            for i in mine
+            if i.status == ItemStatus.needs_review
+        ],
+        already_sent=already_sent,
         heading=msg.heading,
         lines=[
             S.DispatchLineOut(item_id=ln.item_id, number=ln.number, title=ln.title, line=ln.line, url=ln.url)
@@ -223,16 +309,6 @@ def _pick_items(session: Session, project: Project, trade: Trade, item_ids: Sequ
     return items
 
 
-def via(option: ChannelOption) -> str:
-    """'in Slack (#punch-electrical)', 'in Slack', 'by email (x@example.com)', 'from the outbox'."""
-    if option.channel == Channel.slack:
-        named = option.destination and option.destination != SLACK_DEFAULT_DESTINATION
-        return f"in Slack ({option.destination})" if named else "in Slack"
-    if option.channel == Channel.email:
-        return f"by email ({option.destination})"
-    return "from the outbox"
-
-
 def send_items(
     session: Session,
     project: Project,
@@ -241,16 +317,17 @@ def send_items(
     channel: Channel | None = None,
     *,
     actor: HistoryActor = HistoryActor.human,
-    note: str | None = None,
+    note_suffix: str = "",
 ) -> Dispatch:
-    """Send `item_ids` to the trade over `channel` (None = the suggested one). See the module docstring.
+    """Send `item_ids` to the trade over `channel` (None = the effective one). See the module docstring.
 
-    `note` replaces the default history note ("Sent to Ace Electric in Slack (#punch-electrical).").
+    Each item's history note is the send's summary ("Posted 2 items to #punch-electrical") plus
+    `note_suffix` (" automatically: checked against the photo and the quote.").
     """
     items = _pick_items(session, project, trade, item_ids)
     options = channel_options(project, trade)
     if channel is None:
-        option = suggested(options)
+        option = effective(options)
     else:
         option = next(o for o in options if o.channel == channel)
         if not option.available:
@@ -287,14 +364,8 @@ def send_items(
         payload=result.payload,
     )
     session.add(dispatch)
+    text = send_summary(option.channel, len(msg.item_ids), result.destination, company) + note_suffix
     for item in items:
-        again = item.status == ItemStatus.dispatched
-        if note:
-            text = note
-        elif option.channel == Channel.outbox:  # nothing left the app yet: the PM shares the link
-            text = f"{'Put in the Outbox again' if again else 'Put in the Outbox'} for {company}, ready to share."
-        else:
-            text = f"Sent {'again ' if again else ''}to {company} {via(option)}."
         entry = HistoryEvent(
             at=now,
             actor=actor,

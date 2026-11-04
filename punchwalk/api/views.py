@@ -29,9 +29,11 @@ from punchwalk.api.progress import (
 )
 from punchwalk.config import get_settings
 from punchwalk.core.enums import (
+    CHANNEL_LABEL,
     NOT_CHECKED_ON_REWALK,
     REVIEW_FALSE_FIX,
     STAGE_TITLE,
+    TRADE_LABEL,
     ClosureDecision,
     Grounding,
     ItemStatus,
@@ -953,6 +955,8 @@ def rewalk_summary_out(session: Session, walk: Walk) -> S.RewalkSummaryOut:
 
 
 def trade_list_out(session: Session, project: Project) -> S.TradeListOut:
+    from punchwalk.dispatch.service import effective_for
+
     items = live_items(session, Item.project_id == project.id)
     sends = session.exec(select(Dispatch).where(Dispatch.project_id == project.id)).all()
     directory = [c.trade for c in contacts(project)]
@@ -960,10 +964,21 @@ def trade_list_out(session: Session, project: Project) -> S.TradeListOut:
     out = []
     for t in trades:
         mine = [i for i in items if i.trade == t]
+        c = contact_for(project, t)
+        to_review = sum(1 for i in mine if i.status == ItemStatus.needs_review)
+        to_send = sum(1 for i in mine if i.status == ItemStatus.open)
+        eff = effective_for(project, t)
         out.append(
             S.TradeSummaryOut(
                 trade=t,
-                contact=trade_contact_out(contact_for(project, t)),
+                company=c.company if c and c.company else None,
+                contact=trade_contact_out(c),
+                to_review=to_review,
+                to_send=to_send,
+                sent=sum(1 for i in mine if i.status == ItemStatus.dispatched),
+                caught_up=to_review == 0 and to_send == 0,
+                effective_channel=eff.channel,
+                effective_channel_label=eff.label,
                 open_count=sum(1 for i in mine if i.status in OPEN_STATUSES),
                 needs_review_count=sum(1 for i in mine if i.status == ItemStatus.needs_review),
                 signed_off_count=sum(1 for i in mine if i.status == ItemStatus.closed),
@@ -974,13 +989,18 @@ def trade_list_out(session: Session, project: Project) -> S.TradeListOut:
 
 
 def dispatch_out(d: Dispatch, project: Project | None) -> S.DispatchOut:
+    from punchwalk.dispatch.service import send_summary
+
     c = contact_for(project, d.trade) if project else None
+    company = c.company if c else TRADE_LABEL[d.trade]
     return S.DispatchOut(
         id=d.id,
         project_id=d.project_id,
         trade=d.trade,
         company=c.company if c else None,
         channel=d.channel,
+        channel_label=CHANNEL_LABEL[d.channel],
+        summary=send_summary(d.channel, len(d.item_ids or []), d.destination, company, ok=d.ok),
         destination=d.destination,
         item_ids=list(d.item_ids or []),
         sent_at=as_utc(d.sent_at),

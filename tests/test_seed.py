@@ -243,3 +243,26 @@ def test_snapshot_export_can_reencode_the_display_video(seed, api: TestClient, t
     assert copy.read_bytes() != before and seed._video_shape(copy) == seed._video_shape(original)
     with pytest.raises(SystemExit):
         seed.parse_args(["--video-crf", "28"])  # only with --export
+
+
+def test_no_sends_seeds_every_trade_with_its_items_to_send(seed, api: TestClient, tmp_path: Path,
+                                                           monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+    import tarfile
+
+    info = seed.run(["--walks", "synth_walk", "--no-sends", "--export", str(tmp_path / "snap.tar.gz")])
+    assert info["dispatches"] == 0
+    items = api.get("/api/projects/prj_demo/items").json()["items"]
+    assert items and all(i["status"] in ("open", "needs_review") and i["dispatch"] is None for i in items)
+    assert not any(h["action"] == "dispatched" for i in items for h in i["history"])
+    trades = api.get("/api/projects/prj_demo/trades").json()["trades"]
+    assert sum(t["sent"] for t in trades) == 0 and sum(t["to_send"] + t["to_review"] for t in trades) == len(items)
+    with tarfile.open(tmp_path / "snap.tar.gz") as tar:
+        manifest = json.loads(tar.extractfile("manifest.json").read())  # type: ignore[union-attr]
+    assert manifest["rows"]["dispatches"] == []
+    # an existing project with sends isn't silently kept: --no-sends needs --reset then
+    monkeypatch.setenv("AUTO_SEND", "1")  # (--no-sends set it to false for this process)
+    seed.run(["--walks", "synth_walk", "--reset"])
+    assert seed.dispatch_count() > 0  # the synthetic walk auto-sends its verified items
+    with pytest.raises(seed.SeedError, match="--reset --no-sends"):
+        seed.run(["--walks", "synth_walk", "--no-sends"])

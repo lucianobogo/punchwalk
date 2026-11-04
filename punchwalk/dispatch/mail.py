@@ -50,7 +50,7 @@ def send(message: Message, *, to: str) -> SendResult:
             res = client.post(RESEND_URL, json=body, headers=headers)
     except httpx.HTTPError as exc:
         raise ChannelError(
-            "The email service couldn't be reached. Nothing was marked as sent; try again or use the Outbox.",
+            "The email service couldn't be reached. Nothing was marked as sent; try again or copy a link instead.",
             payload=stored,
         ) from exc
     if res.status_code >= 300:
