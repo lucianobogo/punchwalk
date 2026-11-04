@@ -16,7 +16,8 @@
   (`ctx.report({"written": 3, "total": 12})`), stored in Walk.stages and emitted as events.
 - walk.error is a plain sentence ("Hand tracking failed: ..."); StageState.error has the detail.
 - A stage without a function is saved as `skipped`, never `done`, so a later resume runs it.
-- persist on a re-walk sends each trade its still-open items again (dispatch.policy.resend_open_items).
+- persist on a re-walk sends each trade its still-open items again (dispatch.policy.resend_open_items,
+  once per closure decision).
 """
 
 from __future__ import annotations
@@ -87,20 +88,16 @@ def _persist(ctx: StageContext) -> StageOutcome:
         items = walk_items(ctx, s)
     review = sum(1 for i in items if ItemStatus(i.status) == ItemStatus.needs_review)
     counts = {"items": len(items), "needs_review": review}
-    if ctx.kind == WalkKind.rewalk:  # PLAN 7.4: send each trade its still-open items again, once
+    if ctx.kind == WalkKind.rewalk:  # PLAN 7.4: send each trade its still-open items again
+        # resend_open_items sends each still-open item once per closure (closure.decided_at); a re-run
+        # that reaches the same decision keeps decided_at, so nothing is sent twice and failed trades retry.
         from punchwalk.dispatch.policy import resend_open_items
-        from punchwalk.pipeline.context import write_json
 
-        marker = ctx.walk_dir / "stages" / "resend.json"
-        if marker.is_file():  # resend_open_items would send them again: already done for this re-walk
-            counts["resent"] = 0
-        else:
-            with ctx.session() as s:
-                report = resend_open_items(s, ctx.project_id, ctx.walk_id)
-                s.commit()
-            counts["resent"] = sum(len(v) for v in report.sent.values())
-            counts["resend_failed"] = len(report.failed)
-            write_json(marker, {"sent": report.sent, "failed": report.failed})
+        with ctx.session() as s:
+            report = resend_open_items(s, ctx.project_id, ctx.walk_id)
+            s.commit()
+        counts["resent"] = sum(len(v) for v in report.sent.values())
+        counts["resend_failed"] = len(report.failed)
     return StageOutcome(counts=counts, message=f"{len(items)} items saved, {review} need a look")
 
 
@@ -334,13 +331,14 @@ def _run_stage(ctx: StageContext, stage: Stage, buffer: _CallBuffer,
                 time.sleep(wait)
     except BaseException as err:
         buffer.flush(ctx.session_factory)
-        message = readable_error(stage, err)
+        message = readable_error(stage, err)  # technical: StageState.error and the log only
+        plain = plain_error(stage, err)  # plain words: walk.error, StageState.message, the event
         log.error("walk %s: %s", ctx.walk_id, message)
         _set_stage(ctx.session_factory, ctx.walk_id, StageState(
             stage=stage, status=StageStatus.failed, started_at=started, finished_at=utcnow(),
-            duration_ms=int((time.monotonic() - t0) * 1000), error=message,
-        ), walk_status=WalkStatus.failed, error=plain_error(stage, err))
-        _emit(progress, StageEvent(stage, "failed", {}, message))
+            duration_ms=int((time.monotonic() - t0) * 1000), error=message, message=plain,
+        ), walk_status=WalkStatus.failed, error=plain)
+        _emit(progress, StageEvent(stage, "failed", {}, plain))
         raise
     finally:
         ctx.on_progress = None

@@ -111,3 +111,15 @@ def test_before_after_render(tmp_path):
     assert img.shape == (PANEL_H, PANEL_W * 2 + DIVIDER_PX, 3)
     assert img[300, 100][0] > 150 and img[300, PANEL_W + DIVIDER_PX + 100][2] > 150  # before left, after right
     assert img[300, PANEL_W + DIVIDER_PX // 2].min() > 230  # white divider, no text
+
+
+def test_pixel_check_only_for_mark_like_defects():
+    from punchwalk.pipeline.closures import combine, is_mark_like
+
+    marks = Item(project_id="p", number=1, origin_walk_id="w", title="Pencil marks on hallway wall")
+    screen = Item(project_id="p", number=2, origin_walk_id="w", title="Window screen not attached properly")
+    assert is_mark_like(marks) and not is_mark_like(screen)
+    assert combine("no", "yes", True) == ("yes", "pixels")  # the mark is still there: don't sign off
+    assert combine("unclear", "no", True) == ("no", "pixels")
+    assert combine("no", "yes", False) == ("no", "model")  # a fixed screen is still a screen in the photo
+    assert combine("yes", None, True) == ("yes", "model")

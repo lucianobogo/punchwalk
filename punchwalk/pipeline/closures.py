@@ -13,9 +13,15 @@ Runs on re-walks only (Walk.kind == rewalk), after stages ingest..pick_evidence 
       - the original has an outline: the first-walk frame is lined up with the re-walk frame (ORB, else
         phase correlation) and the old outline is redrawn on the re-walk frame ("aligned": is the defect
         still inside it?); if they can't be lined up, the four photos are compared ("compare");
-      - no outline (voice-only original): is the described defect visible at the re-walk dot ("presence").
+      - no outline, or a voice-only original (its outline was never anchored by a finger): is the
+        described defect visible at the re-walk dot ("presence").
+    A "fixed" answer that would sign the item off is double-checked: the same photos, asked the other way
+    round ("does it clearly show it fixed?", `confirm_fixed`); unless that also says yes (or the pixel check
+    saw the mark gone) the answer becomes unclear → needs a look. No automatic sign-off rests on one look.
     When the frames line up, a pixel check also measures the outlined mark's contrast against its
-    surroundings in both frames (`pixel_presence`); `combine` merges it with the model's answer.
+    surroundings in both frames (`pixel_presence`); for mark-like defects (stains, marks, nicks, ...)
+    `combine` merges it with the model's answer. The question is about the problem's condition (a fixed
+    "missing knob" has a knob), not about whether the outlined object is still there.
 7.3 Decide (`decide()`):
       claimed fixed + fixed on camera      → signed_off, status closed
       claimed fixed + still visible        → needs_review, REVIEW_FALSE_FIX (the headline case)
@@ -39,6 +45,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -94,6 +101,11 @@ class StatusMatch(BaseModel):
     rationale: str = Field(description="at most 200 characters")
 
 
+class FixConfirm(BaseModel):
+    shows_fixed: Literal["yes", "no", "unclear"]
+    note: str = Field(description="one short plain sentence")
+
+
 class FixCheck(BaseModel):
     defect_still_present: Literal["yes", "no", "unclear"]
     note: str = Field(description="one short plain sentence about what photo 2 shows")
@@ -102,43 +114,47 @@ class FixCheck(BaseModel):
 
 MAP_SYSTEM = """You match what an inspector says on a construction re-walk to the open punch-list items.
 On the re-walk the inspector goes back to each item, points at it, and says its status
-("Kitchen cabinet knob, fixed." / "Bedroom scuffs, still there.").
+(for example "Hall closet door handle, done." or "Patio door, still sticking.").
 Return the number of the one open item the words are about, or null if none fits (a new defect, or
-nothing to do with an item). Use the room, the words and where the finger pointed.
+nothing to do with an item). The words and the room decide; the photo (the moment the inspector pointed,
+blue dot at the fingertip) only helps choose between similar items. If the words clearly name one item,
+return it even when the photo is unclear or points elsewhere. confidence is between 0 and 1.
 claimed: "fixed" if the inspector says it is fixed, done or good; "not_fixed" if still there, not done,
 or if they describe the defect again; "unclear" otherwise. Keep rationale to one short sentence."""
 
-LOOK_SYSTEM = """You compare photos of the same spot on a construction site, taken on two walks.
-Photos 1 and 3 are from the first walk: the defect is outlined in red when it was found, and a blue dot
-marks where the inspector pointed (photo 1 is a close-up of photo 3). Photos 2 and 4 are from the re-walk,
-of the same spot: the blue dot marks where the inspector pointed this time (photo 2 is a close-up of photo 4).
-Question: is the thing that was marked as the defect in photos 1/3 still there at the same spot in photos 2/4?
-"yes": still there. "no": the spot is now clean, repaired or the item is in place. "unclear": the re-walk
-photos don't show that spot. Judge by comparing the photos; the description is only a hint.
-Keep note and rationale short and plain."""
+_LOOK_ANSWERS = """Answer about the PROBLEM, not about whether the object is still there: a fixed "missing knob"
+has a knob now, a fixed "screen not attached" has the screen properly in place, a fixed "loose, crooked
+outlet cover" sits straight and tight, a fixed stain or pencil mark is gone, a fixed "damaged stove top" looks
+intact. "yes": the problem is still there. "no": it has been fixed. "unclear": the re-walk photos don't show
+it well enough. Keep note and rationale short and plain."""
+
+LOOK_SYSTEM = """You check whether a construction defect was fixed, by comparing photos of the same spot from two walks.
+Photos 1 and 3 are from the first walk: the defect is outlined in red when it was found and a blue dot marks
+where the inspector pointed (photo 1 is a close-up of photo 3). Photos 2 and 4 are from the re-walk: the blue
+dot marks where the inspector pointed this time (photo 2 is a close-up of photo 4).
+""" + _LOOK_ANSWERS
 
 LOOK_ALIGNED_SYSTEM = """You check whether a construction defect was fixed.
 Photo 1 is from the first walk: the defect is outlined in red. Photo 2 is the same spot on the re-walk,
-lined up with photo 1: the red outline in photo 2 only marks where the defect WAS.
-The outline is drawn on top of photo 2, so look at what is under and inside it.
-Question: is the same thing that is inside the outline in photo 1 still inside the outline in photo 2?
-"yes": the same mark/damage/problem is still there (even if it looks a little different or the outline
-is slightly off). "no": under the outline it now looks clean, repaired or complete, like the surrounding
-surface. "unclear": photo 2 doesn't show that spot.
-Judge by comparing what is inside the outline in both photos; the description is only a hint.
-Keep note and rationale short and plain."""
+lined up with photo 1: the red outline drawn on photo 2 only marks where the defect WAS; look at what is under it.
+""" + _LOOK_ANSWERS
 
 LOOK_PRESENCE_SYSTEM = """You check whether a construction defect is still there on a re-walk.
-The photos are from the re-walk: photo 1 is a close-up around the blue dot, which marks where the
-inspector pointed; photo 2 is the whole frame. The finger may land a little beside the defect.
-Question: within about a finger's length of the blue dot, is there anything matching the defect described
-(a mark, stain, damage, a missing or crooked part)? Simple, flat-looking marks count.
-"yes": something matching it is there. "no": the area around the dot is clean and complete.
-"unclear": the spot isn't shown well enough.
-Keep note and rationale short and plain."""
+Photo 1 is a close-up around the blue dot, which marks where the inspector pointed (the finger may land a
+little beside it); photo 2 is the whole frame. Look within about a finger's length of the dot.
+""" + _LOOK_ANSWERS
 
 
 # --------------------------------------------------------------------------- decision table
+
+
+CONFIRM_SYSTEM = """You double-check a construction punch item that was reported fixed.
+You get photos of the same spot from the first walk (the defect outlined in red, a blue dot where the
+inspector pointed) and from the re-walk (a blue dot where the inspector pointed this time).
+Question: does the re-walk photo clearly show the problem FIXED, the way a fixed version of it looks (the
+missing part now in place, the loose or crooked part now straight and tight, the mark or stain gone, the
+damage repaired)? "yes": clearly fixed. "no": the problem is still there. "unclear": the re-walk photo doesn't
+show it well enough to be sure. Keep the note short and plain."""
 
 
 def decide(claimed: str, vision: VisionStatus) -> tuple[ClosureDecision, ItemStatus | None, str]:
@@ -160,6 +176,14 @@ VISION = {"yes": VisionStatus.still_visible, "no": VisionStatus.fixed, "unclear"
 # --------------------------------------------------------------------------- helpers
 
 
+def clamp_confidence(value: float) -> float:
+    """0..1 (a reply of 8.0 means 0.8 on a 0-10 scale; anything else out of range is clamped)."""
+    v = float(value)
+    if 1.0 < v <= 10.0:
+        v /= 10.0
+    return round(min(1.0, max(0.0, v)), 3)
+
+
 def _dt(value: Any) -> datetime | None:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=UTC)
@@ -168,6 +192,37 @@ def _dt(value: Any) -> datetime | None:
     except (TypeError, ValueError):
         return None
     return d if d.tzinfo else d.replace(tzinfo=UTC)
+
+
+def after_crop_box(frame: dict[str, Any], before: Evidence | None) -> tuple[int, int, int, int]:
+    """The re-walk crop: the same size as the first walk's card crop (so before/after share a scale),
+    centered on where the finger pointed (else the frame center), kept inside the frame."""
+    w, h = frame["width"], frame["height"]
+    if before is None or before.crop_box is None:
+        return crop_box_for(w, h, pointer=frame["pointer"])
+    cw = int(round(min(w, before.crop_box.x2 - before.crop_box.x1)))
+    ch = int(round(min(h, before.crop_box.y2 - before.crop_box.y1)))
+    cx, cy = frame["pointer"] or (w / 2, h / 2)
+    x1 = int(round(min(max(0.0, cx - cw / 2), w - cw)))
+    y1 = int(round(min(max(0.0, cy - ch / 2), h - ch)))
+    return x1, y1, x1 + cw, y1 + ch
+
+
+def _closure(**fields: Any) -> Closure:
+    """Closure, with `before_after` only once the contract has the field."""
+    if "before_after" not in Closure.model_fields:
+        fields.pop("before_after", None)
+    return Closure(**fields)
+
+
+def prev_decided_at(prev: dict[str, Any] | None, decision: ClosureDecision, vision: VisionStatus,
+                    claimed: str) -> datetime:
+    """Keep the earlier `decided_at` when a re-run reaches the same decision, so nothing downstream sees a
+    new decision (no second re-send, no duplicate history); else now."""
+    if prev and prev.get("decision") == decision.value and prev.get("vision_status") == vision.value \
+            and prev.get("voice_status") == claimed and _dt(prev.get("decided_at")):
+        return _dt(prev["decided_at"])
+    return utcnow()
 
 
 def human_changed_after(item: Item, since: Any) -> bool:
@@ -208,13 +263,11 @@ def _items_text(items: list[Item]) -> str:
 
 def plan_frames(ctx: StageContext, mentions: list[Mention], events: dict[str, dict[str, Any]],
                 fps: float) -> dict[str, list[int]]:
-    radius = int(round(P.EVIDENCE_SEARCH_S * fps))
     plans = {}
     for m in mentions:
         ev = events.get(m.key)
         if ev:
-            lo, hi = ev_mod._part_range(ctx, ev["frame"])
-            plans[m.key] = list(range(max(lo, ev["frame"] - radius), min(hi, ev["frame"] + radius) + 1))
+            plans[m.key] = ev_mod.pointed_window(ctx, ev, fps)
         else:
             lo, hi = ev_mod._part_range(ctx, int(round(m.start_s * fps)))
             plans[m.key] = ev_mod.sample_frames(m.start_s, m.end_s, fps, lo, hi, P.VOICE_ONLY_SAMPLES)
@@ -248,7 +301,12 @@ def after_frames(ctx: StageContext, mentions: list[Mention], events: dict[str, d
         raw = media.extract_frame(display, t, d / "after_raw.jpg", quality=P.EVIDENCE_JPEG_QUALITY)
         pointer = (round(choice.pointer[0] * sx, 1), round(choice.pointer[1] * sy, 1)) if choice.pointer else None
         marked = render_evidence(raw, d / "after_frame.jpg", pointer=pointer)
+        pointing = None
+        if ev:  # the moment of pointing, dot at the fingertip: the most reliable "where" for matching
+            praw = media.extract_frame(display, ev["t"], d / "pointing_raw.jpg", quality=P.EVIDENCE_JPEG_QUALITY)
+            pointing = render_evidence(praw, d / "pointing.jpg", pointer=tuple(ev["fingertip_display"]))
         out[m.key] = {"t": t, "frame": choice.frame, "raw": raw, "marked": marked, "pointer": pointer,
+                      "pointing": pointing,
                       "width": meta.display.width, "height": meta.display.height, "hand_clear": choice.hand_clear}
     return out
 
@@ -263,9 +321,9 @@ def match_mention(m: Mention, items: list[Item], frame: dict[str, Any] | None) -
         "Open items: " + _items_text(items),
     ]
     images = []
-    if frame and frame.get("pointer"):
-        images.append(frame["marked"])
-        lines.append("The photo is the re-walk frame; the blue dot marks where the finger pointed.")
+    if frame and frame.get("pointing"):
+        images.append(frame["pointing"])
+        lines.append("The photo is the moment the inspector pointed; the blue dot is at the fingertip.")
     result, _ = llm.structured(
         StatusMatch,
         [{"role": "system", "content": MAP_SYSTEM}, {"role": "user", "content": "\n".join(lines)}],
@@ -278,8 +336,7 @@ def look(item: Item, images: list[Path], mode: str) -> FixCheck:
     """mode: "aligned" (photo 1 = first walk outlined, photo 2 = re-walk with the old outline),
     "presence" (re-walk close-up + frame only), "compare" (four photos, no alignment)."""
     system = {"aligned": LOOK_ALIGNED_SYSTEM, "presence": LOOK_PRESENCE_SYSTEM}.get(mode, LOOK_SYSTEM)
-    lines = [f"The defect: {item.title}." + (f" {item.description}" if mode == "presence" and item.description
-                                              else "")]
+    lines = [f"The problem: {item.title}." + (f" {item.description}" if item.description else "")]
     if mode == "compare":
         lines.append("Photo 1: first-walk close-up. Photo 2: re-walk close-up. Photo 3: first-walk frame. "
                      "Photo 4: re-walk frame.")
@@ -289,6 +346,17 @@ def look(item: Item, images: list[Path], mode: str) -> FixCheck:
         images=images, reasoning_effort="medium", max_tokens=LOOK_MAX_TOKENS, stage=Stage.resolve_closures.value,
     )
     return result
+
+
+def confirm_fixed(item: Item, images: list[Path]) -> str:
+    """Second, independently framed look ("does it clearly show it fixed?") on the same photos."""
+    text = f"The problem that was reported: {item.title}." + (f" {item.description}" if item.description else "")
+    result, _ = llm.structured(
+        FixConfirm,
+        [{"role": "system", "content": CONFIRM_SYSTEM}, {"role": "user", "content": text}],
+        images=images, reasoning_effort="medium", max_tokens=LOOK_MAX_TOKENS, stage=Stage.resolve_closures.value,
+    )
+    return result.shows_fixed
 
 
 def align_frames(before: Path, after: Path) -> np.ndarray | None:
@@ -390,9 +458,22 @@ def pixel_presence(before_raw: Path, after_raw: Path, M: np.ndarray, defect_svg:
     return None, ratio
 
 
-def combine(model: str, pixels: str | None) -> tuple[str, str]:
-    """Final answer + its source. The mark still being there wins over a model "no"/"unclear" (a wrong
-    sign-off is worse than an extra look); a clear "gone" only settles a model "unclear"."""
+_MARK_RE = re.compile(r"\b(stain|mark|scuff|smudge|nick|spot|splatter|drip|smear|residue|dirt|debris|"
+                      r"paint|pencil|crayon|graffiti|ding|dent|chip|scratch|gouge|hole|mold)", re.IGNORECASE)
+
+
+def is_mark_like(item: Item) -> bool:
+    """Defects whose fix makes something disappear (a stain, a mark, a nick): the pixel check applies.
+    For missing, loose or crooked things the object stays in the picture, so contrast says nothing."""
+    return bool(_MARK_RE.search(f"{item.title} {item.description}"))
+
+
+def combine(model: str, pixels: str | None, mark_like: bool = True) -> tuple[str, str]:
+    """Final answer + its source. For mark-like defects the mark still being there wins over a model
+    "no"/"unclear" (a wrong sign-off is worse than an extra look), and a clear "gone" settles a model
+    "unclear". Otherwise the model decides."""
+    if not mark_like or pixels is None:
+        return model, "model"
     if pixels == "yes" and model != "yes":
         return "yes", "pixels"
     if pixels == "no" and model == "unclear":
@@ -421,6 +502,10 @@ def _look_inputs(before: Evidence, after_raw: Path, after_crop: Path, after_full
                  out: Path) -> tuple[list[Path], str, np.ndarray | None]:
     """Images, mode and the first-walk → re-walk alignment (or None) for the visual check (see `look`)."""
     root = data_dir()
+    if before.pointer is None and frame.get("pointer"):
+        # voice-only on the first walk: its outline was never anchored by a finger, so judge the re-walk
+        # photo at the dot the inspector points at now
+        return [after_crop, after_full], "presence", None
     if before.defect_svg or before.defect_box:
         M = align_frames(root / before.raw, after_raw)
         if M is not None:
@@ -437,10 +522,12 @@ def _look_inputs(before: Evidence, after_raw: Path, after_crop: Path, after_full
     return [root / before.crop, after_crop, root / before.image, after_full], "compare", None
 
 
-def _restore(ctx: StageContext, previous: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Undo this re-walk's earlier decisions (except where a person changed the item since).
-    Returns the snapshot of pre-re-walk state to keep."""
+def _restore(ctx: StageContext, previous: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    """Undo this re-walk's earlier decisions (except where a person changed the item since): status,
+    review note, closure, and the history entries this re-walk added (people's entries and sends stay).
+    Returns (the snapshot of pre-re-walk state to keep, {item_id: the closure this re-walk had written})."""
     snapshot: dict[str, dict[str, Any]] = dict(previous.get("restore") or {})
+    written: dict[str, Any] = {}
     with ctx.session() as s:
         for item_id, before in list(snapshot.items()):
             item = s.get(Item, item_id)
@@ -453,13 +540,18 @@ def _restore(ctx: StageContext, previous: dict[str, Any]) -> dict[str, dict[str,
             if human_changed_after(item, cl.get("decided_at")):
                 snapshot.pop(item_id)  # a person owns this decision now; leave it alone
                 continue
+            written[item_id] = dict(cl)
             if cl.get("decision") in (ClosureDecision.signed_off.value, ClosureDecision.needs_review.value):
                 item.status = ItemStatus(before["status"])  # only statuses this re-walk set are undone
                 item.review_reason = before.get("review_reason")  # (a re-send after "still open" stays)
             item.closure = before.get("closure")
+            n = int(before.get("history_len", len(item.history or [])))
+            history = list(item.history or [])
+            item.history = history[:n] + [h for h in history[n:] if (h or {}).get("actor") == HistoryActor.human.value
+                                          or (h or {}).get("action") == HistoryAction.dispatched.value]
             s.add(item)
         s.commit()
-    return snapshot
+    return snapshot, written
 
 
 def run(ctx: StageContext) -> StageOutcome:
@@ -469,7 +561,7 @@ def run(ctx: StageContext) -> StageOutcome:
         previous = ctx.output(Stage.resolve_closures)
     except Exception:  # noqa: BLE001 - first run
         previous = {}
-    snapshot = _restore(ctx, previous)
+    snapshot, previous_closures = _restore(ctx, previous)
     points_doc = ctx.output(Stage.find_points)
     track = ctx.output(Stage.track_hands)
     mentions = [mention_from_dict({k: v for k, v in m.items() if k != "point_id"}) for m in points_doc["mentions"]]
@@ -483,7 +575,7 @@ def run(ctx: StageContext) -> StageOutcome:
                   and human_changed_after(i, (i.closure or {}).get("decided_at"))}
         for i in items:
             snapshot.setdefault(i.id, {"status": ItemStatus(i.status).value, "review_reason": i.review_reason,
-                                       "closure": i.closure})
+                                       "closure": i.closure, "history_len": len(i.history or [])})
     ctx.save_output(Stage.resolve_closures, {"version": 1, "restore": snapshot, "partial": True})
     by_number = {i.number: i for i in items}
     calls_left = P.CLOSURE_MAX_CALLS
@@ -499,7 +591,7 @@ def run(ctx: StageContext) -> StageOutcome:
             continue
         item = by_number.get(res.item_number) if res.item_number is not None else None
         matches[m.key] = {"item_number": res.item_number, "claimed": res.claimed,
-                          "confidence": round(float(res.confidence), 3), "rationale": res.rationale,
+                          "confidence": clamp_confidence(res.confidence), "rationale": res.rationale,
                           "item_id": item.id if item else None}
     # each item takes its most confident mention
     best: dict[str, tuple[Mention, dict[str, Any]]] = {}
@@ -529,7 +621,7 @@ def run(ctx: StageContext) -> StageOutcome:
             after_raw = out / "after_raw.jpg"
             after_raw.write_bytes(Path(frame["raw"]).read_bytes())
             after_full = render_evidence(after_raw, out / "after_frame.jpg", pointer=frame["pointer"])
-            cb = crop_box_for(frame["width"], frame["height"], pointer=frame["pointer"])
+            cb = after_crop_box(frame, before)
             after_crop = render_crop(after_full, out / "after.jpg", cb)
             after_rel, after_frame_rel, after_t = rel_to_data(after_crop), rel_to_data(after_full), frame["t"]
             if before is not None and (root / before.crop).is_file():
@@ -548,20 +640,38 @@ def run(ctx: StageContext) -> StageOutcome:
                     except (llm.StructuredOutputError, ApiError) as err:
                         log.warning("resolve_closures: visual check of %s failed: %s", item_id, err)
                         answer, note_v = "unclear", NOTE_NO_COMPARE
-                    final, source = combine(answer, pixels)
+                    final, source = combine(answer, pixels, is_mark_like(item))
+                    second = None
+                    if (final == "no" and source == "model" and pixels != "no" and mt["claimed"] == "fixed"
+                            and P.CLOSURE_SECOND_LOOK and calls_left > 0):
+                        # Safety: an automatic sign-off needs a second, independent "fixed" (the other view
+                        # of the same photos) unless the pixel check already confirmed the mark is gone.
+                        calls_left -= 1
+                        try:
+                            full = [root / before.image, after_full]
+                            second = confirm_fixed(item, images + [p for p in full if p not in images])
+                        except (llm.StructuredOutputError, ApiError) as err:
+                            log.warning("resolve_closures: second look at %s failed: %s", item_id, err)
+                            second = "unclear"
+                        if second != "yes":
+                            final, source = "unclear", "second-look"
                     vision = VISION[final]
-                    look_mode = {"mode": mode, "model": answer, "pixels": pixels, "ratio": ratio, "source": source}
+                    look_mode = {"mode": mode, "model": answer, "pixels": pixels, "ratio": ratio, "source": source,
+                                 "second": second}
                 else:
                     vision, note_v = VisionStatus.unclear, NOTE_NO_COMPARE
             else:
                 vision, note_v = VisionStatus.unclear, NOTE_NO_COMPARE
         decision, new_status, note = decide(mt["claimed"], vision)
         counts[decision.value] += 1
-        closure = Closure(
+        closure = _closure(
             rewalk_id=ctx.walk_id, rewalk_turn_id=m.turn_ids[0], quote=m.quote, after_t=after_t,
             after_image=after_rel, after_frame=after_frame_rel, voice_status=VoiceStatus(mt["claimed"]),
-            vision_status=vision, decision=decision, note=note if decision != ClosureDecision.still_open else
-            (note_v or note), decided_at=utcnow(),
+            vision_status=vision, decision=decision,
+            note=(note_v if vision == VisionStatus.still_visible and note_v else note)
+            if decision == ClosureDecision.still_open else note,
+            before_after=ba_rel, decided_at=prev_decided_at(previous_closures.get(item_id), decision, vision,
+                                                            mt["claimed"]),
         )
         with ctx.session() as s:
             row = s.get(Item, item_id)
@@ -589,7 +699,10 @@ def run(ctx: StageContext) -> StageOutcome:
         with ctx.session() as s:
             row = s.get(Item, item.id)
             row.closure = Closure(rewalk_id=ctx.walk_id, decision=ClosureDecision.not_checked,
-                                  note=NOT_CHECKED_ON_REWALK, decided_at=utcnow()).model_dump(mode="json")
+                                  note=NOT_CHECKED_ON_REWALK,
+                                  decided_at=prev_decided_at(previous_closures.get(item.id),
+                                                             ClosureDecision.not_checked, VisionStatus.not_checked,
+                                                             "not_mentioned")).model_dump(mode="json")
             add_history(row, HistoryActor.system, HistoryAction.rewalk_checked, note=NOT_CHECKED_ON_REWALK)
             s.add(row)
             s.commit()

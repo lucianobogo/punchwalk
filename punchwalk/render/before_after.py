@@ -1,6 +1,7 @@
 """Before/after render for re-walk closures (PLAN 7.4): two 4:3 panels side by side, no text.
 
-Left: the original evidence crop (defect outline + blue dot). Right: the re-walk crop (blue dot).
+Left: the original evidence crop (defect outline + blue dot). Right: the re-walk crop (blue dot), cut
+at the same size as the left one (closures.after_crop_box), so both panels show the same scale.
 Both are fitted to the same 4:3 panel (cover crop), with a thin white divider.
 """
 

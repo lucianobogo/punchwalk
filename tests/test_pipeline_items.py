@@ -293,3 +293,36 @@ def test_skipped_stage_event_and_orphan_note_once(monkeypatch, tmp_path):
     events = []
     runner.run_walk("wlk_o", session_factory=factory, progress=events.append)
     assert [e.status for e in events if e.stage == Stage.resolve_closures] == ["running", "skipped"]
+
+
+def test_failed_stage_message_is_plain_words(monkeypatch, tmp_path):
+    from sqlmodel import Session, SQLModel, create_engine
+
+    from punchwalk.core.models import Project, Walk
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'm.sqlite3'}")
+    SQLModel.metadata.create_all(engine)
+
+    def factory():
+        return Session(engine, expire_on_commit=False)
+
+    with factory() as s:
+        s.add(Project(id="prj_m", name="m"))
+        s.add(Walk(id="wlk_m", project_id="prj_m"))
+        s.commit()
+
+    def miss(ctx):
+        raise CacheMiss("c8f0deadbeef", "ASR audio.wav")
+
+    ok = runner.StageOutcome(counts={})
+    fns = {k: (lambda ctx: ok) for k in runner.STAGE_FUNCTIONS}
+    fns["transcribe"] = miss
+    monkeypatch.setattr(runner, "STAGE_FUNCTIONS", fns)
+    events = []
+    with pytest.raises(CacheMiss):
+        runner.run_walk("wlk_m", session_factory=factory, progress=events.append)
+    plain = "Transcription failed: a recorded model answer is missing (offline mode)."
+    with factory() as s:
+        st = s.get(Walk, "wlk_m").stages["transcribe"]
+        assert st["message"] == plain and "c8f0deadbeef" in st["error"]  # detail only in `error`
+    assert [e.message for e in events if e.status == "failed"] == [plain]
