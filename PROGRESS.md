@@ -77,3 +77,5 @@ One line per event, newest at the bottom:
 2026-11-03 20:09 ET | eval fixes | builder (fresh) | report path leak fixed, in-sample note; 36 eval tests; make eval unchanged numbers | report | commit
 2026-11-03 20:21 ET | grounding round | builder (Track A) | done: #006 no wrong outline (pointed_only), #003 unchanged (coarse); targets still pass; make test 446+102; spend $3.06 | report | commit; re-seed + final snapshot; 9.4
 2026-11-03 20:26 ET | 8.1 final seed | builder (fresh) | re-seeded at $0 (108 cached calls): same 14 items/decisions; #006 pointed_only; snapshot FINAL 61.8 MB | report | human imports; ui recaptures README 02
+2026-11-03 20:27 ET | docs/screens | ui-builder | 02 recaptured with #011 from the final seed; 01/06 unchanged | report | commit
+2026-11-03 20:33 ET | 9.4 | verifier | PASS: make test 446+102 (also in a fresh clone), make eval all targets met (grounding 10/11 after the #006 fix), 35/35 screens, docker build + in-image 68 tests, no secrets in history, repo 17 MB, seed 14 items $0, live healthz ok; 3 doc corrections → docs builder | report | tick 8.1, 9.3, 9.4; 9.2 after the README fix; 9.1 after the human's import

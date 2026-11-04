@@ -212,7 +212,7 @@ Track ownership and paths are in the orchestrator's instructions.
 
 ## Phase 8: Demo readiness
 
-- [ ] **8.1 `make seed`.**
+- [x] **8.1 `make seed`.**
   - Creates the demo project "Unit 2B final punch", with a fictional trades directory (`@example.com` contacts).
   - Loads walk1 (first walk) and walk2 (re-walk), plus walk3 if present, from cache, at zero API cost.
   - `DEMO_MODE` banner: "This is a demo project. Upload your own walk to try it live."
@@ -237,8 +237,8 @@ Track ownership and paths are in the orchestrator's instructions.
   - how to run, limitations
   - roadmap: live hands-free capture through Meta's Wearables Device Access Toolkit (glasses stream straight in, items are confirmed by voice, a trade looks at a defect and hears its item), Procore/Fieldwire sync, spec citations with Muse Spark 1.3's 1M context, live captions
   - **"Built during the Meta Global AI Developer Hackathon, Nov 3–4, 2026. Everything in this repo was created during the event."**, followed by a dated feature list
-- [ ] **9.3 `docs/DEMO_SCRIPT.md`.** Built from the shot list below, with the exact screens to capture on the iPhone for each beat.
-- [ ] **9.4 Final pass.** `make test`, `make eval`, `make screenshots` (all PASS), a fresh clone sets up cleanly, `docker build` works, no secrets anywhere in git history.
+- [x] **9.3 `docs/DEMO_SCRIPT.md`.** Built from the shot list below, with the exact screens to capture on the iPhone for each beat.
+- [x] **9.4 Final pass.** `make test`, `make eval`, `make screenshots` (all PASS), a fresh clone sets up cleanly, `docker build` works, no secrets anywhere in git history.
 
 ## If ahead (in order)
 
