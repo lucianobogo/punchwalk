@@ -4,8 +4,11 @@
 worker calls it; the pipeline's persist stage may call it too, which is safe: it's idempotent):
 - open items whose self-check passed (`verification.consistent`) are grouped by trade and sent over
   the trade's effective channel, with the history note "Posted 2 items to Slack automatically: checked
-  against the photo and the quote." (or "Emailed ... to <company> automatically: ...", "Copied a link
-  for ... automatically: ...");
+  against the photo and the quote." (or "Emailed 2 items to <company> automatically: ...");
+- an automatic send only counts when it reaches the trade (Slack or email). When the trade's effective
+  channel is Copy link (no working Slack or email), nothing is sent: the items stay open (To send) with
+  the note "Couldn't go out automatically: no Slack or email set up for <company>." Copy link is a
+  send only when the project manager does it;
 - needs-a-look items, and open items that were never checked, are held, with one history note each
   ("Held for a look: <reason>");
 - items already sent (dispatched), signed off or dismissed are left alone, and a held item is never
@@ -28,6 +31,7 @@ from sqlmodel import Session, col, select
 
 from punchwalk.config import get_settings
 from punchwalk.core.enums import (
+    Channel,
     ClosureDecision,
     HistoryAction,
     HistoryActor,
@@ -42,6 +46,8 @@ log = logging.getLogger("punchwalk.dispatch")
 
 AUTO_NOTE = "checked against the photo and the quote."
 HOLD_PREFIX = "Held for a look: "
+NO_CHANNEL_NOTE = "Couldn't go out automatically: no Slack or email set up for {company}."
+NO_CHANNEL_REWALK_NOTE = "Couldn't go out automatically after the re-walk: no Slack or email set up for {company}."
 NOT_SENT_PREFIX = "Not sent automatically: "
 
 
@@ -53,6 +59,7 @@ def auto_send_enabled() -> bool:
 class AutoSendReport:
     sent: dict[str, list[str]] = field(default_factory=dict)  # dispatch id -> item ids
     held: list[str] = field(default_factory=list)
+    no_channel: list[str] = field(default_factory=list)  # items left To send: only Copy link works
     failed: dict[str, str] = field(default_factory=dict)  # trade -> error
 
     @property
@@ -105,6 +112,9 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
 
     for trade, group in by_trade.items():
         option = service.effective_for(project, trade)
+        if option.channel == Channel.outbox:
+            _leave_to_send(session, group, NO_CHANNEL_NOTE.format(company=service.company_for(project, trade)), report)
+            continue
         try:
             dispatch = service.send_items(
                 session, project, trade, [i.id for i in group], option.channel, actor=HistoryActor.system,
@@ -121,6 +131,15 @@ def auto_dispatch_after_processing(session: Session, walk_id: str) -> AutoSendRe
             continue
         report.sent[dispatch.id] = list(dispatch.item_ids)
     return report
+
+
+def _leave_to_send(session: Session, group: list[Item], note: str, report: AutoSendReport) -> None:
+    """No working Slack or email: nothing goes out; each item keeps its status with one note."""
+    for item in group:
+        _note(item, note)
+        session.add(item)
+        report.no_channel.append(item.id)
+    session.commit()
 
 
 RESEND_NOTE_SUFFIX = " again after the re-walk: still open."  # "Posted 2 items to Slack again after ..."
@@ -179,6 +198,10 @@ def resend_open_items(session: Session, project_id: str, rewalk_id: str) -> Auto
         ):
             by_trade[item.trade].append(item)
     for trade, group in by_trade.items():
+        if service.effective_for(project, trade).channel == Channel.outbox:
+            note = NO_CHANNEL_REWALK_NOTE.format(company=service.company_for(project, trade))
+            _leave_to_send(session, group, note, report)
+            continue
         try:
             dispatch = service.send_items(
                 session,

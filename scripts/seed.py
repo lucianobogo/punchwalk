@@ -42,10 +42,11 @@ A snapshot holds the demo project's rows (project, walks, turns, points, items, 
 calls, jobs) and each walk's public media plus stages/ (display.mp4, poster.jpg, meta.json,
 stages/*.json, items/**). It leaves out audio.wav and sam*.mp4, which only the pipeline needs.
 
-`--no-sends` seeds with AUTO_SEND off (no automatic send after the first walk, no re-send after the
-re-walk), so the project has no Dispatch rows and no "sent" history: every trade starts with its
-items To send. Use it with --reset for the exported demo:
-  uv run python scripts/seed.py --reset --no-sends --export demo/seed_snapshot.tar.gz --video-crf 28
+The seed keeps its sends: the automatic send after the first walk and the re-walk's re-send run as
+in the app. The seed blanks SLACK_WEBHOOK_URL and RESEND_API_KEY, so only trades with their own
+(example-domain) webhook get anything; the others have no working Slack or email, so their items stay
+To send with a "Couldn't go out automatically" note. `--no-sends` (AUTO_SEND off: no Dispatch rows at
+all) is still there if a snapshot without any sends is wanted.
 
 Idempotent: walk ids are `wlk_demo_<walk>` and the project id is `prj_demo`. A walk that's already
 ready is left alone unless --force. A real Slack webhook (SLACK_WEBHOOK_URL) is ignored while seeding.

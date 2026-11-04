@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from sqlmodel import select
 
-from punchwalk.config import get_settings
+from punchwalk.config import get_settings, reset_settings
 from punchwalk.core.enums import (
     REVIEW_FALSE_FIX,
     ClosureDecision,
@@ -73,7 +73,11 @@ def _items(s) -> list[Item]:
     return list(s.exec(select(Item).order_by(Item.number)).all())
 
 
-def test_rewalk_signs_off_flags_false_claim_and_resends(db):  # noqa: F811
+def test_rewalk_signs_off_flags_false_claim_and_resends(db, monkeypatch):  # noqa: F811
+    # a working channel (the team's Slack; example.com webhooks are never contacted): an automatic re-send
+    # with only Copy link wouldn't count as a send
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", "https://hooks.slack.example.com/services/T000/B000/test-team")
+    reset_settings()
     first = first_walk_reviewed(db)
     rewalk = make_rewalk(db, first)
     run_walk(rewalk, session_factory=db)

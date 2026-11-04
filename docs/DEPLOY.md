@@ -103,7 +103,7 @@ snapshot on Fly. The import writes rows and media only, and makes no model calls
 
 ```bash
 # On the recording machine (cache hits here):
-uv run python scripts/seed.py --reset --no-sends --export demo/seed_snapshot.tar.gz --video-crf 28   # real walks; no sends, so every trade starts To send
+uv run python scripts/seed.py --reset --export demo/seed_snapshot.tar.gz --video-crf 28   # real walks (keeps the auto-sends)
 #   or, before they exist:  uv run python scripts/seed.py --walks synth_walk --reset --export demo/seed_snapshot.tar.gz
 
 # Put it on the volume (or bake it: demo/ is copied into the image; rebuild + deploy):
@@ -128,6 +128,19 @@ promotes them. For recordings made with other rooms, put `{"rooms": [...], "keyw
 Locally: `make seed` (= `uv run python scripts/seed.py`), or `uv run python scripts/seed.py --walks synth_walk`.
 
 With `DEMO_MODE=true` (`/healthz` reports `demo_mode`), the app shows the banner "This is a demo project. Upload your own walk to try it live."
+
+**Re-seed on Fly (automatic).** The image bakes `demo/seed_snapshot.tar.gz` (gitignored, but `fly deploy`
+ships the working directory and `.dockerignore` doesn't exclude `demo/`). With `DEMO_RESEED=true`
+(fly.toml) the app imports it on every boot, so every deploy, and nightly at `DEMO_RESEED_AT` (03:00
+America/New_York): `scripts/seed.py --import` as the app user, after the job worker is idle (it waits, it
+never interrupts a walk). The import replaces `prj_demo` wholesale, so visitors' walks in it are gone and
+the demo opens like the snapshot; other projects stay. Each run is logged (`fly logs | grep re-seed`); a
+missing snapshot is logged and skipped. Re-export the snapshot and `fly deploy` to change the demo.
+
+**Spend caps.** `COST_DAILY_CAP_USD` (fly.toml: 10) caps live spend per calendar day in America/New_York;
+`COST_CAP_USD` (fly.toml: 60) caps the whole ledger. A walk that would pass either fails with a readable
+message; cached calls are free. Budget left: `fly ssh console -a punchwalk -C "/app/.venv/bin/python
+/app/scripts/budget.py"`. `DEMO_UPLOADS_PER_HOUR` (fly.toml: 6) limits uploads per device per hour.
 
 ## Operations
 

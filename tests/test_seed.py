@@ -66,7 +66,12 @@ def test_seed_synth_walk_end_to_end(seed, api: TestClient) -> None:
         if item.status == "needs_review":
             assert any((h.note or "").startswith("Held for a look") for h in item.history)
         else:
-            assert item.status == "dispatched" and item.dispatch is not None
+            # only Ace Electric has a working channel (its example-domain webhook): the others stay To send
+            if item.trade == "electrical":
+                assert item.status == "dispatched" and item.dispatch is not None
+            else:
+                assert item.status == "open" and item.dispatch is None
+                assert item.history[-1].note and item.history[-1].note.startswith("Couldn't go out automatically")
 
     detail = check(S.WalkDetailOut, api.get("/api/walks/wlk_demo_synth_walk").json())
     assert detail.walk.status == "ready" and detail.walk.media.display_mp4 and detail.walk.media.poster
@@ -245,8 +250,7 @@ def test_snapshot_export_can_reencode_the_display_video(seed, api: TestClient, t
         seed.parse_args(["--video-crf", "28"])  # only with --export
 
 
-def test_no_sends_seeds_every_trade_with_its_items_to_send(seed, api: TestClient, tmp_path: Path,
-                                                           monkeypatch: pytest.MonkeyPatch) -> None:
+def test_no_sends_seeds_every_trade_with_its_items_to_send(seed, api: TestClient, tmp_path: Path) -> None:
     import json
     import tarfile
 
@@ -261,8 +265,21 @@ def test_no_sends_seeds_every_trade_with_its_items_to_send(seed, api: TestClient
         manifest = json.loads(tar.extractfile("manifest.json").read())  # type: ignore[union-attr]
     assert manifest["rows"]["dispatches"] == []
     # an existing project with sends isn't silently kept: --no-sends needs --reset then
-    monkeypatch.setenv("AUTO_SEND", "1")  # (--no-sends set it to false for this process)
-    seed.run(["--walks", "synth_walk", "--reset"])
-    assert seed.dispatch_count() > 0  # the synthetic walk auto-sends its verified items
+    from punchwalk.core.enums import Channel, Trade
+    from punchwalk.core.models import Dispatch
+    from punchwalk.db import session_factory
+
+    with session_factory() as s:  # a project that has sent something (e.g. the PM copied a link)
+        s.add(Dispatch(project_id="prj_demo", trade=Trade.painting, item_ids=[items[0]["id"]],
+                       channel=Channel.outbox, destination="Copy link", ok=True, payload={}))  # fmt: skip
+        s.commit()
     with pytest.raises(seed.SeedError, match="--reset --no-sends"):
         seed.run(["--walks", "synth_walk", "--no-sends"])
+
+
+def test_export_only_packs_the_project_with_its_sends(seed, api: TestClient, tmp_path: Path) -> None:
+    snap = tmp_path / "snap.tar.gz"
+    seed.run(["--walks", "synth_walk"])  # AUTO_SEND on: sends are part of the demo story
+    counts = seed.run(["--export-only", "--export", str(snap)])
+    assert snap.is_file() and counts["dispatches"] == seed.dispatch_count()
+

@@ -46,23 +46,25 @@ def test_verified_items_go_out_and_needs_a_look_items_wait(api: TestClient) -> N
     walk_id, ids = seed_walk(pid)
     report = run_policy(walk_id)
 
-    # electrical #2 #3 -> Slack; carpentry #1 and glazing #5 -> Copy link (no Slack, no Resend)
-    assert sorted(report.sent_items) == sorted([ids[0], ids[1], ids[2], ids[4]])
+    # electrical #2 #3 -> Slack; carpentry #1 and glazing #5 have no working Slack or email (no Resend
+    # here): an automatic Copy link isn't a send, so they stay To send with a note
+    assert sorted(report.sent_items) == sorted([ids[1], ids[2]])
+    assert report.no_channel == [ids[0], ids[4]]
     assert report.held == [ids[3]] and report.failed == {}
     assert route.call_count == 1
     assert json.loads(route.calls.last.request.content)["text"].startswith("*Unit 2B final punch: 2 electrical items*")
-    for i in (0, 1, 2, 4):
+    for i in (1, 2):
         item = item_row(ids[i])
         assert item.status == ItemStatus.dispatched
         last = item.history[-1]
         assert last["actor"] == "system" and last["action"] == "dispatched"
-        assert last["note"].endswith(": checked against the photo and the quote.")
     assert item_row(ids[1]).history[-1]["note"] == (
         "Posted 2 items to #punch-electrical automatically: checked against the photo and the quote."
     )
-    assert item_row(ids[0]).history[-1]["note"] == (
-        "Copied a link for 1 item automatically: checked against the photo and the quote."
-    )
+    for i, company in ((0, "Oakline Millwork"), (4, "Clearview Glass")):
+        item = item_row(ids[i])
+        assert item.status == ItemStatus.open and item.history[-1]["action"] == "noted"
+        assert item.history[-1]["note"] == f"Couldn't go out automatically: no Slack or email set up for {company}."
     held = item_row(ids[3])
     assert held.status == ItemStatus.needs_review
     assert held.history[-1]["note"] == "Held for a look: The frame doesn't show the defect described."
@@ -81,7 +83,7 @@ def test_auto_send_is_idempotent(api: TestClient) -> None:
     assert {i: len(item_row(i).history) for i in ids} == before  # no duplicate notes
     assert route.call_count == 1
     with session_factory() as s:
-        assert len(s.exec(select(Dispatch)).all()) == 3  # electrical, carpentry, glazing
+        assert len(s.exec(select(Dispatch)).all()) == 1  # electrical (carpentry and glazing: no channel)
 
 
 def test_unverified_open_items_are_held(api: TestClient) -> None:
@@ -103,7 +105,7 @@ def test_slack_failure_during_auto_send_leaves_items_open_with_a_note(api: TestC
     pid = make_project(api)["id"]
     walk_id, ids = seed_walk(pid)
     report = run_policy(walk_id)
-    assert "electrical" in report.failed and ids[0] in report.sent_items
+    assert "electrical" in report.failed and ids[0] in report.no_channel
     assert item_row(ids[1]).status == ItemStatus.open
     assert notes(ids[1])[-1].startswith("Not sent automatically: Slack didn't accept the message (no_service).")
 
@@ -131,20 +133,27 @@ def seed_walk_rewalk(pid: str):
         return w.id, []
 
 
-def test_job_worker_auto_sends_after_a_first_walk(api: TestClient, clip_path: Path) -> None:
+@respx.mock
+def test_job_worker_auto_sends_after_a_first_walk(api: TestClient, clip_path: Path,
+                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+    route = respx.post(WEBHOOK).mock(return_value=httpx.Response(200, text="ok"))
+    monkeypatch.setenv("SLACK_WEBHOOK_URL", WEBHOOK)  # the team's Slack
+    reset_settings()
     pid = make_project(api, webhook=None)["id"]
     up = support.upload(api, pid, [clip_path]).json()
     assert jobs.run_pending_jobs_once() == 1
     items = api.get(f"/api/projects/{pid}/items").json()["items"]
     (item,) = items
     assert item["status"] == "dispatched"  # the fake runner's item passed its self-check
-    assert item["history"][-1]["note"].startswith("Copied a link for 1 item automatically")
-    assert item["dispatch"]["channel"] == "outbox"
+    assert item["history"][-1]["note"].startswith("Posted 1 item to Slack automatically")
+    assert item["dispatch"]["channel"] == "slack" and route.call_count == 1
     assert api.get(f"/api/walks/{up['walk_id']}/progress").json()["status"] == "done"
 
 
+@respx.mock
 def test_resend_open_items_after_a_rewalk(api: TestClient) -> None:
-    pid = make_project(api, webhook=None)["id"]
+    respx.post(WEBHOOK).mock(return_value=httpx.Response(200, text="ok"))
+    pid = make_project(api)["id"]
     walk_id, ids = seed_walk(pid)
     run_policy(walk_id)
     rewalk_id, _ = seed_walk_rewalk(pid)
@@ -158,13 +167,15 @@ def test_resend_open_items_after_a_rewalk(api: TestClient) -> None:
         s.commit()
         report = resend_open_items(s, pid, rewalk_id)
     assert report.sent_items == [ids[1]]
-    assert notes(ids[1])[-1] == "Copied a link for 1 item again after the re-walk: still open."
+    assert notes(ids[1])[-1] == "Posted 1 item to #punch-electrical again after the re-walk: still open."
 
 
+@respx.mock
 def test_resend_after_a_rewalk_sends_once_per_closure(api: TestClient) -> None:
     from punchwalk.core.models import utcnow
 
-    pid = make_project(api, webhook=None)["id"]
+    respx.post(WEBHOOK).mock(return_value=httpx.Response(200, text="ok"))
+    pid = make_project(api)["id"]
     walk_id, ids = seed_walk(pid)
     run_policy(walk_id)
     rewalk_id, _ = seed_walk_rewalk(pid)
@@ -210,4 +221,31 @@ def test_auto_send_off_also_skips_the_rewalk_resend(api: TestClient, monkeypatch
     reset_settings()
     with session_factory() as s:
         assert resend_open_items(s, pid, rewalk_id).sent_items == []
+
+
+def test_rewalk_resend_with_no_channel_leaves_the_item_to_send(api: TestClient) -> None:
+    pid = make_project(api, webhook=None)["id"]  # Ace Electric: no webhook, no Resend -> only Copy link
+    walk_id, ids = seed_walk(pid)
+    report = run_policy(walk_id)
+    assert ids[1] in report.no_channel and item_row(ids[1]).status == ItemStatus.open
+    rewalk_id, _ = seed_walk_rewalk(pid)
+    with session_factory() as s:
+        item = s.get(Item, ids[1])
+        item.closure = Closure(rewalk_id=rewalk_id, decision=ClosureDecision.still_open).model_dump(mode="json")
+        s.add(item)
+        s.commit()
+        report = resend_open_items(s, pid, rewalk_id)
+        assert report.sent == {} and report.no_channel == [ids[1]]
+        assert resend_open_items(s, pid, rewalk_id).sent == {}
+        assert len(s.exec(select(Dispatch)).all()) == 0
+    hist = notes(ids[1])
+    assert hist.count("Couldn't go out automatically after the re-walk: no Slack or email set up for Ace Electric.") == 1
+    trades = api.get(f"/api/projects/{pid}/trades").json()["trades"]
+    elec = next(t for t in trades if t["trade"] == "electrical")
+    assert (elec["to_send"], elec["sent"]) == (2, 0)  # never counted as sent
+    assert preview_already_sent(api, pid) == []
+
+
+def preview_already_sent(api: TestClient, pid: str) -> list:
+    return api.get(f"/api/projects/{pid}/trades/electrical/preview").json()["already_sent"]
 
