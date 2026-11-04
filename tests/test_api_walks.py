@@ -422,4 +422,5 @@ def test_model_calls_and_processing_summary(
     assert steps[Stage.verify].fallback_calls == 1 and steps[Stage.verify].provider == "meta-fallback"
     assert steps[Stage.track_hands].model_label == "SAM 3.1" and steps[Stage.track_hands].calls == 1
     assert steps[Stage.fuse].model_label is None and steps[Stage.fuse].detail.startswith("Timing and position")
+    assert steps[Stage.ground_defects].detail.startswith("Muse Spark Open "), steps[Stage.ground_defects].detail
     assert proc.total_duration_ms == 10_800  # 11 stages, 1 s apart, 0.8 s each

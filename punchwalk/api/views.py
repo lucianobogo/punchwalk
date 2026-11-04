@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -760,7 +761,7 @@ def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
         n = c.get("written", c.get("total", 0))
         return f"Summary, action, trade, room and severity for {n} {'item' if n == 1 else 'items'}"
     if stage == Stage.ground_defects:
-        return f"Spark Open names what to outline near your fingertip, SAM draws it. {c.get('outlined', 0)} outlined."
+        return ground_detail(c or {}, row.message or row.detail or "")
     if stage == Stage.verify:
         return (row.detail or "").replace(", ", ". ", 1) + "."
     if stage == Stage.classify_turns and walk.kind == WalkKind.rewalk:
@@ -770,6 +771,47 @@ def _step_detail(walk: Walk, stage: Stage, row: S.StageProgressOut) -> str:
     if stage == Stage.resolve_closures:
         return "Each update matched to its item, then the new frame compared with the original photo"
     return row.detail or ""
+
+
+# ground_defects (pipeline/ground.py `ground_message`): v2 writes "... Muse Spark Open located each defect ..."
+# and "...; a clearer photo picked for N". Its counts carry no version or picked number, so those two come
+# from the stage message (counts win when a newer pipeline stores "v2" / "picked").
+_GROUND_V2_MARK = "located each defect"
+_GROUND_PICKED = re.compile(r"clearer photo picked for (\d+)")
+
+
+def ground_detail(c: dict[str, Any], message: str = "") -> str:
+    """The "How this walk was processed" line for the outline step, from the stage counts."""
+    sam_n = int(c.get("concept", 0) or 0) + int(c.get("box", 0) or 0)
+    spark_n = int(c.get("spark_box", 0) or 0)
+    outlined = c.get("outlined")
+    total = c.get("total")
+    v2 = bool(c["v2"]) if "v2" in c else (spark_n > 0 or _GROUND_V2_MARK in message)
+    if not v2:
+        line = "Muse Spark Open names what to outline near your fingertip; SAM 3.1 draws it."
+        if outlined is None:
+            return line
+        return f"{line} {outlined} of {total} outlined." if total else f"{line} {outlined} outlined."
+    if "picked" in c:
+        picked = int(c["picked"] or 0)
+    else:
+        m = _GROUND_PICKED.search(message)
+        picked = int(m.group(1)) if m else 0
+    outlined = int(outlined if outlined is not None else sam_n + spark_n)
+    total = int(total if total is not None else outlined)
+    if total == 0:
+        return "No defects to outline in this walk."
+    of, checked = f"of {total}", "checked by Muse Spark Open"
+    if outlined == 0:
+        line = f"Muse Spark Open looked for each defect; none {of} could be outlined."
+    elif sam_n and spark_n:
+        line = (f"Muse Spark Open located each defect; SAM 3.1 outlined {sam_n} {of} and Muse Spark Open "
+                f"boxed {spark_n} more, each {checked}.")
+    elif spark_n:
+        line = f"Muse Spark Open located each defect and boxed {spark_n} {of}, each {checked}."
+    else:
+        line = f"Muse Spark Open located each defect; SAM 3.1 outlined {outlined} {of}, each {checked}."
+    return f"{line} A clearer photo was picked for {picked}." if picked else line
 
 
 FILES_MODEL = "meta-files"  # ModelCall.model of Files API uploads (pipeline/runner.py)
