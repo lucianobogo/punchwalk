@@ -21,7 +21,16 @@ kill_timeout = "30s"  # jobs interrupted by a restart are re-queued and resume o
   FIXTURE_CACHE_DIR = "/app/fixtures/cache"
   AUTO_SEND = "true"
   PUNCHWALK_WORKER = "1"
-  REASONING_PROVIDER = "baseten"
+  REASONING_PROVIDER = "baseten"  # Muse Spark Open on Baseten; Muse Spark 1.3 only as the logged fallback
+  # Spend: a daily cap (America/New_York day) that a judge's upload only hits on a very busy day, and a
+  # total cap the demo can't reach. Budget left: /app/scripts/budget.py
+  COST_DAILY_CAP_USD = "10"
+  COST_CAP_USD = "60"
+  DEMO_UPLOADS_PER_HOUR = "6"
+  # Restore prj_demo from the baked snapshot on every boot (so every deploy) and nightly at 03:00 ET
+  DEMO_RESEED = "true"
+  DEMO_RESEED_AT = "03:00"
+  DEMO_SNAPSHOT = "/app/demo/seed_snapshot.tar.gz"
   # Secrets (MODEL_API_KEY, BASETEN_API_KEY, SLACK_WEBHOOK_URL, RESEND_API_KEY, EMAIL_FROM) are set
   # with `fly secrets import`, never here.
 

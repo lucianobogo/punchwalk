@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 
 from punchwalk.config import get_settings
@@ -28,7 +29,21 @@ SPARK_META_OUT_PER_TOKEN = 15.00 / 1_000_000  # estimate
 
 
 class CostCapReached(RuntimeError):
-    pass
+    """`daily` is True when it's today's cap (COST_DAILY_CAP_USD), not the total (COST_CAP_USD)."""
+
+    def __init__(self, message: str, *, daily: bool = False) -> None:
+        super().__init__(message)
+        self.daily = daily
+
+
+def eastern() -> tzinfo:
+    """America/New_York (the daily cap's calendar day); a fixed UTC-5 if the tz database is missing."""
+    try:
+        from zoneinfo import ZoneInfo
+
+        return ZoneInfo("America/New_York")
+    except Exception:  # noqa: BLE001 (ZoneInfoNotFoundError, or no tzdata at all)
+        return timezone(timedelta(hours=-5), "EST")
 
 
 def sam_video_cost(frames: int) -> float:
@@ -86,13 +101,49 @@ def total_usd(path: Path | None = None) -> float:
     return round(sum(float(r.get("est_cost_usd") or 0.0) for r in read_ledger(path) if not r.get("cached")), 6)
 
 
-def assert_under_cap(next_cost_usd: float = 0.0) -> float:
-    """Raise CostCapReached when spend (plus the next call's estimate) reaches COST_CAP_USD."""
-    cap = get_settings().COST_CAP_USD
-    spent = total_usd()
-    if spent + next_cost_usd >= cap:
+def _row_day(row: dict, tz: tzinfo) -> date | None:
+    try:
+        ts = datetime.fromisoformat(str(row.get("ts")))
+    except ValueError:
+        return None
+    return (ts if ts.tzinfo else ts.replace(tzinfo=UTC)).astimezone(tz).date()
+
+
+def spend_on(day: date, rows: list[dict] | None = None) -> float:
+    """Live spend whose ledger timestamp falls on `day` (America/New_York)."""
+    tz = eastern()
+    rows = read_ledger() if rows is None else rows
+    return round(sum(float(r.get("est_cost_usd") or 0.0) for r in rows
+                     if not r.get("cached") and _row_day(r, tz) == day), 6)  # fmt: skip
+
+
+def today_eastern(now: datetime | None = None) -> date:
+    return (now or datetime.now(UTC)).astimezone(eastern()).date()
+
+
+def spend_today_usd(now: datetime | None = None) -> float:
+    return spend_on(today_eastern(now))
+
+
+def assert_under_cap(next_cost_usd: float = 0.0, *, now: datetime | None = None) -> float:
+    """Raise CostCapReached when spend (plus the next call's estimate) reaches a cap.
+
+    Two caps: COST_CAP_USD on the whole ledger and COST_DAILY_CAP_USD on today's spend (America/New_York
+    calendar day). Returns the total spent so far.
+    """
+    s = get_settings()
+    rows = read_ledger()
+    spent = round(sum(float(r.get("est_cost_usd") or 0.0) for r in rows if not r.get("cached")), 6)
+    if spent + next_cost_usd >= s.COST_CAP_USD:
         raise CostCapReached(
             f"Live spend ${spent:.2f} (+${next_cost_usd:.2f} for this call) reaches the "
-            f"${cap:.2f} cap in {ledger_path()}. Stop making live calls."
+            f"${s.COST_CAP_USD:.2f} cap in {ledger_path()}. Stop making live calls."
+        )
+    today = spend_on(today_eastern(now), rows)
+    if today + next_cost_usd >= s.COST_DAILY_CAP_USD:
+        raise CostCapReached(
+            f"Today's live model budget (${s.COST_DAILY_CAP_USD:.2f}) is used up: ${today:.2f} spent "
+            f"(+${next_cost_usd:.2f} for this call). It resets at midnight Eastern; try again tomorrow.",
+            daily=True,
         )
     return spent

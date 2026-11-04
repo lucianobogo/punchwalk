@@ -24,7 +24,8 @@ MAX_CLIPS = 12
 UPLOAD_OVERHEAD_BYTES = 2 * MiB  # multipart headers and form fields on top of the clip bytes
 MAX_JSON_BODY_BYTES = 1 * MiB  # every other request
 
-# DEMO_MODE: uploads per client IP per window (in memory; resets on restart).
+# DEMO_MODE: uploads per client IP per window (in memory; resets on restart). The limit is the
+# DEMO_UPLOADS_PER_HOUR setting (default 3).
 DEMO_UPLOADS_PER_WINDOW = 3
 DEMO_UPLOAD_WINDOW_S = 3600.0
 
@@ -111,11 +112,19 @@ class UploadRateLimiter:
     """Sliding-window counter of uploads per IP. A slot is reserved before the body streams in
     (so parallel uploads from one device can't all slip through) and released if the upload fails."""
 
-    def __init__(self, limit: int = DEMO_UPLOADS_PER_WINDOW, window_s: float = DEMO_UPLOAD_WINDOW_S) -> None:
-        self.limit = limit
+    def __init__(self, limit: int | None = None, window_s: float = DEMO_UPLOAD_WINDOW_S) -> None:
+        self._limit = limit  # None: read DEMO_UPLOADS_PER_HOUR each time
         self.window_s = window_s
         self._hits: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
+
+    @property
+    def limit(self) -> int:
+        if self._limit is not None:
+            return self._limit
+        from punchwalk.config import get_settings
+
+        return get_settings().DEMO_UPLOADS_PER_HOUR
 
     def _prune(self, ip: str, now: float) -> deque[float]:
         hits = self._hits.setdefault(ip, deque())

@@ -46,13 +46,13 @@ ENV PYTHONUNBUFFERED=1 \
     PATH=/app/.venv/bin:$PATH
 
 # ffmpeg/ffprobe (Debian's build has libzimg for zscale HDR tonemapping); Pango/HarfBuzz(+subset)/Cairo + fonts
-# for WeasyPrint; util-linux for setpriv in the entrypoint.
+# for WeasyPrint; util-linux for setpriv in the entrypoint; tzdata for the America/New_York daily cap and re-seed.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ffmpeg \
       libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libharfbuzz-subset0 libffi8 libcairo2 \
       fonts-dejavu-core fontconfig \
-      util-linux ca-certificates \
+      util-linux ca-certificates tzdata \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /usr/local/bin/

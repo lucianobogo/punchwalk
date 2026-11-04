@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     AUTO_SEND: bool = True  # send verified items after a first walk is processed (PLAN 6.2)
     TRUST_PROXY: bool = False  # trust X-Forwarded-For for the client IP (only behind a known proxy)
     PUNCHWALK_WORKER: int = Field(default=1, ge=0)  # 0 = no in-process job worker (tests drive jobs)
+    DEMO_UPLOADS_PER_HOUR: int = Field(default=3, ge=1)  # DEMO_MODE: uploads per device per hour
+    # Re-seed the demo project from the snapshot on boot and every night at DEMO_RESEED_AT (America/New_York)
+    DEMO_RESEED: bool = False
+    DEMO_RESEED_AT: str = "03:00"
+    DEMO_SNAPSHOT: Path = REPO_ROOT / "demo" / "seed_snapshot.tar.gz"
 
     # Cache
     PUNCHWALK_CACHE: Literal["readwrite", "readonly", "off"] = "readwrite"
@@ -66,8 +71,12 @@ class Settings(BaseSettings):
     GROUNDING_MODE: Literal["point+voice", "voice_only"] = "point+voice"
     # PLAN 10.3: defect outline v2 (locate -> SAM box/point prompts -> score -> Spark check -> smooth)
     GROUNDING_V2: bool = False
+    # PLAN 10.4/10.5: with GROUNDING_V2, also re-ground protected items (closed/sent/edited): evidence and
+    # grounding fields and their renders only; never text, status, history or closure decisions
+    REGROUND_ALL: bool = False
     SAM_HAND_CONCEPT: str = DEFAULT_HAND_CONCEPT
-    COST_CAP_USD: float = Field(default=25.0, ge=0)
+    COST_CAP_USD: float = Field(default=25.0, ge=0)  # total live spend in the ledger
+    COST_DAILY_CAP_USD: float = Field(default=10.0, ge=0)  # live spend per calendar day, America/New_York
 
     @field_validator("GROUNDING_MODE", mode="before")
     @classmethod
@@ -89,7 +98,15 @@ class Settings(BaseSettings):
     def _empty_is_none(cls, v):
         return None if v is None or (isinstance(v, str) and not v.strip()) else v
 
-    @field_validator("DATA_DIR", "PUNCHWALK_CACHE_DIR", "FIXTURE_CACHE_DIR", mode="after")
+    @field_validator("DEMO_RESEED_AT", mode="after")
+    @classmethod
+    def _hh_mm(cls, v: str) -> str:
+        h, _, m = v.strip().partition(":")
+        if not (h.isdigit() and m.isdigit() and 0 <= int(h) < 24 and 0 <= int(m) < 60):
+            raise ValueError(f"DEMO_RESEED_AT must be HH:MM (24-hour, America/New_York), not {v!r}")
+        return f"{int(h):02d}:{int(m):02d}"
+
+    @field_validator("DATA_DIR", "PUNCHWALK_CACHE_DIR", "FIXTURE_CACHE_DIR", "DEMO_SNAPSHOT", mode="after")
     @classmethod
     def _anchor_relative(cls, v: Path | None) -> Path | None:
         """Relative paths are relative to the repo root, not the current directory."""

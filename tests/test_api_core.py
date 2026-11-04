@@ -155,6 +155,17 @@ def test_cors_allows_the_vite_dev_server(api: TestClient) -> None:
     assert "access-control-allow-origin" not in api.get("/healthz", headers={"Origin": "https://evil.example"}).headers
 
 
+def test_demo_uploads_per_hour_setting(api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("DEMO_UPLOADS_PER_HOUR", "6")
+    reset_settings()
+    pid = make_project(api)["id"]
+    for _ in range(6):
+        assert upload(api, pid, [clip_path]).status_code == 201
+    body = assert_readable_error(upload(api, pid, [clip_path]), 429)
+    assert "6 uploads per hour" in body["detail"]
+
+
 def test_demo_mode_upload_rate_limit(api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DEMO_MODE", "true")
     reset_settings()

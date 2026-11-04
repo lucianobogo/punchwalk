@@ -3,7 +3,8 @@
     uv run uvicorn punchwalk.api.app:app --reload --port 8000     # make dev
 
 Startup (lifespan): create the SQLite (WAL) database under DATA_DIR, put jobs interrupted by a
-restart back in the queue, and start the in-process job worker (`PUNCHWALK_WORKER=0` disables it).
+restart back in the queue, start the in-process job worker (`PUNCHWALK_WORKER=0` disables it), and,
+with DEMO_RESEED=true, the demo re-seed (boot + nightly at 03:00 America/New_York; api/reseed.py).
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from punchwalk.api.guards import BodySizeLimitMiddleware
 from punchwalk.api.jobs import recover_interrupted_jobs, start_worker, stop_worker
 from punchwalk.api.media import router as media_router
 from punchwalk.api.media import spa_router
+from punchwalk.api.reseed import start_reseed, stop_reseed
 from punchwalk.api.routes import items, projects, trades, walks
 from punchwalk.config import get_settings
 from punchwalk.core.enums import ReasoningProvider
@@ -40,9 +42,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     if resumed:
         log.info("re-queued %d job(s) interrupted by a restart", resumed)
     start_worker()
+    start_reseed()
     try:
         yield
     finally:
+        stop_reseed()
         stop_worker()
 
 
