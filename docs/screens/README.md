@@ -9,7 +9,7 @@ produced.
 | File | Screen | Data |
 |---|---|---|
 | `01-punch-list.png` | Punch list, To do: Needs a look first, then rooms | real |
-| `02-item-detail.png` | Item 6, cabinet knob: before/after slider, the action, the inspector's quote, details | real |
+| `02-item-detail.png` | Item 11, outlet cover loose and crooked: before/after slider (red outline + blue dot on the before photo), the action, the inspector's quote, details | real |
 | `03-play-this-moment.png` | Play this moment, mid-play: hand outlined, tab 6 at the fingertip, quote as caption | real |
 | `04-walk-detail.png` | First walk, mid-play at item 6: hand outline + tab, the "New" card over the video | real |
 | `05-record-processing-mock.png` | Record: the live processing checklist mid-run | **mock** (no walk is processing in the real data) |
