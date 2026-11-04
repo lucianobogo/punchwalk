@@ -1,9 +1,9 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 18:59 ET
-Current phase: A = 0.6 record + 2.5 fixes + 7.x (target Wed 7:30 AM); B = 6.1 UI/7.4 UI/8.2 (Phase 5 done, target was Wed 3 AM); C = CHANGE-2 + 8.1 seed; eval = 3.1–3.3 — all ahead of the PLAN clock
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged commits pending verification: 8.1 (verified on synth; tag after real walks seed), 5.8 + 8.4 + UI fix rounds (verifying), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.7, 6.1-backend, 6.2, 6.3, 7.1–7.3, 7.4-pipeline, 9.1-image
+Updated: 2026-11-03 19:00 ET
+Current phase: 3.4 tuning (A) → 7.5 eval → 8.1 real seed + Fly import → 8.3 screenshot audit on real data → 9.2/9.3 final → 9.4 final pass. Everything else is done. Far ahead of the PLAN clock (Phase 8 target was Wed 10:30 AM).
+Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts, CHANGE-4 (uncommitted until the eval builder reports). 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
 ## Next actions
 1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
@@ -16,7 +16,6 @@ Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified
 | eval follow-ups 2 (fail loudly on cache miss, template files skip not block, case-insensitive trades/rooms, model_label for the catalog slug, blank-trade labels, build_mock_api checks) + first real `make eval` on walk1/walk3 | builder (eval, same agent) | 18:43 | eval/**, tests/test_eval*, punchwalk/core/enums.py + web/src/api/types.ts (MODEL_LABEL only), punchwalk/api/views.py (meta-files label) | briefed |
 | CHANGE-4: Closure.before_after (+ ClosureOut.before_after_url, types.ts, mocks, views) | builder (fresh fix builder) | 18:56 | contract files + scripts/gen_mock_api.py + punchwalk/api/views.py | briefed; Track A writes the field |
 | Track A: 3.4 tuning on real footage (≤ 2 h; never on walk3) + fingertip clamp, then re-run walk2, then 7.5 | builder (Track A, same agent) | 18:45 | punchwalk/pipeline/**, punchwalk/render/**, params.py, fixtures/cache, scripts/record.py | briefed; eval numbers relayed from the eval builder |
-| 5.8 + 8.4 + UI fix rounds verify (worktree .verify/wt-ui4 @ 63ceda3) | verifier | 18:49 | read-only | ui-builder idle until real-walk screenshots (after 3.4 + seed) |
 
 ## Needs human
 - Deploy: DONE by the human (18:55 ET) — https://punchwalk.fly.dev is live (healthz ok, demo_mode true, PWA served, /mock-api 404). Remaining on the live app: the demo data. After Track A's 3.4 tuning, the orchestrator builds the seed snapshot on this Mac (`scripts/seed.py --reset --export demo/seed_snapshot.tar.gz`); then it must reach Fly — the orchestrator will try `fly ssh sftp` / `fly ssh console` itself; if the permission classifier blocks that, the exact commands appear here (they're also in docs/DEPLOY.md → "Seed").
@@ -32,7 +31,7 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 ## Health
 - make test: 427 passed + 1 skipped (Pango) Python, 100 web (Track A report 18:45)
 - make eval: harness verified; real labels landed 18:42 → first real run on walk1/walk3 in progress; walk2 after Phase 7
-- make screenshots: 33/33 strict at 8.2 (ui-builder); verification of 6.1 UI/7.4 UI/8.2 running
+- make screenshots: 35/35 strict (verified at 8.4); 8.3 audit pending on real-walk data
 - Live API spend: $1.43 of $25 at 18:45 (real walks: record $0.44 + full runs $0.54; synthetic fixtures $0.45)
 - Deploy: LIVE at https://punchwalk.fly.dev (human ran the runbook 18:55 ET); demo project not seeded yet (snapshot after 3.4)
 - Live URL: https://punchwalk.fly.dev

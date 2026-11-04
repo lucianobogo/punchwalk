@@ -185,11 +185,11 @@ Track ownership and paths are in the orchestrator's instructions.
   - the video collapses to a mini-player on scroll
 - [x] **5.6 Record** per DESIGN.md: project → first walk / re-walk → add clips (reorderable) → upload with progress → live processing checklist naming each model → done.
 - [x] **5.7 How this walk was processed** per DESIGN.md: model-call timeline, time and cost per walk, eval numbers.
-- [ ] **5.8 Live data.** Once Phase 4 passes, switch the app to the API (`VITE_DATA=live` by default); mocks stay for tests and screenshots.
+- [x] **5.8 Live data.** Once Phase 4 passes, switch the app to the API (`VITE_DATA=live` by default); mocks stay for tests and screenshots.
 
 ## Phase 6: Dispatch & report (Tracks B + C)
 
-- [ ] **6.1 Trades & dispatch.**
+- [x] **6.1 Trades & dispatch.**
   - Backend channels: Slack incoming webhook (if set); email via Resend (if set) *(nice)*; in-app Outbox (always).
   - Trades screens per DESIGN.md.
   - Public read-only share page `/share/item/:token`, styled like the item detail, with "Play this moment".
@@ -207,7 +207,7 @@ Track ownership and paths are in the orchestrator's instructions.
   - Said not fixed, or defect still visible → **open**, send again.
   - Claimed fixed + defect still visible → **needs a look: "Marked fixed on the re-walk, but the defect is still visible."** This is the headline demo moment.
   - Open items in visited rooms that were never mentioned → stay open, flagged "not checked on re-walk".
-- [ ] **7.4 Before/after + re-walk summary.** Side-by-side renders (Track A) and the re-walk summary screen per DESIGN.md (Track B); re-send still-open items.
+- [x] **7.4 Before/after + re-walk summary.** Side-by-side renders (Track A) and the re-walk summary screen per DESIGN.md (Track B); re-send still-open items.
 - [ ] **7.5 Eval.** Closure metrics from 3.2 pass.
 
 ## Phase 8: Demo readiness
@@ -216,9 +216,9 @@ Track ownership and paths are in the orchestrator's instructions.
   - Creates the demo project "Unit 2B final punch", with a fictional trades directory (`@example.com` contacts).
   - Loads walk1 (first walk) and walk2 (re-walk), plus walk3 if present, from cache, at zero API cost.
   - `DEMO_MODE` banner: "This is a demo project. Upload your own walk to try it live."
-- [ ] **8.2 Landing page** per DESIGN.md. On desktop: the live app inside a phone frame, plus a QR code. On a phone: straight into the demo project.
+- [x] **8.2 Landing page** per DESIGN.md. On desktop: the live app inside a phone frame, plus a QR code. On a phone: straight into the demo project.
 - [ ] **8.3 Screenshot audit.** The verifier runs `make screenshots` and checks all checklist screens against DESIGN.md; the ui-builder fixes what it finds; repeat until PASS.
-- [ ] **8.4 Polish.** Empty, error and loading states everywhere; accessibility floor; no console errors; dark mode *(nice)*.
+- [x] **8.4 Polish.** Empty, error and loading states everywhere; accessibility floor; no console errors; dark mode *(nice)*.
 
 ## Phase 9: Ship (Track C)
 
