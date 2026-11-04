@@ -1,6 +1,6 @@
 # eval/
 
-Scores the pipeline against the human labels (PLAN Phase 3).
+Scores the pipeline against the human labels.
 
 ```
 make eval                                   # every walk in eval/labels/*.csv, from the cache (readonly)
@@ -9,10 +9,22 @@ make eval-live                              # same, cache misses go live (counts
 uv run python eval/run_eval.py --labels fixtures/eval/labels_synth --data-dir .verify/eval-synth  # synthetic
 ```
 
-- **Labels**: `eval/labels/walkN.csv`, format in FOOTAGE.md and `labels_template.csv`. One walk per file, and the
-  `walk` column must equal the file name. A file that is still the template (same rows) or that names another
-  walk is refused ("is still the template — fill it in per FOOTAGE.md"), and then nothing in the folder is scored.
+- **Labels**: `eval/labels/walkN.csv`, one row per defect, with the header
+  `walk,item_no,room,description,trade,time_mmss,pointed,fixed_in_rewalk,claimed_fixed_in_rewalk,clip`
+  (example: `labels_template.csv`):
+  - `walk`: the walk name, equal to the file name (walk1.csv → walk1)
+  - `item_no`: the defect's number; a re-walk reuses the first walk's numbers
+  - `room`, `description`, `trade`: what the item should say (trades match case-insensitively, as an id like
+    `carpentry_millwork` or plain words like "Carpentry & millwork"; a blank trade or room is left out of that metric)
+  - `time_mmss`: when the inspector starts describing it, as MM:SS inside the clip part named by `clip`
+  - `pointed`: 1 if the inspector pointed at it, 0 if it was only described
+  - `fixed_in_rewalk`: re-walk rows only, 1/0, whether it really was fixed
+  - `claimed_fixed_in_rewalk`: re-walk rows only, 1/0, whether the inspector said it was fixed
+  - `clip`: the clip part letter (a, b, ...) in upload order
+
   A walk whose rows fill `fixed_in_rewalk` / `claimed_fixed_in_rewalk` is a re-walk of the first walk before it.
+  A file that is still the template (same rows), names another walk, or doesn't parse isn't ground truth: that
+  walk is reported and left out, and the other files are still scored.
 - **Project rooms/keywords** are part of the cached prompts, so they must equal `make record --rooms/--keywords`.
   Order of precedence: `--rooms/--keywords`, `<labels>/project.json`, `eval/project.json`, then the label rooms in walk order.
 - **Media**: `DATA_DIR/record/<walk>/` (from `make record`), else `fixtures/pipeline/<walk>/media/`;
@@ -23,7 +35,7 @@ uv run python eval/run_eval.py --labels fixtures/eval/labels_synth --data-dir .v
   (same room or token Jaccard >= 0.2 of title + description vs the label description); Hungarian on time closeness + overlap.
 - **Metrics** (`metrics.py`): recall, precision, trade, room, grounding (pointed labels outlined by SAM), needs-review
   rate; re-walk closure accuracy and false-claim catch, which read "n/a (Phase 7 pending)" until the re-walk's
-  `resolve_closures` stage is `done`. Targets are PLAN 3.4. walk3 (`--holdout`) is reported separately and never tuned on.
+  `resolve_closures` stage is `done`. Targets: recall ≥ 0.9, precision ≥ 0.9, trade ≥ 0.85, room ≥ 0.9, closure ≥ 0.9, false-claim catch = 100%. walk3 (`--holdout`) is reported separately and never tuned on.
   The re-walk closure numbers are measured on walk2, which was used for tuning (in-sample); walk3 is the only
   out-of-sample walk and has no re-walk.
 - **Output**: the summary table on stdout, `report.md` (summary, per-item diffs, closures, timing and cost) and

@@ -3,11 +3,11 @@
 **Walk it once. Get a punch list with proof.** Punchwalk turns a construction punch walk into a verified,
 dispatched punch list.
 
-An inspector walks the unit wearing Ray-Ban Meta glasses (or holding a phone), points at each defect for
-about two seconds, and says what's wrong. Pointing is optional: a defect you only describe still becomes an
-item; pointing just makes the location and the outline more precise. Punchwalk turns that one video into a punch list. Each item has
-a photo showing exactly where the finger pointed and the defect outlined, plus a plain summary, the action
-needed, the trade, the room and the severity. Every item is checked against its own photo and the
+An inspector walks the unit wearing Ray-Ban Meta glasses (or holding a phone) and says what's wrong.
+That's all an item needs. Pointing is optional: when a defect is subtle, or the exact spot matters, hold a
+finger near it for about two seconds and Punchwalk uses the fingertip to pin it down. Punchwalk turns that
+one video into a punch list. Each item has a photo with the defect outlined (plus a dot where the finger
+pointed, when it did), a plain summary, the action needed, the trade, the room and the severity. Every item is checked against its own photo and the
 inspector's words, then sent to the trade that has to fix it. On the re-walk, Punchwalk signs off what's
 fixed, with before and after photos, and flags anything "marked fixed, but the defect is still visible".
 
@@ -34,7 +34,7 @@ mock data, because no walk was processing when we captured. See [the screenshots
 - **#003** (stovetop): marked fixed on the re-walk, but the defect is still visible. It's held as "Needs a
   look" with before and after photos. **#012** (hallway pencil marks) is the second false claim.
 - **#011** (hallway outlet): tap **Play this moment** to jump to the second it was called out.
-- **Walks → First walk**: items slide in over the video as the inspector points at them.
+- **Walks → First walk**: items slide in over the video as the inspector calls them out.
 - **Walks → Re-walk**: "7 signed off. 2 still open. 3 need a look."
 - **First walk → How this walk was processed**: every model call, by model, in order.
 
@@ -45,18 +45,23 @@ notes, a spreadsheet per trade. The contractor's final payment waits on it. Proj
 their phones, between sites. Punchwalk makes the walk itself the input, and every item carries its proof:
 the exact second of video, the photo with the defect outlined, and the inspector's own words.
 
+**Beyond punch lists.** The same loop works anywhere someone walks a space and says what's wrong:
+construction site and safety walks, Airbnb and rental turnovers and cleaning checks, move-in and move-out
+reports in property management, and facilities and QA walkthroughs. What changes is the vocabulary and
+who fixes what. The voice, the visual proof, the write-up and the check stay the same.
+
 ## How it works
 
 ```mermaid
 flowchart TD
-    A["Ray-Ban Meta glasses or phone<br/>inspector points ~2 s and says the defect"] --> B["Upload: one or more clips, in order<br/>(PWA, streamed to disk)"]
+    A["Ray-Ban Meta glasses or phone<br/>inspector says what is wrong<br/>(points ~2 s when it is subtle)"] --> B["Upload: one or more clips, in order<br/>(PWA, streamed to disk)"]
     B --> C["FastAPI + in-process job worker<br/>(SQLite, 2 jobs at a time)"]
     C --> D["Ingest (ffmpeg)<br/>display.mp4, 10 fps sam.mp4, 16 kHz audio"]
     D --> E["Muse Voice Transcribe<br/>turns with timestamps"]
     D --> F["SAM 3.1 video, concept 'hand'<br/>hand tracked at 10 fps"]
     E --> G["Muse Spark Open on Baseten<br/>sort each line: room, defect, status update"]
     F --> H["Pointing events<br/>hand held still, fingertip from the mask"]
-    G --> I["Fuse: each defect mention + its pointing event"]
+    G --> I["Fuse: each defect mention + its pointing event, if any"]
     H --> I
     I --> J["Pick the clearest frame<br/>hand out of the way, pointer mapped in"]
     J --> K["Muse Spark Open on Baseten<br/>writes the item: summary, action, trade, room, severity"]
@@ -77,9 +82,9 @@ screen shows.
 
 | Model | Where | What it does in Punchwalk |
 |---|---|---|
-| **Muse Voice Transcribe** (`muse-voice-transcribe-1.0`) | Meta Model API, `/v1/asr/transcribe` | Transcribes the walk's audio in `ENDPOINTING` mode: one turn per sentence, with start and end times. A built-in construction vocabulary ("strike plate", "escutcheon", "GWB", room names) plus the project's keywords bias recognition. The turn times decide which pointing event a sentence belongs to and where "Play this moment" starts. |
-| **SAM 3.1**, video (`sam-3.1`) | Meta Model API, `/v1/responses`, streamed | Tracks the concept "hand" through the walk at 10 fps, one request per uploaded clip. A hand that holds still during a defect mention becomes a pointing event, and the fingertip comes from the hand mask. The walk view draws the hand outline from these masks. |
-| **SAM 3.1**, image | same endpoint, image input | Outlines the defect on the evidence frame. First it tries a concept prompt with the noun phrase Spark Open chose (e.g. "door strike plate"), keeping the instance nearest the fingertip. If that fails, a box prompt from Spark Open's estimate. If both fail, the item keeps only the "pointed here" dot. |
+| **Muse Voice Transcribe** (`muse-voice-transcribe-1.0`) | Meta Model API, `/v1/asr/transcribe` | Transcribes the walk's audio in `ENDPOINTING` mode: one turn per sentence, with start and end times. A built-in construction vocabulary ("strike plate", "escutcheon", "GWB", room names) plus the project's keywords bias recognition. The turn times pick the moment each item's photo comes from, match a sentence to a pointing event when there is one, and set where "Play this moment" starts. |
+| **SAM 3.1**, video (`sam-3.1`) | Meta Model API, `/v1/responses`, streamed | Tracks the concept "hand" through the walk at 10 fps, one request per uploaded clip. When the inspector points, SAM 3.1 follows the hand: a hand that holds still during a defect mention becomes a pointing event, and the fingertip comes from the hand mask. The walk view draws the hand outline from these masks. Walks without pointing still work; their items come from the voice alone. |
+| **SAM 3.1**, image | same endpoint, image input | Outlines the defect on the evidence frame. First it tries a concept prompt with the noun phrase Spark Open chose (e.g. "door strike plate"), keeping the instance nearest the fingertip (or, when nobody pointed, nearest Spark Open's estimate of where the defect is). If that fails, it tries a box prompt from Spark Open's estimate. If both fail, the item keeps the photo with only the "pointed here" dot, or no mark if nobody pointed. |
 | **Muse Spark Open** on Baseten (`meta-models/muse-spark-open-1026`) | Baseten, OpenAI-compatible chat completions, strict `json_schema` | All the reasoning. It sorts each transcript line (room, defect, status update) and writes each item from the evidence frame plus the quote (title, summary, action, trade, room, severity, what SAM should outline; `reasoning_effort=low`). It verifies each item against its rendered evidence and the original quote (`medium`). On a re-walk, it maps each status update to an open item and compares the before and after crops. |
 | **Muse Spark 1.3** (`muse-spark-1.3`) | Meta Model API | **Fallback only.** It is used if Baseten fails twice (5xx or timeout) on a call. Every fallback is logged with `provider = "meta-fallback"` and shown in the UI. |
 
@@ -95,12 +100,13 @@ logged fallback above, and `REASONING_PROVIDER=meta` is the explicit switch to u
 seeded demo, all 62 reasoning calls went to Muse Spark Open on Baseten, and none fell back. The only Muse
 Spark 1.3 call in the whole build was one probe call that tested the fallback's schema.
 
-### Pointing, not markers
+### Say it; point when it's subtle
 
-The inspector doesn't stage anything. The hand is the marker: point with an index finger close to the
-defect, hold about two seconds, describe it. SAM 3.1 follows the hand, and the fingertip locates the
-defect. Defects that are described without pointing still become items (voice-only), with a photo picked
-from the moment they were described.
+The inspector doesn't stage anything, and doesn't have to point. Saying what's wrong while looking at it
+is enough: Punchwalk picks a clear frame from that moment, Spark Open names what to outline, and SAM 3.1
+outlines it. Pointing is for subtle defects (a hairline crack, a small nick) or when the exact spot matters.
+Hold an index finger close to the defect for about two seconds. SAM 3.1 follows the hand, and the
+fingertip pins the location and guides the outline.
 
 ## Evaluation
 
@@ -120,14 +126,16 @@ and is never used for tuning.
 | Closure accuracy (signed off vs. really fixed) | ≥ 0.90 | n/a | **0.92** (11/12) | n/a |
 | False "fixed" claims caught | 100% | n/a | **100%** (2/2) | n/a |
 
-Every target from the plan is met. The full per-item tables are in [eval/report.md](eval/report.md). Read
+Every target we set before tuning is met. The full per-item tables are in [eval/report.md](eval/report.md). Read
 these numbers with their limits in mind:
 
 - **It's a small test set.** walk1 has 12 labeled defects, walk2 has 12 re-walk statements (two of them
   false "fixed" claims), and walk3 has 2 defects. One miss would move walk1's recall by 8 points and
   walk3's by 50. Treat this as a careful smoke test, not a benchmark.
-- **walk1 and walk2 were tuned on** (the tuning log is in `DECISIONS.md`). walk3 was recorded in a laundry
-  room and never used for tuning.
+- **walk1 and walk2 were tuned on.** The prompt and threshold changes are in the git history (commit
+  "phase 3.4: tuning on walk1+walk2"). walk3 was recorded in a laundry room and never used for tuning.
+- **Our walks point at most defects** (11 of 12 on walk1), so the outline rate is reported for pointed
+  items. Described-only items are scored the same way for found, trade and room.
 - **The 3 "Needs a look" items on walk1** (#001, #005, #008) are photo-quality flags. Their best frames
   are overexposed or blurry, so the verifier said "The frame doesn't show the defect described." and held
   them for a person instead of sending them. That's the check doing its job: all three items are correct, and
@@ -209,9 +217,11 @@ the container (`--import`). The commands are in [docs/DEPLOY.md](docs/DEPLOY.md)
 
 ## Limitations
 
-- **Pointing needs the hand in view for about two seconds**, close to the defect without covering it. A
-  hand that never holds still, or points off-frame, gives a voice-only item (still listed, without the
-  pointed-here dot).
+- **Pointing is optional, but when you do it, the hand has to be in view for about two seconds**, close
+  to the defect without covering it. A hand that never holds still, or points off-frame, counts as not
+  pointing: the item is still written from what was said, just without the pointed-here dot.
+- **Described-only items depend on the camera.** Their photo comes from the moment the defect was
+  described, so look at it while you say it. A subtle defect is easier to outline when you point.
 - **One concept per SAM request.** The hand is tracked as "hand", and each defect outline is a separate
   image request, so a walk with many defects makes many small SAM calls.
 - **No word timestamps.** Muse Voice Transcribe returns turn-level times, so a sentence covering two
@@ -240,14 +250,14 @@ the container (`--import`). The commands are in [docs/DEPLOY.md](docs/DEPLOY.md)
 All footage and assets are our own: the walks were recorded by the team, and the fixtures and mock media
 are synthetic. The build was planned and coordinated by an orchestrator agent (Claude Fable 5.1), and the
 code was written by worker agents (Claude Opus 5.5), with every subphase independently verified before it
-was committed. See `PLAN.md`, `PROGRESS.md` and `DECISIONS.md`.
+was committed. The dated list below comes from the git history.
 
 **Nov 3, 2026**
 - Scaffold, model clients for Files, Muse Voice Transcribe, SAM 3.1, and Muse Spark Open with its logged fallback. Includes a content-addressed cache and a cost ledger.
 - `make probe`: one live call per API to confirm request and response shapes ($0.05). SAM mask coordinate check (masks are box-local).
 - Contracts: database models, API schemas, a TypeScript mirror and mock API fixtures, all enforced by a contract test.
 - Ingest: ordered clips → portrait-safe display video, 10 fps SAM video, 16 kHz audio, with HDR → SDR.
-- Pointing pipeline: transcription, SAM 3.1 hand tracking, pointing events from the fingertip, turn classification, fusion, evidence frames.
+- Perception pipeline: transcription, turn classification, SAM 3.1 hand tracking for optional pointing (pointing events from the fingertip), fusion, evidence frames.
 - Items: Spark Open writes each one, SAM 3.1 outlines the defect near the fingertip, Spark Open verifies it, and a resumable job runner ties the stages together.
 - API: SQLite (WAL), range-capable media for iOS video seeking, upload with limits, progress (poll and SSE), the hand overlay, and guards.
 - PWA: design system, punch list, item detail, Play this moment, walk detail with the hand overlay, the record flow with a live checklist, and "How this walk was processed".
