@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useHealth } from '../../api/hooks';
+import { useCurrentProject } from '../../api/project';
 import { isDemoSession } from '../landing/landing';
 
 const KEY = 'punchwalk.demoBannerHidden';
@@ -20,8 +21,10 @@ function hidden(): boolean {
 export function DemoBanner() {
   const [gone, setGone] = useState(hidden);
   const health = useHealth();
+  const { status } = useCurrentProject();
   const demo = health.data?.demo_mode === true || import.meta.env.VITE_DEMO === '1' || isDemoSession();
-  if (!demo || gone) return null;
+  // Only over a loaded project: an empty or unreachable server has no demo project to talk about.
+  if (!demo || gone || status !== 'ready') return null;
   return (
     <div className="mx-4 mt-2 flex items-center gap-2 rounded-card border border-hairline bg-sheet py-1 pr-1 pl-3">
       <p className="flex-1 text-secondary text-graphite">

@@ -50,6 +50,15 @@ describe('screen states', () => {
     expect(await screen.findByText('There’s no project here yet.')).toBeInTheDocument();
   });
 
+  it('shows no demo banner on an empty server, even in a demo session', async () => {
+    sessionStorage.setItem('punchwalk.demo', '1');
+    setApi({ ...diskMock().api, projects: async () => ({ projects: [] }) } as Api);
+    renderAt('/');
+    expect(await screen.findByText('There’s no project here yet.')).toBeInTheDocument();
+    expect(screen.queryByText('This is a demo project.', { exact: false })).toBeNull();
+    sessionStorage.clear();
+  });
+
   it('says "This item isn’t here anymore." for a missing item', async () => {
     setApi(diskMock().api);
     renderAt('/items/itm_gone');
