@@ -36,6 +36,22 @@ class CostSummary:
     fallback_calls: int = 0
 
 
+def sample_note(walks: list[WalkEval]) -> list[str]:
+    """One line on which numbers are in-sample: the re-walk was used for tuning; the holdout wasn't."""
+    tuned_rewalks = [w.name for w in walks if w.kind == "rewalk" and not w.holdout]
+    if not tuned_rewalks:
+        return []
+    names = ", ".join(tuned_rewalks)
+    line = (f"Re-walk closure numbers are measured on {names}, which {'was' if len(tuned_rewalks) == 1 else 'were'} "
+            "used for tuning (in-sample).")
+    holdouts = [w.name for w in walks if w.holdout]
+    if holdouts and not any(w.kind == "rewalk" for w in walks if w.holdout):
+        one = len(holdouts) == 1
+        line += (f" {', '.join(holdouts)} {'is the only out-of-sample walk' if one else 'are the out-of-sample walks'}"
+                 f" and {'has' if one else 'have'} no re-walk.")
+    return ["", line]
+
+
 @dataclass
 class WalkEval:
     name: str
@@ -233,6 +249,7 @@ def render_markdown(run: EvalRun) -> str:
         f"Matching: an item matches a label when its quote starts within {MAX_DT_S:.0f} s of the label's time "
         f"and the rooms agree or the words overlap (token Jaccard >= {MIN_JACCARD}); one-to-one by Hungarian "
         "assignment on time closeness + word overlap. Targets are PLAN 3.4.",
+        *sample_note(run.walks),
         "",
         "## Summary",
         "",

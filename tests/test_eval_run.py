@@ -23,10 +23,11 @@ import pytest
 from sqlmodel import Session, create_engine, select
 
 from eval import run_eval
-from eval.labels import ProjectConfig, with_times
+from eval.labels import ProjectConfig, project_config, with_times
 from eval.matching import match_walk, pred_from_item
 from eval.metrics import initial_metrics
-from eval.report import EvalRun, WalkEval, render_json, render_markdown, text_table
+from eval.report import EvalRun, WalkEval, render_json, render_markdown, sample_note, text_table
+from punchwalk.config import REPO_ROOT
 from punchwalk.core.enums import STAGES_REWALK, ItemStatus, JobStatus, StageStatus, WalkKind, WalkStatus
 from punchwalk.core.models import Item, Job, Walk
 from scripts import build_mock_api as bm
@@ -133,6 +134,7 @@ def test_synthetic_walk_scores_and_writes_the_report(data_dir, tmp_path, capsys)
     assert "| 1 | 00:00.0 | #001 |" in md and "Carpentry & millwork / " in md  # label 1 vs its item
     assert "The frame doesn't show the defect described." in md  # review_reason of the contradictory item
     assert "## Timing and cost" in md and "| synth_walk |" in md.split("## Timing and cost")[1]
+    assert "/Users/" not in md and str(REPO_ROOT) not in md, "the report never carries a local absolute path"
     m = doc["walks"][0]["metrics"]
     assert (m["recall"]["num"], m["precision"]["num"], m["room"]["num"]) == (3, 3, 3)
     assert m["trade"]["den"] == 3 and f"| synth_walk | Trade accuracy | {trade_row['value']} |" in md
@@ -290,6 +292,23 @@ def test_holdout_is_reported_separately(tmp_path):
     assert "## Holdout (never used for tuning)" in md and "## walk3 (first walk, holdout)" in md
     assert json.loads(render_json(run))["app_summary"] is None  # holdout numbers never reach the app
     assert render_markdown(run) == md
+
+
+def test_project_source_is_repo_relative(tmp_path):
+    cfg = project_config(tmp_path, {}, fallback=REPO_ROOT / "eval" / "project.json")
+    assert cfg.source == "eval/project.json"
+    (tmp_path / "project.json").write_text('{"rooms": ["Kitchen"]}')  # outside the repo: just the file name
+    assert project_config(tmp_path, {}).source == "project.json"
+
+
+def test_report_says_which_numbers_are_in_sample():
+    def walk(name, kind, holdout):
+        return WalkEval(name=name, walk_id=f"wlk_eval_{name}", kind=kind, holdout=holdout, labels=[])
+
+    note = sample_note([walk("walk1", "initial", False), walk("walk2", "rewalk", False), walk("walk3", "initial", True)])
+    assert note == ["", "Re-walk closure numbers are measured on walk2, which was used for tuning (in-sample). "
+                        "walk3 is the only out-of-sample walk and has no re-walk."]
+    assert sample_note([walk("walk1", "initial", False)]) == []  # no re-walk: nothing to say
 
 
 # --------------------------------------------------------------------------- build_mock_api

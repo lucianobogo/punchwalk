@@ -28,6 +28,7 @@ import re
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from punchwalk.config import REPO_ROOT
 from punchwalk.core.enums import Trade
 
 COLUMNS = (
@@ -249,6 +250,14 @@ def with_times(labels: list[Label], clip_offsets: list[float]) -> list[Label]:
     return [replace(lb, t=label_time(lb, clip_offsets)) for lb in labels]
 
 
+def repo_relative(path: Path) -> str:
+    """`eval/project.json` for a file in the repo (reports never carry a local absolute path)."""
+    try:
+        return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def project_config(labels_dir: Path, by_walk: dict[str, list[Label]], *, rooms: list[str] | None = None,
                    keywords: list[str] | None = None, fallback: Path | None = None) -> ProjectConfig:
     """Rooms/keywords for the eval project: CLI > <labels>/project.json > `fallback` json > the labels."""
@@ -257,7 +266,7 @@ def project_config(labels_dir: Path, by_walk: dict[str, list[Label]], *, rooms: 
             data = json.loads(Path(path).read_text())
             return ProjectConfig(rooms=list(data.get("rooms") or []),
                                  keywords=list(keywords if keywords is not None else data.get("keywords") or []),
-                                 source=str(path))
+                                 source=repo_relative(Path(path)))
     if rooms is not None:
         return ProjectConfig(rooms=list(rooms), keywords=list(keywords or []), source="--rooms")
     derived: list[str] = []

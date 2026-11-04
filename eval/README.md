@@ -24,6 +24,8 @@ uv run python eval/run_eval.py --labels fixtures/eval/labels_synth --data-dir .v
 - **Metrics** (`metrics.py`): recall, precision, trade, room, grounding (pointed labels outlined by SAM), needs-review
   rate; re-walk closure accuracy and false-claim catch, which read "n/a (Phase 7 pending)" until the re-walk's
   `resolve_closures` stage is `done`. Targets are PLAN 3.4. walk3 (`--holdout`) is reported separately and never tuned on.
+  The re-walk closure numbers are measured on walk2, which was used for tuning (in-sample); walk3 is the only
+  out-of-sample walk and has no re-walk.
 - **Output**: the summary table on stdout, `report.md` (summary, per-item diffs, closures, timing and cost) and
   `report.json` (the same numbers + `app_summary`, the "How this walk was processed" eval block). Exit code is 0
   unless `--strict` is given and a non-holdout target fails or a walk errors.
