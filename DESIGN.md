@@ -229,7 +229,7 @@ The render `06-send-to-trade.png` predates this section; where they differ, this
   - "Marked fixed on the re-walk, but the defect is still visible."
   - (the inspector pointed at the spot again on the re-walk; the after photo has the same framing and its own blue dot)
   - before and after photos side by side, with dates
-  - buttons "Send again" and "Open item"
+  - buttons "Approve and send to <company>" (approves the item and sends it on the trade's channel; the toast says where it went) and "Open item"
 - **Then a "Signed off N" list:** rows with a check badge on the tab, the title, and "Signed off" in green text.
 - **Then still-open items,** each with "Send again".
 

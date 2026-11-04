@@ -3,7 +3,8 @@
 // with Send again, then anything the re-walk didn't check.
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { useApproveAndSend, useItems, useRewalkSummary, useSendDispatch } from '../api/hooks';
+import { useApproveAndSend, useItems, useProject, useRewalkSummary, useSendDispatch } from '../api/hooks';
+import { recipient } from '../features/item/actions';
 import { NOT_CHECKED_ON_REWALK, type ItemOut, type RewalkItemOut, type RewalkSummaryOut } from '../api/types';
 import { Button, ButtonLink, Card, PushedBar, SectionHeader, Skeleton, TapeTab, useToast } from '../components';
 import { barLabel, barSegments, openByTrade, rewalkSections } from '../features/rewalk/summary';
@@ -49,6 +50,7 @@ export default function RewalkPage() {
 }
 
 function Body({ s }: { s: RewalkSummaryOut }) {
+  const project = useProject(s.project_id);
   const items = useItems(s.project_id);
   const byId = new Map((items.data?.items ?? []).map((i) => [i.id, i]));
   const sender = useSendToTrade();
@@ -118,7 +120,13 @@ function Body({ s }: { s: RewalkSummaryOut }) {
       {rewalkSections(s).map((sec) => {
         if (sec.kind === 'needs_a_look') {
           return sec.items.map((it) => (
-            <FlaggedCard key={it.item_id} it={it} onApprove={() => approveOne(it)} busy={sendingId === it.item_id} />
+            <FlaggedCard
+              key={it.item_id}
+              it={it}
+              company={recipient(it, project.data?.trades.find((c) => c.trade === it.trade))}
+              onApprove={() => approveOne(it)}
+              busy={sendingId === it.item_id}
+            />
           ));
         }
         return (
@@ -159,7 +167,7 @@ function Body({ s }: { s: RewalkSummaryOut }) {
   );
 }
 
-function FlaggedCard({ it, onApprove, busy }: { it: RewalkItemOut; onApprove: () => void; busy: boolean }) {
+function FlaggedCard({ it, company, onApprove, busy }: { it: RewalkItemOut; company: string; onApprove: () => void; busy: boolean }) {
   return (
     <Card tone="flagged" className="mt-5">
       <SectionHeader tone="hold" as="div">
@@ -182,9 +190,10 @@ function FlaggedCard({ it, onApprove, busy }: { it: RewalkItemOut; onApprove: ()
           alt={`${it.title}, on the re-walk`}
         />
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      {/* Stacked: "Approve and send to <company>" needs the full width. */}
+      <div className="mt-3 flex flex-col gap-2">
         <Button onClick={onApprove} busy={busy} busyLabel="Sending…">
-          Approve and send
+          Approve and send to {company}
         </Button>
         <ButtonLink to={`/items/${it.item_id}`} variant="secondary">
           Open item
