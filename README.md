@@ -13,6 +13,8 @@ fixed, with before and after photos, and flags anything "marked fixed, but the d
 
 *The voice says what. SAM proves where. Spark Open writes it up and checks it.*
 
+Built from scratch for the Meta Global AI Developer Hackathon, starting Tue Nov 3, 2026 at 3:06 PM ET (first commit) — see the commit history.
+
 - **Live app:** https://punchwalk.fly.dev. On a phone it opens the demo project "Unit 2B final punch" (three real walks,
   14 items); on a desktop, the landing page with the live app in a phone frame and a QR code.
 - **Demo video (3 min):** `<!-- VIDEO_URL -->` (coming soon)
