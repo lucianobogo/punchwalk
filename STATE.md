@@ -2,13 +2,13 @@
 
 Status: RUNNING
 Updated: 2026-11-03 20:34 ET
-Current phase: grounding fix round (A) → re-seed + snapshot FINAL → 9.4 final pass → COMPLETE. 46/51 boxes done; open: 8.1 (tick after the final pass), 9.1 (human import + redeploy), 9.2/9.3 (tick after the final pass), 9.4.
-Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
+Current phase: DONE except 9.1 `[~]` — waiting for the human to load the demo snapshot on Fly (then a live iPhone-profile smoke test closes 9.1 → Status COMPLETE). 50/51 boxes `[x]`, 0 `[ ]`.
+Last checkpoint: ckpt-9.4. Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
 ## Next actions
-1. Review + verify Track A (0.6, 1.x), Track C (4.x), Track B (5.1); commit one checkpoint per subphase.
-2. When footage/ lands: `make record` (0.6) via the Track A builder; re-check the tape phrasing on a real frame.
-3. After 4.x passes: brief 5.8 (UI → live API) and Phase 2 (items, grounding, verification).
+1. Human: import the demo snapshot on Fly (Needs human) → orchestrator smoke-tests https://punchwalk.fly.dev with the iPhone profile → 9.1 `[x]` → Status COMPLETE.
+2. Human: `make deploy` once more, record the video, fill `<!-- VIDEO_URL -->`, push, make public, submit.
+3. Nothing else is open; BACKLOG.md lists optional polish.
 
 ## In flight
 | Task | Agent | Started (ET) | Paths | Notes |
