@@ -111,3 +111,35 @@ def test_reseed_time_setting_is_validated(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("DEMO_RESEED_AT", "25:00")
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_app_logs_punchwalk_info_lines(capsys: pytest.CaptureFixture[str]) -> None:
+    import logging
+
+    from punchwalk.api.app import configure_logging
+
+    root = configure_logging()
+    configure_logging()  # idempotent: still one handler
+    assert root.level == logging.INFO
+    assert sum(1 for h in root.handlers if getattr(h, "_punchwalk", False)) == 1
+    logging.getLogger("punchwalk.reseed").info("re-seed (boot): importing /app/demo/seed_snapshot.tar.gz")
+    err = capsys.readouterr().err
+    assert "INFO punchwalk.reseed: re-seed (boot): importing" in err
+
+
+def test_a_boot_reseed_logs_import_and_restore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, api,
+                                               caplog: pytest.LogCaptureFixture) -> None:  # fmt: skip
+    import logging
+    import subprocess
+
+    snap = tmp_path / "snap.tar.gz"
+    snap.write_bytes(b"x")
+    monkeypatch.setattr(reseed.subprocess, "run",
+                        lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="ok\n", stderr=""))  # fmt: skip
+    monkeypatch.setattr(reseed, "demo_item_count", lambda: 14)
+    with caplog.at_level(logging.INFO, logger="punchwalk.reseed"):
+        assert reseed.reseed_once("boot", snapshot=snap, wait=lambda: True) == "done"
+    lines = [r.getMessage() for r in caplog.records]
+    assert f"re-seed (boot): importing {snap}" in lines
+    assert f"re-seed: restored prj_demo (14 items) from {snap}" in lines
+

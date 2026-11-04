@@ -155,6 +155,25 @@ def test_cors_allows_the_vite_dev_server(api: TestClient) -> None:
     assert "access-control-allow-origin" not in api.get("/healthz", headers={"Origin": "https://evil.example"}).headers
 
 
+def test_upload_is_refused_up_front_when_todays_budget_is_used(
+    api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from punchwalk.clients import calls
+
+    monkeypatch.setenv("COST_DAILY_CAP_USD", "1")
+    reset_settings()
+    pid = make_project(api)["id"]
+    calls.emit(calls.CallRecord(provider="baseten", model="m", endpoint="/e", est_cost_usd=1.2))
+    res = upload(api, pid, [clip_path])
+    body = assert_readable_error(res, 429)
+    assert body["error"] == "daily_budget_used_up"
+    assert body["detail"] == "Today's live model budget is used up. It resets at midnight Eastern; try again tomorrow."
+    assert int(res.headers["retry-after"]) >= 60
+    monkeypatch.setenv("COST_DAILY_CAP_USD", "10")
+    reset_settings()
+    assert upload(api, pid, [clip_path]).status_code == 201
+
+
 def test_demo_uploads_per_hour_setting(api: TestClient, clip_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DEMO_MODE", "true")
     monkeypatch.setenv("DEMO_UPLOADS_PER_HOUR", "6")

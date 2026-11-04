@@ -7,7 +7,8 @@ worker calls it; the pipeline's persist stage may call it too, which is safe: it
   against the photo and the quote." (or "Emailed 2 items to <company> automatically: ...");
 - an automatic send only counts when it reaches the trade (Slack or email). When the trade's effective
   channel is Copy link (no working Slack or email), nothing is sent: the items stay open (To send) with
-  the note "Couldn't go out automatically: no Slack or email set up for <company>." Copy link is a
+  the note "Couldn't go out automatically: there was no working Slack or email for <company> at the
+  time." Copy link is a
   send only when the project manager does it;
 - needs-a-look items, and open items that were never checked, are held, with one history note each
   ("Held for a look: <reason>");
@@ -46,8 +47,10 @@ log = logging.getLogger("punchwalk.dispatch")
 
 AUTO_NOTE = "checked against the photo and the quote."
 HOLD_PREFIX = "Held for a look: "
-NO_CHANNEL_NOTE = "Couldn't go out automatically: no Slack or email set up for {company}."
-NO_CHANNEL_REWALK_NOTE = "Couldn't go out automatically after the re-walk: no Slack or email set up for {company}."
+NO_CHANNEL_NOTE = "Couldn't go out automatically: there was no working Slack or email for {company} at the time."
+NO_CHANNEL_REWALK_NOTE = (
+    "Couldn't go out automatically after the re-walk: there was no working Slack or email for {company} at the time."
+)
 NOT_SENT_PREFIX = "Not sent automatically: "
 
 

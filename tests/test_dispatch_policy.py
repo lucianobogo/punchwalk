@@ -64,7 +64,7 @@ def test_verified_items_go_out_and_needs_a_look_items_wait(api: TestClient) -> N
     for i, company in ((0, "Oakline Millwork"), (4, "Clearview Glass")):
         item = item_row(ids[i])
         assert item.status == ItemStatus.open and item.history[-1]["action"] == "noted"
-        assert item.history[-1]["note"] == f"Couldn't go out automatically: no Slack or email set up for {company}."
+        assert item.history[-1]["note"] == f"Couldn't go out automatically: there was no working Slack or email for {company} at the time."
     held = item_row(ids[3])
     assert held.status == ItemStatus.needs_review
     assert held.history[-1]["note"] == "Held for a look: The frame doesn't show the defect described."
@@ -239,7 +239,8 @@ def test_rewalk_resend_with_no_channel_leaves_the_item_to_send(api: TestClient) 
         assert resend_open_items(s, pid, rewalk_id).sent == {}
         assert len(s.exec(select(Dispatch)).all()) == 0
     hist = notes(ids[1])
-    assert hist.count("Couldn't go out automatically after the re-walk: no Slack or email set up for Ace Electric.") == 1
+    assert hist.count("Couldn't go out automatically after the re-walk: there was no working Slack or email for "
+                      "Ace Electric at the time.") == 1
     trades = api.get(f"/api/projects/{pid}/trades").json()["trades"]
     elec = next(t for t in trades if t["trade"] == "electrical")
     assert (elec["to_send"], elec["sent"]) == (2, 0)  # never counted as sent

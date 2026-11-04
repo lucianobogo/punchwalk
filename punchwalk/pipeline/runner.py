@@ -226,6 +226,8 @@ def plain_error(stage: Stage, err: BaseException) -> str:
     """walk.error: what failed, in words a project manager understands, plus a hint when there is one."""
     words = FAILURE_WORDS.get(stage.value, "Processing failed")
     if isinstance(err, CostCapReached):
+        if getattr(err, "daily", False):
+            return f"{words}: today's live model budget is used up. It resets at midnight Eastern; try again tomorrow."
         return f"{words}: the live model budget for this build is used up."
     if isinstance(err, ApiError):
         if err.auth_failed or "is not set" in err.body:

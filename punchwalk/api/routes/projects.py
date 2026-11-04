@@ -13,6 +13,7 @@ from punchwalk.api import uploads, views
 from punchwalk.api.errors import ApiError, not_found
 from punchwalk.api.guards import client_ip, upload_limiter
 from punchwalk.api.jobs import enqueue_walk_job, notify_worker
+from punchwalk.clients import cost
 from punchwalk.config import get_settings
 from punchwalk.core.enums import TRADE_LABEL, ItemStatus, Severity, Trade, WalkKind, WalkStatus
 from punchwalk.core.models import ClipInfo, Item, Project, TradeContact, Walk, new_id, utcnow
@@ -151,6 +152,10 @@ def _resolve_rewalk_of(session: Session, project: Project, kind: WalkKind, rewal
 async def upload_walk(project_id: str, request: Request, session: Session = Depends(get_session)) -> S.UploadOut:
     """multipart: kind=initial|rewalk, rewalk_of=<walk id>?, clips=<file> (repeated, in walk order)."""
     project = get_project(session, project_id)
+    # Today's model budget is gone: say so now, not after the upload and a few minutes of processing.
+    if cost.daily_cap_reached():
+        raise ApiError(429, cost.DAILY_CAP_SENTENCE, error="daily_budget_used_up",
+                       headers={"Retry-After": str(cost.seconds_until_midnight_eastern())})  # fmt: skip
     ip = client_ip(request)
     # DEMO_MODE: take the slot before the body streams in, give it back if the upload fails.
     reservation = upload_limiter.check_and_reserve(ip) if get_settings().DEMO_MODE else None

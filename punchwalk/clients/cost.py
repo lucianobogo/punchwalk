@@ -125,6 +125,20 @@ def spend_today_usd(now: datetime | None = None) -> float:
     return spend_on(today_eastern(now))
 
 
+DAILY_CAP_SENTENCE = "Today's live model budget is used up. It resets at midnight Eastern; try again tomorrow."
+
+
+def daily_cap_reached(now: datetime | None = None) -> bool:
+    """True when today's live spend (America/New_York) has reached COST_DAILY_CAP_USD."""
+    return spend_today_usd(now) >= get_settings().COST_DAILY_CAP_USD
+
+
+def seconds_until_midnight_eastern(now: datetime | None = None) -> int:
+    local = (now or datetime.now(UTC)).astimezone(eastern())
+    midnight = datetime.combine(local.date() + timedelta(days=1), datetime.min.time(), tzinfo=eastern())
+    return max(60, int((midnight - local).total_seconds()))
+
+
 def assert_under_cap(next_cost_usd: float = 0.0, *, now: datetime | None = None) -> float:
     """Raise CostCapReached when spend (plus the next call's estimate) reaches a cap.
 

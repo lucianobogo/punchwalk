@@ -103,3 +103,19 @@ def test_budget_script(monkeypatch, capsys):
     assert b["spend_today_usd"] == pytest.approx(1.5) and b["left_today_usd"] == pytest.approx(8.5)
     assert b["spend_total_usd"] == pytest.approx(1.5) and b["total_cap_usd"] == 25
     assert mod.main([]) == 0 and "of $10.00" in capsys.readouterr().out
+
+
+def test_daily_cap_wording_in_the_walk_error():
+    from punchwalk.core.enums import Stage
+    from punchwalk.pipeline import runner
+
+    daily = runner.plain_error(Stage.write_items, cost.CostCapReached("x", daily=True))
+    assert daily.endswith("today's live model budget is used up. It resets at midnight Eastern; try again tomorrow.")
+    assert runner.plain_error(Stage.write_items, cost.CostCapReached("x")).endswith("for this build is used up.")
+
+
+def test_seconds_until_midnight_eastern():
+    from datetime import UTC, datetime
+
+    assert cost.seconds_until_midnight_eastern(datetime(2026, 11, 5, 4, 0, tzinfo=UTC)) == 3600  # 23:00 EST
+

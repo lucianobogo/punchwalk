@@ -89,8 +89,16 @@ def run_import(snapshot: Path) -> bool:
     if res.returncode != 0:
         log.error("re-seed: the import failed (exit %d): %s", res.returncode, " | ".join(tail))
         return False
-    log.info("re-seed: demo project restored from %s (%s)", snapshot, " | ".join(tail))
+    log.info("re-seed: restored prj_demo (%d items) from %s", demo_item_count(), snapshot)
+    log.debug("re-seed output: %s", " | ".join(tail))
     return True
+
+
+def demo_item_count() -> int:
+    from punchwalk.core.models import Item
+
+    with session_factory() as s:
+        return len(s.exec(select(Item.id).where(Item.project_id == "prj_demo")).all())
 
 
 def reseed_once(

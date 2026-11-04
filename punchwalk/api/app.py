@@ -10,6 +10,7 @@ with DEMO_RESEED=true, the demo re-seed (boot + nightly at 03:00 America/New_Yor
 from __future__ import annotations
 
 import logging
+import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -32,11 +33,40 @@ from punchwalk.db import init_db
 
 log = logging.getLogger("punchwalk.api")
 
+
+class _StderrHandler(logging.StreamHandler):
+    """Writes to whatever sys.stderr is at the time (uvicorn, pytest's capture, a redirected shell)."""
+
+    @property  # type: ignore[override]
+    def stream(self):
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, _value) -> None:
+        pass
+
+
+def configure_logging() -> logging.Logger:
+    """`punchwalk.*` loggers (jobs, re-seed, dispatch) at INFO on stderr, next to uvicorn's own lines.
+
+    Uvicorn only configures its own loggers, so without this every `punchwalk` INFO line is dropped.
+    Idempotent: one handler, however often the app starts.
+    """
+    root = logging.getLogger("punchwalk")
+    root.setLevel(logging.INFO)
+    if not any(getattr(h, "_punchwalk", False) for h in root.handlers):
+        handler = _StderrHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        handler._punchwalk = True  # type: ignore[attr-defined]
+        root.addHandler(handler)
+    return root
+
 DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    configure_logging()
     init_db()
     resumed = recover_interrupted_jobs()
     if resumed:
