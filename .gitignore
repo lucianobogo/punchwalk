@@ -27,3 +27,6 @@ test-results/
 # misc
 .DS_Store
 *.log
+
+# seed snapshots (scripts/seed.py --export): uploaded to Fly with sftp, never committed
+demo/*.tar.gz

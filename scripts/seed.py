@@ -35,6 +35,8 @@ include JPEG frames that ffmpeg extracts at run time, so a cache recorded on a M
 Linux image. Seed where the recording was made, then ship the result instead of re-running it:
   uv run python scripts/seed.py --export demo/seed_snapshot.tar.gz       # after a successful seed
   python scripts/seed.py --import demo/seed_snapshot.tar.gz              # in the container: no pipeline
+Add `--video-crf 28` to the export to re-encode each display.mp4 in the snapshot (same size and fps,
+so the overlay's display-pixel coordinates still line up; DATA_DIR/walks is left as it is).
 A snapshot holds the demo project's rows (project, walks, turns, points, items, dispatches, model
 calls, jobs) and each walk's public media plus stages/ (display.mp4, poster.jpg, meta.json,
 stages/*.json, items/**). It leaves out audio.wav and sam*.mp4, which only the pipeline needs.
@@ -383,10 +385,43 @@ def _tables():
             "dispatches": Dispatch, "model_calls": ModelCall, "jobs": Job}  # fmt: skip
 
 
-def export_snapshot(path: Path) -> dict[str, int]:
-    """Write the demo project's rows + public walk media to a .tar.gz."""
+def reencode_display(src: Path, dest: Path, crf: int) -> None:
+    """display.mp4 -> a smaller copy: libx264 at `crf`, same resolution and fps, AAC 96k, +faststart."""
+    import subprocess
+
+    cmd = ["ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error", "-y", "-i", str(src),
+           "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "medium", "-crf", str(crf),
+           "-pix_fmt", "yuv420p", "-fps_mode", "passthrough", "-c:a", "aac", "-b:a", "96k",
+           "-movflags", "+faststart", "-map_metadata", "0", str(dest)]  # fmt: skip
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except FileNotFoundError as exc:
+        raise SeedError("--video-crf needs ffmpeg on PATH.") from exc
+    except subprocess.CalledProcessError as exc:
+        raise SeedError(f"Couldn't re-encode {src}: {(exc.stderr or '').strip()[-400:]}") from exc
+    if _video_shape(dest) != _video_shape(src):
+        raise SeedError(f"Re-encoding {src} changed its size or frame rate: {_video_shape(src)} -> {_video_shape(dest)}")
+
+
+def _video_shape(path: Path) -> tuple[str, ...]:
+    import subprocess
+
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate",
+         "-of", "csv=p=0", str(path)],
+        check=True, capture_output=True, text=True,
+    ).stdout  # fmt: skip
+    return tuple(out.strip().split(","))
+
+
+def export_snapshot(path: Path, video_crf: int | None = None) -> dict[str, int]:
+    """Write the demo project's rows + public walk media to a .tar.gz.
+
+    `video_crf` re-encodes each display.mp4 for the snapshot only (see `reencode_display`).
+    """
     import io
     import tarfile
+    import tempfile
 
     from sqlmodel import col, select
 
@@ -415,7 +450,7 @@ def export_snapshot(path: Path) -> dict[str, int]:
     data = Path(get_settings().DATA_DIR)
     path.parent.mkdir(parents=True, exist_ok=True)
     files = 0
-    with tarfile.open(path, "w:gz") as tar:
+    with tempfile.TemporaryDirectory(prefix="seed_snapshot_") as tmp, tarfile.open(path, "w:gz") as tar:
         blob = json.dumps(manifest).encode()
         info = tarfile.TarInfo("manifest.json")
         info.size = len(blob)
@@ -426,7 +461,13 @@ def export_snapshot(path: Path) -> dict[str, int]:
                 rel = f.relative_to(wdir)
                 if rel.parts[0] in ("clips", "_work") or f.name in SNAPSHOT_SKIP or f.name.startswith("sam"):
                     continue
-                tar.add(f, arcname=f"walks/{wid}/{rel.as_posix()}")
+                source = f
+                if video_crf is not None and rel.as_posix() == "display.mp4":
+                    source = Path(tmp) / f"{wid}_display.mp4"
+                    reencode_display(f, source, video_crf)
+                    print(f"re-encoded {wid}/display.mp4 at CRF {video_crf}: "
+                          f"{f.stat().st_size / 1e6:.1f} MB -> {source.stat().st_size / 1e6:.1f} MB", file=sys.stderr)  # fmt: skip
+                tar.add(source, arcname=f"walks/{wid}/{rel.as_posix()}")
                 files += 1
     return {name: len(r) for name, r in rows.items()} | {"files": files}
 
@@ -499,7 +540,15 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     snap.add_argument("--export", type=Path, metavar="TAR_GZ", help="after seeding, write a snapshot of the demo project")
     snap.add_argument("--import", dest="import_", type=Path, metavar="TAR_GZ",
                       help="load a snapshot instead of running the pipeline (replaces the demo project)")
-    return ap.parse_args(argv)
+    ap.add_argument("--video-crf", type=int, default=None, metavar="N",
+                    help="with --export: re-encode each display.mp4 in the snapshot with libx264 at CRF N "
+                         "(same size and fps; e.g. 28). Default: copy the videos as they are")
+    args = ap.parse_args(argv)
+    if args.video_crf is not None and not args.export:
+        ap.error("--video-crf only applies to --export")
+    if args.video_crf is not None and not 0 <= args.video_crf <= 51:
+        ap.error("--video-crf must be between 0 and 51")
+    return args
 
 
 def _offline_settings() -> None:
@@ -562,7 +611,7 @@ def run(argv: list[str] | None = None) -> dict[str, Any]:
     else:
         print_summary(info)
     if args.export:
-        counts = export_snapshot(args.export)
+        counts = export_snapshot(args.export, video_crf=args.video_crf)
         print(f"Snapshot written to {args.export}: {counts}", file=sys.stderr)
     return info
 

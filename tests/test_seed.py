@@ -227,3 +227,19 @@ def test_boot_recovery_closes_seed_jobs_and_requeues_the_rest(api: TestClient) -
         assert s.get(Job, "job_upload").status == JobStatus.queued
         assert s.get(Walk, "wlk_upload").status == WalkStatus.processing
     assert jobs.claim_next_job() == "job_upload" and jobs.claim_next_job() is None
+
+
+def test_snapshot_export_can_reencode_the_display_video(seed, api: TestClient, tmp_path: Path) -> None:
+    import tarfile
+
+    seed.run(["--walks", "synth_walk"])
+    original = Path(get_settings().DATA_DIR, "walks", "wlk_demo_synth_walk", "display.mp4")
+    before = original.read_bytes()
+    seed.run(["--walks", "synth_walk", "--export", str(tmp_path / "snap.tar.gz"), "--video-crf", "35"])
+    assert original.read_bytes() == before  # DATA_DIR/walks is left as it is
+    with tarfile.open(tmp_path / "snap.tar.gz") as tar:
+        tar.extract("walks/wlk_demo_synth_walk/display.mp4", tmp_path / "out", filter="data")
+    copy = tmp_path / "out" / "walks" / "wlk_demo_synth_walk" / "display.mp4"
+    assert copy.read_bytes() != before and seed._video_shape(copy) == seed._video_shape(original)
+    with pytest.raises(SystemExit):
+        seed.parse_args(["--video-crf", "28"])  # only with --export
