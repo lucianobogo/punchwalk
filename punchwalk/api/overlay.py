@@ -383,7 +383,11 @@ def _frames(
             if win.hand_center is not None:
                 dx = (box.x1 + box.x2) / 2 - win.hand_center[0]
                 dy = (box.y1 + box.y2) / 2 - win.hand_center[1]
-            fingertip = S.XYOut(x=round(win.point.fingertip_x + dx, 1), y=round(win.point.fingertip_y + dy, 1))
+            # Clamped into this frame's box (inclusive): when the box grows or shrinks as it drifts, the
+            # shifted point could otherwise land off the hand.
+            fx = min(max(win.point.fingertip_x + dx, box.x1), box.x2)
+            fy = min(max(win.point.fingertip_y + dy, box.y1), box.y2)
+            fingertip = S.XYOut(x=round(fx, 1), y=round(fy, 1))
         item = by_point.get(win.point.id)
         hand = S.OverlayHandOut(
             point_id=win.point.id,

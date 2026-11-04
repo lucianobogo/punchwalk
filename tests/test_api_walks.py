@@ -346,6 +346,29 @@ def test_overlay_in_display_coordinates_and_cached(api: TestClient, clip_path: P
     assert pointing == list(range(7, 14))
 
 
+def test_overlay_fingertip_stays_inside_a_drifting_hand_box() -> None:
+    from punchwalk.api import overlay as O
+    from punchwalk.core.models import Point
+
+    # measured once, at the right edge of a 40x60 hand box centred on (100, 100)
+    point = Point(id="pnt_x", walk_id="wlk_x", number=1, t=1.0, frame=10, fingertip_x=120.0, fingertip_y=70.0,
+                  hand_box={"x1": 80, "y1": 70, "x2": 120, "y2": 130}, hold_s=2.0, sam_object_ids=["a:1"])  # fmt: skip
+    win = O.HoldWindow(point, 0, 20, 0)
+    records = []
+    for frame in range(21):  # the box drifts right and shrinks to 20x30, so the shifted tip would leave it
+        cx, hw, hh = 100 + frame, 20 - frame / 2, 30 - frame * 0.75
+        records.append({"frame": frame, "object_id": "a:1", "box": [cx - hw, 100 - hh, cx + hw, 100 + hh]})
+    frames = O._frames(records, [win], {}, 10.0, 1.0, 1.0, 1.0)
+    assert len(frames) == 21
+    for f in frames:
+        (hand,) = f.hands
+        b, tip = hand.box, hand.fingertip
+        assert tip is not None and b.x1 <= tip.x <= b.x2 and b.y1 <= tip.y <= b.y2, (f.t, b, tip)
+    first, last = frames[0].hands[0], frames[-1].hands[0]
+    assert (first.fingertip.x, first.fingertip.y) == (120.0, 70.0)  # no drift yet: unchanged
+    assert (last.fingertip.x, last.fingertip.y) == (last.box.x2, last.box.y1)  # pinned to the corner
+
+
 def test_overlay_before_ingest_is_a_readable_409(api: TestClient, clip_path: Path) -> None:
     pid = make_project(api)["id"]
     up = upload(api, pid, [clip_path]).json()

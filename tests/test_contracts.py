@@ -208,8 +208,8 @@ def test_scenario_has_what_every_screen_needs() -> None:
     assert by_status[E.ItemStatus.dispatched] and by_status[E.ItemStatus.open]
     assert any(i.severity == E.Severity.safety for i in items)
     voice_only = [i for i in items if i.point_id is None]
-    assert voice_only and all(
-        i.evidence and i.evidence.grounding == E.Grounding.none and i.evidence.pointer is None
+    assert voice_only and all(  # SAM may still find the named object; there's never a pointer
+        i.evidence and i.evidence.grounding in VOICE_ONLY_GROUNDING and i.evidence.pointer is None
         for i in voice_only
     )
     assert any(i.dispatch and i.history for i in by_status[E.ItemStatus.dispatched])
@@ -384,6 +384,9 @@ def test_no_tape_or_marks_in_the_mocks() -> None:
     assert not problems, "\n".join(problems[:20])
 
 
+VOICE_ONLY_GROUNDING = {E.Grounding.sam_concept, E.Grounding.sam_box, E.Grounding.none}
+
+
 def test_every_pointed_item_has_a_point_and_a_pointer() -> None:
     points: dict[str, tuple[str, S.PointOut]] = {}
     for p in sorted((MOCK / "walks").glob("*.json")):
@@ -404,8 +407,11 @@ def test_every_pointed_item_has_a_point_and_a_pointer() -> None:
         ev = it.evidence
         assert ev is not None
         if it.point_id is None:  # voice-only: no marker, no pointing frame, no outline from a point
-            assert ev.grounding == E.Grounding.none, it.id
+            # SAM may still outline the object the inspector named (sam_concept / sam_box); never pointed_only
+            assert ev.grounding in VOICE_ONLY_GROUNDING, (it.id, ev.grounding)
             assert ev.pointer is None and ev.pointing_frame is None and ev.hand_box is None, it.id
+            if ev.grounding != E.Grounding.none:
+                assert ev.defect_svg and ev.defect_box, it.id
             continue
         pointed += 1
         assert it.point_id in points, f"{it.id}: point {it.point_id} is in no walk detail"
