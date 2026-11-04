@@ -12,18 +12,30 @@ fixed, with before and after photos, and flags anything "marked fixed, but the d
 
 *The voice says what. SAM proves where. Spark Open writes it up and checks it.*
 
-- **Live app:** https://punchwalk.fly.dev (deploying)
+- **Live app:** https://punchwalk.fly.dev. On a phone it opens the demo project "Unit 2B final punch" (three real walks,
+  14 items); on a desktop, the landing page with the live app in a phone frame and a QR code.
 - **Demo video (3 min):** `<!-- VIDEO_URL -->` (coming soon)
 - **Built for:** Meta Global AI Developer Hackathon, Startup track, Nov 3–4, 2026
 
-| Punch list | Item detail | Play this moment | Walk detail | Processing | Re-walk summary |
+| Punch list | Item detail | Play this moment | Walk detail | Re-walk summary | How it was processed |
 |---|---|---|---|---|---|
-| ![Punch list](docs/screens/01-punch-list-todo.png) | ![Item detail](docs/screens/07-item-open.png) | ![Play this moment](docs/screens/13-play-this-moment.png) | ![Walk detail](docs/screens/15-walk-detail-new-item.png) | ![Processing](docs/screens/18-record-processing.png) | ![Re-walk summary](docs/screens/24-rewalk-summary.png) |
+| ![Punch list](docs/screens/01-punch-list.png) | ![Item detail](docs/screens/02-item-detail.png) | ![Play this moment](docs/screens/03-play-this-moment.png) | ![Walk detail](docs/screens/04-walk-detail.png) | ![Re-walk summary](docs/screens/06-rewalk-summary.png) | ![How it was processed](docs/screens/07-how-processed.png) |
 
-<sub>iPhone 15 Pro (393 × 852), WebKit, from `make screenshots`. These are captured from the app's mock-data
-build, so the photos are synthetic scenes drawn for the fixtures. `<!-- SCREENS_REAL -->` Real-walk captures
-replace them after the labeled run. More screens are in `docs/screens/`: sending to a trade, how a walk was
-processed, and the landing page.</sub>
+<sub>iPhone 15 Pro (393 × 852), Playwright WebKit, captured from the live build serving the seeded demo project.
+These are real: our own glasses footage, and the quotes, red defect outlines and blue "pointed here" dots
+the pipeline produced. Also in the screens folder: the message preview for a trade
+([09](docs/screens/09-trade-preview.png)), the desktop landing page ([08](docs/screens/08-landing-desktop.png)),
+and the record checklist mid-run ([05](docs/screens/05-record-processing-mock.png)). That one is from
+mock data, because no walk was processing when we captured. See [the screenshots README](docs/screens/README.md).</sub>
+
+### What to look at in the demo project
+
+- **#003** (stovetop): marked fixed on the re-walk, but the defect is still visible. It's held as "Needs a
+  look" with before and after photos. **#012** (hallway pencil marks) is the second false claim.
+- **#011** (hallway outlet): tap **Play this moment** to jump to the second it was called out.
+- **Walks → First walk**: items slide in over the video as the inspector points at them.
+- **Walks → Re-walk**: "7 signed off. 2 still open. 3 need a look."
+- **First walk → How this walk was processed**: every model call, by model, in order.
 
 ## Why
 
@@ -78,7 +90,9 @@ on Nov 3: that slug returned `HTTP 404 {"error":"please check the model you prov
 slug `meta-models/muse-spark-open` answered. The client tries `-1026` first, falls back to the catalog slug
 on a 404, remembers which slug answered, and records it on every call (`fixtures/probe/README.md`). Both
 slugs are the same open-weights model on Baseten. The hosted Muse Spark 1.3 is reached only through the
-logged fallback above, and `REASONING_PROVIDER=meta` is the explicit switch to use it instead.
+logged fallback above, and `REASONING_PROVIDER=meta` is the explicit switch to use it instead. In the
+seeded demo, all 62 reasoning calls went to Muse Spark Open on Baseten, and none fell back. The only Muse
+Spark 1.3 call in the whole build was one probe call that tested the fallback's schema.
 
 ### Pointing, not markers
 
@@ -94,39 +108,65 @@ predicted items to labels: within 6 s, and the same room or similar words, with 
 It writes `eval/report.md`, and it runs entirely from the cache. walk3 is a holdout in a different space
 and is never used for tuning.
 
-<!-- EVAL_TABLE -->
 | Metric | Target | walk1 (first walk) | walk2 (re-walk) | walk3 (holdout) |
 |---|---|---|---|---|
-| Defects found (recall) | ≥ 0.90 | _pending_ | n/a | _pending_ |
-| Precision | ≥ 0.90 | _pending_ | n/a | _pending_ |
-| Right trade | ≥ 0.85 | _pending_ | n/a | _pending_ |
-| Right room | ≥ 0.90 | _pending_ | n/a | _pending_ |
-| Defect outlined (pointed items) | reported | _pending_ | n/a | _pending_ |
-| Needs a look rate | reported | _pending_ | _pending_ | _pending_ |
-| Closure accuracy (signed off vs. really fixed) | ≥ 0.90 | n/a | _pending_ | n/a |
-| False "fixed" claims caught | 100% | n/a | _pending_ | n/a |
+| Defects found (recall) | ≥ 0.90 | **1.00** (12/12) | n/a | **1.00** (2/2) |
+| Precision | ≥ 0.90 | **1.00** (12/12) | n/a | **1.00** (2/2) |
+| Right trade | ≥ 0.85 | **1.00** (12/12) | n/a | **1.00** (2/2) |
+| Right room | ≥ 0.90 | **1.00** (12/12) | n/a | **1.00** (2/2) |
+| Defect outlined (pointed items) | reported | 1.00 (11/11) | n/a | 0.50 (1/2) |
+| Needs a look rate | reported | 0.25 (3/12) | n/a | 0.50 (1/2) |
+| Closure accuracy (signed off vs. really fixed) | ≥ 0.90 | n/a | **0.92** (11/12) | n/a |
+| False "fixed" claims caught | 100% | n/a | **100%** (2/2) | n/a |
 
-Numbers land here after the labeled run (`make eval`, see `eval/report.md`).
-<!-- /EVAL_TABLE -->
+Every target from the plan is met. The full per-item tables are in [eval/report.md](eval/report.md). Read
+these numbers with their limits in mind:
+
+- **It's a small test set.** walk1 has 12 labeled defects, walk2 has 12 re-walk statements (two of them
+  false "fixed" claims), and walk3 has 2 defects. One miss would move walk1's recall by 8 points and
+  walk3's by 50. Treat this as a careful smoke test, not a benchmark.
+- **walk1 and walk2 were tuned on** (the tuning log is in `DECISIONS.md`). walk3 was recorded in a laundry
+  room and never used for tuning.
+- **The 3 "Needs a look" items on walk1** (#001, #005, #008) are photo-quality flags. Their best frames
+  are overexposed or blurry, so the verifier said "The frame doesn't show the defect described." and held
+  them for a person instead of sending them. That's the check doing its job: all three items are correct, and
+  all three were signed off on the re-walk.
+- **The one closure miss is the safe kind.** #004 (light switch screw) really was fixed, but the re-walk
+  photo didn't clearly show it, so it went to "Needs a look" instead of being signed off. Nothing was
+  signed off that wasn't fixed.
+- **Model answers vary from run to run.** These numbers replay the recorded answers of the final run
+  (`make eval`, cache readonly, $0). A fresh live run can come out differently.
 
 ## Cost and time per walk
 
 Prices are from `punchwalk/clients/cost.py`:
 - SAM 3.1 video: $0.20 per 1,000 frames
 - SAM 3.1 images: $2.50 per 1,000
-- Muse Voice Transcribe: $0.18 per hour
+- Muse Voice Transcribe: $0.18 per audio hour
 - Muse Spark Open on Baseten: $1.25 / $4.25 per million input / output tokens
 - Muse Spark 1.3 fallback: estimated at $3 / $15
 
-| | Value | Source |
-|---|---|---|
-| Hand tracking | about $0.20 per 100 s of walk (10 fps = 1,000 frames) | price table |
-| Writing + checking one item | about $0.003 (Spark Open) plus one or two SAM image calls ($0.0025 each) | price table and probe token counts |
-| Synthetic 21 s walk, 3 items | $0.043 for transcription + hand tracking, then about $0.04 per full item pass (write, outline, verify) | measured, `fixtures/pipeline/README.md` |
-| Live latencies | Files 2.3 s, SAM video 7.0 s for 90 frames, SAM image 1.4–2.9 s, ASR 3.6 s for 5 s of audio, Spark Open 4.2 s per call | measured, `fixtures/probe/README.md` |
-| Typical 2–3 min walk | **estimate:** about $0.5–1.0 and 2–4 minutes end to end | estimate until the real walks are measured `<!-- COST_REAL -->` |
+Measured on our real glasses footage, from the cost ledger (`data/cost_ledger.jsonl`) for the recorded
+runs. Spark Open is priced from the token counts Baseten returned.
 
-All development spend is in `data/cost_ledger.jsonl`, capped at $25. Re-running a walk from the cache costs $0.
+| Walk | Length | Output | Live cost | Pipeline time |
+|---|---|---|---|---|
+| walk1, first walk | 105 s, 5 glasses clips | 12 items | **≈ $0.54**: ≈ $0.22 to hear and track (Muse Voice Transcribe + SAM 3.1 following the hand at 10 fps), ≈ $0.32 to write, outline and check the 12 items | ≈ 4.8 min on a laptop |
+| walk2, re-walk | 81 s, 5 clips | 12 status updates checked against open items | **≈ $0.33** | not timed separately |
+| walk3, holdout | 16 s, 1 clip | 2 items | **≈ $0.08** | not timed separately |
+
+Rules of thumb from those runs:
+- Following the hand costs about $0.20 per 100 s of walk (1,000 frames at 10 fps).
+- Each item costs about $0.03 to write, outline and check.
+- **Estimate** for the longest walk we accept (10 minutes, 20 defects): about $1.20 for tracking plus
+  $0.60 for items, so roughly $1.80. We haven't measured this.
+
+Live latencies from the probe: Files 2.3 s, SAM video 7.0 s for 90 frames, SAM image 1.4–2.9 s, ASR 3.6 s
+for 5 s of audio, and Spark Open 4.2 s per call (`fixtures/probe/README.md`).
+
+The whole build cost **≈ $2.92** of live Meta and Baseten calls, including probes, prompt tuning and
+fixture recording, against a $25 cap. Replaying a walk from the cache costs $0. That's why the seeded
+demo's "How this walk was processed" screen says "from recorded model answers (no new cost)".
 
 ## Run it
 
@@ -210,10 +250,15 @@ was committed. See `PLAN.md`, `PROGRESS.md` and `DECISIONS.md`.
 - PWA: design system, punch list, item detail, Play this moment, walk detail with the hand overlay, the record flow with a live checklist, and "How this walk was processed".
 - Dispatch to Slack, email or the Outbox, with an auto-send policy (verified items go out, flagged ones wait), and a PDF punch report.
 - Docker image and Fly config, and `make seed` (zero-cost replay, plus a snapshot for the deployed image).
+- Our own walks: three walks recorded on Ray-Ban Meta glasses (5 clips, 5 clips, 1 clip), with ground truth labeled by the inspector. `make record` captured every model answer ($0.44).
+- Eval: label loading, matching (6 s window + Hungarian assignment), metrics and the report. Tuned on walk1 and walk2 until every target was met; walk3 held out.
+- Re-walk loop: each status update is mapped to an open item and the before and after photos are compared. Items are signed off with proof, or flagged "marked fixed, but the defect is still visible". Still-open items are sent again, and the re-walk summary screen shows the result.
+- Trades screen with the exact message preview, a public share page for each item, the desktop landing page with a QR code, and loading, empty and error states everywhere.
+- MIT license. Deployed to Fly.io at https://punchwalk.fly.dev, with the demo project imported from a snapshot.
 
 **Nov 4, 2026**
-- `<!-- NOV4_FEATURES -->` Real-walk recording and eval tuning, re-walk loop on the real footage, landing page, deploy, demo video.
+- Final verification pass, redeploy, demo video.
 
 ## License
 
-`<!-- LICENSE -->` To be added before the repo goes public.
+MIT, see [LICENSE](LICENSE). Copyright 2026 Luciano Bogomolni.
