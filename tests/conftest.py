@@ -2,6 +2,7 @@
 
 - PUNCHWALK_CACHE=readonly; reads come from a per-test tmp cache dir + fixtures/cache.
 - DATA_DIR is a tmp dir, so the cost ledger never touches data/.
+- SLACK_WEBHOOK_URL, RESEND_API_KEY and EMAIL_FROM are blank, whatever the local .env says.
 - Real network is blocked at the socket layer. respx mocks work because they intercept
   before a socket opens. Tests that need to record into the tmp cache use `readwrite`.
 """
@@ -63,6 +64,10 @@ def _offline_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("BASETEN_API_KEY", "test-baseten-key")
     monkeypatch.setenv("REASONING_PROVIDER", "baseten")
     monkeypatch.setenv("COST_CAP_USD", "25")
+    # Never pick up a real Slack webhook / Resend key from the local .env (env vars win over .env);
+    # tests that need a channel set their own fake value.
+    for name in ("SLACK_WEBHOOK_URL", "RESEND_API_KEY", "EMAIL_FROM"):
+        monkeypatch.setenv(name, "")
     monkeypatch.setattr("time.sleep", lambda s: None)
     reset_settings()
     _reset_client_state()

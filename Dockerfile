@@ -82,7 +82,7 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
 COPY tests/ tests/
 COPY --from=context /ctx/fixtures/ fixtures/
 RUN PUNCHWALK_CACHE=readonly python -m pytest -q -p no:cacheprovider \
-      tests/test_ingest.py tests/test_report.py tests/test_api_core.py -rs
+      tests/test_ingest.py tests/test_color.py tests/test_report.py tests/test_api_core.py -rs
 
 # --------------------------------------------------------------------------- runtime (default)
 FROM base AS runtime
