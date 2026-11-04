@@ -1,7 +1,7 @@
 # STATE
 
 Status: RUNNING
-Updated: 2026-11-03 19:59 ET
+Updated: 2026-11-03 20:03 ET
 Current phase: 3.4 tuning (A) → 7.5 eval → 8.1 real seed + Fly import → 8.3 screenshot audit on real data → 9.2/9.3 final → 9.4 final pass. Everything else is done. Far ahead of the PLAN clock (Phase 8 target was Wed 10:30 AM).
 Last checkpoint: ckpt-5.4 (tagged; 0.1–0.5, 0.7, 4.1–4.4, 5.1–5.4 verified). Untagged: 8.1 (verified on synth; tag after real walks seed), 9.2/9.3 drafts. 6.1 UI/7.4 UI/8.2 (92ac215..2d5783a) verified except two touch targets — tag after the fix. Tagged: 0.1–0.7, 1.1–1.7, 2.1–2.5, 3.1–3.3, 4.1–4.4, 5.1–5.8, 6.1–6.3, 7.1–7.4, 8.2, 8.4, 9.1-image
 
@@ -58,4 +58,4 @@ Fly: `fly auth whoami` works (lucianob@consaitech.com), so deploy can run unatte
 - Agreed Make entry points (used by later briefs): dev=`uvicorn punchwalk.api.app:app`, probe=`scripts/probe.py`, record=`scripts/record.py`, seed=`scripts/seed.py`, eval=`eval/run_eval.py`, build=`pnpm -C web build` → `punchwalk/static/`, screenshots=`pnpm -C web screenshots` → `.verify/screens/`.
 
 ## Final handoff
-- not written yet. README placeholders to fill at the end: VIDEO_URL, live URL "(deploying)", SCREENS_REAL, EVAL_TABLE, COST_REAL, NOV4_FEATURES, LICENSE; DEMO_SCRIPT item-number table after seeding.
+- not written yet (after 9.4). README is final except `<!-- VIDEO_URL -->` (line 17) — fill it after recording the video.
