@@ -18,7 +18,6 @@ Built from scratch for the Meta Global AI Developer Hackathon, starting Tue Nov 
 
 - **Live app:** https://punchwalk.fly.dev. On a phone it opens the demo project "Unit 2B final punch" (three real walks,
   14 items); on a desktop, the landing page with the live app in a phone frame and a QR code.
-- **Demo video (3 min):** `<!-- VIDEO_URL -->` (coming soon)
 - **Built for:** Meta Global AI Developer Hackathon, Startup track, Nov 3–4, 2026
 - **Meta models:** Muse Voice Transcribe (narration), SAM 3.1 (hand tracking and defect outlines), Muse Spark Open on Baseten (every LLM call: writing, grounding, verification).
 - **Run it locally:** `make setup && cp .env.example .env && make dev`, or `make test` offline. See [Run it](#run-it).
