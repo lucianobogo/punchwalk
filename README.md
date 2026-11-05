@@ -1,7 +1,7 @@
 # Punchwalk
 
-**Walk it once. Get a punch list with proof.** Punchwalk turns a construction punch walk into a verified,
-dispatched punch list.
+**Walk it once. Get a punch list with proof.** Punchwalk turns a construction punch walk into a verified punch list,
+sent to each trade.
 
 An inspector walks the unit wearing Ray-Ban Meta glasses (or holding a phone) and says what's wrong.
 That's all an item needs. Pointing is optional: when a defect is subtle, or the exact spot matters, hold a
@@ -20,6 +20,8 @@ Built from scratch for the Meta Global AI Developer Hackathon, starting Tue Nov 
   14 items); on a desktop, the landing page with the live app in a phone frame and a QR code.
 - **Demo video (3 min):** `<!-- VIDEO_URL -->` (coming soon)
 - **Built for:** Meta Global AI Developer Hackathon, Startup track, Nov 3–4, 2026
+- **Meta models:** Muse Voice Transcribe (narration), SAM 3.1 (hand tracking and defect outlines), Muse Spark Open on Baseten (every LLM call: writing, grounding, verification).
+- **Run it locally:** `make setup && cp .env.example .env && make dev`, or `make test` offline. See [Run it](#run-it).
 
 | Punch list | Item detail | Play this moment | Walk detail | Re-walk summary | How it was processed |
 |---|---|---|---|---|---|
@@ -258,12 +260,11 @@ for 5 s of audio, and Spark Open 4.2 s per call (`fixtures/probe/README.md`).
 
 ### Uploading your own walk
 
-Measured in a local Docker dry run at the Fly machine's size (2 CPUs, 2 GB); the run on Fly itself is
-still to come.
+Measured in a local Docker dry run at the Fly machine's size (2 CPUs, 2 GB).
 
-- A 26 s walk of two glasses clips took **3.1 min** to process and cost **≈ $0.12**. <!-- 10.9 timing -->
-- Expect **≈ 3–4 min for a 30 s walk** and **≈ 7–8 min for a 60 s walk** on Fly. <!-- 10.9 timing -->
-- Each item costs about **$0.03–0.05** with grounding v2 (write, locate, outline, check, verify). <!-- 10.9 timing -->
+- A 26 s walk of two glasses clips took **3.1 min** to process and cost **≈ $0.12**.
+- Expect **≈ 3–4 min for a 30 s walk** and **≈ 7–8 min for a 60 s walk** on Fly.
+- Each item costs about **$0.03–0.05** with grounding v2 (write, locate, outline, check, verify).
 - Best iPhone settings: 1080p at 30 fps, portrait, at most 3 minutes per clip. HDR on is fine (it's
   tone-mapped at ingest), and so is HEVC.
 - Say every defect out loud. Items come from what's said, so a silent walk gives 0 items.
@@ -365,7 +366,7 @@ was committed. The dated list below comes from the git history.
 - Contracts: database models, API schemas, a TypeScript mirror and mock API fixtures, all enforced by a contract test.
 - Ingest: ordered clips → portrait-safe display video, 10 fps SAM video, 16 kHz audio, with HDR → SDR.
 - Perception pipeline: transcription, turn classification, SAM 3.1 hand tracking for optional pointing (pointing events from the fingertip), fusion, evidence frames.
-- Items: Spark Open writes each one, SAM 3.1 outlines the defect near the fingertip, Spark Open verifies it, and a resumable job runner ties the stages together.
+- Items: Spark Open writes each one, SAM 3.1 outlines the defect (first version, guided by the fingertip), Spark Open verifies it, and a resumable job runner ties the stages together.
 - API: SQLite (WAL), range-capable media for iOS video seeking, upload with limits, progress (poll and SSE), the hand overlay, and guards.
 - PWA: design system, punch list, item detail, Play this moment, walk detail with the hand overlay, the record flow with a live checklist, and "How this walk was processed".
 - Sending to Slack, email or a copied link (Copy link: a shareable message, and the items count as sent), with an auto-send policy (verified items go out, flagged ones wait), and a PDF punch report.
